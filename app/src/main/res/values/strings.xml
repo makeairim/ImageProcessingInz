@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">ImageProcessing</string>
+    <string name="title_home">Home</string>
+    <string name="title_results">Results</string>
+    <string name="navi_export_as">Export</string>
+    <string name="dialog_height_desc">Height</string>
+    <string name="dialog_width_desc">Width</string>
+</resources>

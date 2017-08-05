@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/export"
+        android:title="@string/navi_export_as"
+        app:showAsAction="ifRoom|collapseActionView"
+        app:srcCompat="@drawable/ic_save_24dp"/>
+
+    <item
+        android:id="@+id/navigation_home"
+        android:title="@string/title_home" />
+
+    <item
+        android:id="@+id/navigation_results"
+        android:title="@string/title_results" />
+
+</menu>

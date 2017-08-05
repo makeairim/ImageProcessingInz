@@ -1,0 +1,144 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "a7ece880e1776967afa29ef80795d1be",
+    "entities": [
+      {
+        "tableName": "Operation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `operationChainId` INTEGER, `creationDate` TEXT, `operationType` TEXT, `photoPath` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "operationChainId",
+            "columnName": "operationChainId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "creationDate",
+            "columnName": "creationDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "operationType",
+            "columnName": "operationType",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "photoPath",
+            "columnName": "photoPath",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Chain",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `creationDate` TEXT, `chainName` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "creationDate",
+            "columnName": "creationDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "chainName",
+            "columnName": "chainName",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "chain_has_operations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `chainId` INTEGER, `parentOperationId` INTEGER, `childOperationId` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "chainId",
+            "columnName": "chainId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "parentOperationId",
+            "columnName": "parentOperationId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "childOperationId",
+            "columnName": "childOperationId",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "ResourceFile",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `creationDate` TEXT, `fileUri` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "creationDate",
+            "columnName": "creationDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileUri",
+            "columnName": "fileUri",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"a7ece880e1776967afa29ef80795d1be\")"
+    ]
+  }
+}

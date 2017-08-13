@@ -18,10 +18,10 @@ import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.features.detail.android.CoreException;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 
-public class DilationOperation extends BasicOperation {
+public class ErosionOperation extends BasicOperation {
     static final ImageOperationType type = ImageOperationType.DILATION;
 
-    public DilationOperation(ImageOperationParameter parameter) {
+    public ErosionOperation(ImageOperationParameter parameter) {
         super(parameter);
     }
 
@@ -37,7 +37,7 @@ public class DilationOperation extends BasicOperation {
         Mat src = new Mat(parameter.getImageBitmap().getHeight(), parameter.getImageBitmap().getWidth(), CvType.CV_8UC4);
         Utils.bitmapToMat(parameter.getImageBitmap(), src);
         Mat kernelDilate = Imgproc.getStructuringElement(((Parameters) parameter).getStructElement, new Size(((Parameters) parameter).getStructElementWidth(), ((Parameters) parameter).getStructElementHeight()));
-        Imgproc.dilate(src, src, kernelDilate);
+        Imgproc.erode(src, src, kernelDilate);
 
         Utils.matToBitmap(src, parameter.getImageBitmap());
         return parameter.getImageBitmap();

@@ -7,6 +7,9 @@
         <variable
             name="resource"
             type="pl.edu.agh.imageprocessing.data.remote.Resource" />
+
+        <import type="android.view.View"/>
+            <variable name="viewModel" type="pl.edu.agh.imageprocessing.features.detail.viemodel.HomeViewModel"/>
     </data>
 
     <android.support.design.widget.CoordinatorLayout
@@ -110,8 +113,7 @@
                 android:layout_gravity="bottom"
                 android:layout_weight="0.1"
                 android:background="@color/colorPrimary"
-                android:orientation="vertical"
-                android:visibility="gone">
+                android:orientation="vertical">
 
                 <android.support.constraint.ConstraintLayout
                     android:layout_width="match_parent"
@@ -123,20 +125,28 @@
                         android:layout_width="266dp"
                         android:layout_height="27dp"
                         android:paddingTop="3dp"
-                        app:layout_constraintEnd_toStartOf="@+id/do_oper"
+                        app:layout_constraintEnd_toStartOf="@+id/btn_bottom"
                         app:layout_constraintHorizontal_bias="0.285"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        android:layout_marginBottom="8dp"
-                        app:layout_constraintVertical_bias="0.703"
                         app:layout_constraintTop_toTopOf="parent"
                         android:layout_marginTop="8dp"
-                        tools:layout_editor_absoluteY="64dp"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="8dp"
+                        android:visibility="gone"
                         android:paddingRight="6dp"
-                        android:paddingEnd="6dp" />
-
+                        android:paddingEnd="6dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        android:layout_marginBottom="8dp" />
+                    <LinearLayout
+                        android:id="@+id/btn_bottom"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        android:layout_marginEnd="8dp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginRight="8dp"
+                        android:visibility="gone">
                     <ImageButton
                         android:id="@+id/do_oper"
                         android:layout_width="wrap_content"
@@ -166,6 +176,24 @@
                         android:layout_marginBottom="8dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         android:layout_marginRight="8dp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textView_seekbarprogress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentTop="true"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_toEndOf="@+id/seekbar"
+                        android:layout_toRightOf="@+id/seekbar"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="@+id/seekbar"
+                        app:layout_constraintStart_toStartOf="@+id/seekbar"
+                        app:layout_constraintTop_toBottomOf="@+id/seekbar"
+                        tools:text="200" />
                 </android.support.constraint.ConstraintLayout>
             </RelativeLayout>
             <!--<com.inandwin.halfmodalpresenter.HalfModalView-->

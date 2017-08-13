@@ -1,8 +1,12 @@
 package pl.edu.agh.imageprocessing.data.remote;
 
 import android.arch.lifecycle.LiveData;
+import android.media.Image;
 import android.net.Uri;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,13 +55,7 @@ public class ImageProcessingAPIRepository {
         return true;
     }
     public Observable<Resource<List<ImageOperationType>>> getImageOperationTypes(){
-        ImageOperationType type1=ImageOperationType.DILATION;
-        ImageOperationType type2=ImageOperationType.BINARIZATION;
-
-        LinkedList<ImageOperationType> types = new LinkedList<>();
-        types.add(type1);
-        types.add(type2);
-        Resource<List<ImageOperationType>> res1 = new Resource<>(types);
+        Resource<List<ImageOperationType>> res1 = new Resource<>(Arrays.asList(ImageOperationType.values()));
         return Observable.just(res1);
     }
 

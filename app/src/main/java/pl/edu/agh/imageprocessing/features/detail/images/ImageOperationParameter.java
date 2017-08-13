@@ -35,4 +35,6 @@ abstract public class ImageOperationParameter {
     public void setPreviousOperation(Long previousOperation) {
         this.previousOperation = previousOperation;
     }
+
+
 }

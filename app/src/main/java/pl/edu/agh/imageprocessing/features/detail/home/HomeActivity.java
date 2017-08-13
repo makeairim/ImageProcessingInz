@@ -22,6 +22,7 @@ import butterknife.OnClick;
 import io.fotoapparat.Fotoapparat;
 import pl.edu.agh.imageprocessing.BaseActivity;
 import pl.edu.agh.imageprocessing.R;
+import pl.edu.agh.imageprocessing.databinding.ActivityHomeBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.RecyclerViewListenerOutsideClick;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.HomeViewModel;
 
@@ -30,7 +31,7 @@ public class HomeActivity extends BaseActivity {
     private final String TAG = HomeActivity.class.getSimpleName();
     public static final String KEY_HOME_ACTIVITY_ID = "key__home_activity_id";
 
-
+    public ActivityHomeBinding binding;
     private HomeViewModel getViewModel() {
         return (HomeViewModel) viewModel;
     }
@@ -46,6 +47,7 @@ public class HomeActivity extends BaseActivity {
         viewModel = ViewModelProviders.of(this, viewModelFactory).get(HomeViewModel.class);
         viewModel.setBinding(this);//todo lifecycle event
         binding = DataBindingUtil.setContentView(this, R.layout.activity_home);
+        binding.setViewModel(getViewModel());
         setSupportActionBar(binding.toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         ButterKnife.bind(this);

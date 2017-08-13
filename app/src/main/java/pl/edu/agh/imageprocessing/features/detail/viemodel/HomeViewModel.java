@@ -17,22 +17,24 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
+import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.dagger.GlideApp;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.remote.ImageProcessingAPIRepository;
-import pl.edu.agh.imageprocessing.features.detail.android.DilationCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.DilationErosionCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.MatrixCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.OperationHomeListCallback;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
-import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationTypeResolver;
+import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolver;
 import pl.edu.agh.imageprocessing.features.detail.images.OpenCvTypes;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
-import pl.edu.agh.imageprocessing.features.detail.images.operation.BinarizationOperation;
-import pl.edu.agh.imageprocessing.features.detail.images.operation.DilationOperation;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static pl.edu.agh.imageprocessing.data.ImageOperationType.BINARIZATION;
 
 /**
  * Created by bwolcerz on 27.07.2017.
@@ -49,9 +51,15 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     @Inject
     Context context;
     @Inject
-    ImageOperationTypeResolver imageOperationTypeResolver;
+    ImageOperationResolver imageOperationResolver;
     @Inject
     OpenCvTypes openCvTypes;
+
+    @Override
+    protected HomeActivity provideActivity() {
+        return (HomeActivity) super.provideActivity();
+    }
+
 
     HomeViewModelState state = new HomeViewModelState();
     public Callable<Void> onOutsideListClick = () -> {
@@ -63,6 +71,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     @Inject
     public HomeViewModel() {
     }
+
 
     public void photoPicker() {
         pickImageDialog.setOnPickResult(pickResult -> {
@@ -94,49 +103,89 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     @Override
     public void onImageOperationClicked(ImageOperationType imageOperationType, View sharedView) {
         Log.i(TAG, "onImageOperationClicked: " + imageOperationType.name());
+        state.setOperationType(imageOperationType);
         switch (imageOperationType) {
             case BINARIZATION:
-                provideActivity().binding.parentSeekbar.setVisibility(VISIBLE);
-                provideActivity().binding.seekbar.setMaxValue(AppConstants.MAX_ADAPTIVE_THRESHOLD);
-                provideActivity().binding.doOper.setOnClickListener((v) -> callImageOperation(imageOperationType));
                 provideActivity().binding.seekbar.setSeekBarValueChangedListener((i, b) -> {
-                    callImageOperation(imageOperationType);
-                });
+                            Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
+                            state.setThreshold(i);
+                            provideActivity().binding.textViewSeekbarprogress.setText(String.valueOf(state.getThreshold()));
+                            if (BINARIZATION.equals(state.getOperationType())) {
+                                callImageOperation(state.getOperationType());
+                            }
+                        }
+                );
+                provideActivity().binding.seekbar.setVisibility(VISIBLE);
+                provideActivity().binding.textViewSeekbarprogress.setVisibility(VISIBLE);
+                provideActivity().binding.seekbar.setMaxValue(AppConstants.MAX_ADAPTIVE_THRESHOLD);
                 provideActivity().binding.parentRecyclerView.setVisibility(GONE);
                 provideActivity().binding.ivPhoto.setAlpha(AppConstants.IMAGE_VIEW_FULL_OPAQUE);
-                provideActivity().binding.doOper.setOnClickListener(view -> {
-                    //todo save image and operation to DB
-                    //todo store as chain or add to existing
-                    provideActivity().binding.parentSeekbar.setVisibility(GONE);
-                });
-                provideActivity().binding.clearOper.setOnClickListener(view -> {
-                    //todo restore previous image
-                    provideActivity().binding.parentSeekbar.setVisibility(GONE);
-                });
+                break;
+            case EROSION:
+                showErosionDilationDialog(provideActivity().getString(R.string.title_erosion_dialog), imageOperationType);
                 break;
             case DILATION:
-                showDilationDialog().setListener((width, height, elementType) -> {
-                    state.setMorphologyWidth(width);
-                    state.setMorphologyHeight(height);
-                    state.setMorphologyElementType(OpenCvTypes.MORPH_ELEMENTS.getTypeFromName(elementType));
-                    callImageOperation(imageOperationType);
-                });
+                showErosionDilationDialog(provideActivity().getString(R.string.title_dilation_dialog), imageOperationType);
                 break;
+            case FILTER:
+                showMatrixDialog(provideActivity().getString(R.string.title_matrix_value_dialog), 3, 3, imageOperationType);
+                break;
+            default:
+                throw new AssertionError("Could not resolve operation type");
         }
+
+    }
+
+    public void showMatrixDialog(String title, int height, int width, ImageOperationType imageOperationType) {
+        FragmentManager fm = provideActivity().getSupportFragmentManager();
+        MatrixCustomDialog dialog = MatrixCustomDialog.newInstance(title, width, height);
+        dialog.show(fm, "matrix_values");
+        dialog.setListener((width1, height1, matrix) -> {
+            state.setMatrixWidth(width1);
+            state.setMatrixHeight(height1);
+            state.setMatrix(matrix);
+            callImageOperation(imageOperationType);
+        });
+
+    }
+
+    private void showErosionDilationDialog(String title, ImageOperationType imageOperationType) {
+        FragmentManager fm = provideActivity().getSupportFragmentManager();
+        DilationErosionCustomDialog dialog = DilationErosionCustomDialog.newInstance(title, openCvTypes.getStructuringElementTypes());
+        dialog.show(fm, "operation_parameters");
+        dialog.setListener((width, height, elementType) -> {
+            state.setMorphologyWidth(width);
+            state.setMorphologyHeight(height);
+            state.setMorphologyElementType(OpenCvTypes.MORPH_ELEMENTS.getTypeFromName(elementType));
+            callImageOperation(imageOperationType);
+        });
     }
 
     private void callImageOperation(ImageOperationType imageOperationType) {
-        BasicOperation operation = imageOperationTypeResolver.resolveOperation(imageOperationType);
+        BasicOperation operation = null;
         try {
-            operation.setParameter(imageOperationParameterViewResolver(imageOperationType));
+            operation = imageOperationResolver.resolveOperation(imageOperationType, state);
         } catch (IOException e) {
             e.printStackTrace();
-            return;
         }
         Bitmap resultBitmap = operation.execute();
-        state.currentImageUri = null;
-        state.bitmap = resultBitmap;
+        state.setCurrentImageUri(null);
+        state.setBitmap(resultBitmap);
         showImage();
+        provideActivity().binding.btnBottom.setVisibility(VISIBLE);
+        provideActivity().binding.doOper.setOnClickListener(view -> {
+            //todo save image and operation to DB
+            //todo store as chain or add to existing
+            provideActivity().binding.seekbar.setVisibility(GONE);
+            provideActivity().binding.textViewSeekbarprogress.setVisibility(GONE);
+            provideActivity().binding.btnBottom.setVisibility(GONE);
+        });
+        provideActivity().binding.clearOper.setOnClickListener(view -> {
+            //todo restore previous image
+            provideActivity().binding.seekbar.setVisibility(GONE);
+            provideActivity().binding.textViewSeekbarprogress.setVisibility(GONE);
+            provideActivity().binding.btnBottom.setVisibility(GONE);
+        });
     }
 
     public void provideOperationTypes() {
@@ -144,63 +193,26 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                 .subscribe(resources -> {
                     provideActivity().binding.ivPhoto.setImageAlpha(AppConstants.IMAGE_VIEW_PARTIAL_TRANSPARENT);
                     provideActivity().binding.parentRecyclerView.setVisibility(VISIBLE);
-                    provideActivity().binding.parentSeekbar.setVisibility(GONE);
+                    provideActivity().binding.seekbar.setVisibility(GONE);
                     provideActivity().binding.recyclerView.setAlpha(1.0f);
                     provideActivity().binding.setResource(resources);
                 });
     }
 
 
-    private ImageOperationParameter imageOperationParameterViewResolver(ImageOperationType type) throws IOException {
-        switch (type) {
-            case BINARIZATION:
-                BinarizationOperation.Parameters result;
-                result = new BinarizationOperation.Parameters();
-                result.setThreshold(provideActivity().binding.seekbar.getProgress());
-                result.setImageUri(state.getCurrentImageUri());
-                if (state.getCurrentImageUri() != null) {
-                    result.setImageBitmap(fileTools.getImageBitmap(context, state.currentImageUri));
-                } else if (state.getBitmap() != null) {
-                    result.setImageBitmap(state.getBitmap());
-                }
-                return result;
-            case FILTER:
-                break;
-            case CONVOLUTION:
-                break;
-            case DILATION:
-                DilationOperation.Parameters dilation;
-                dilation=new DilationOperation.Parameters();
-                dilation.setStructElementHeight(state.getMorphologyElementType());
-                dilation.setStructElementHeight(state.getMorphologyHeight());
-                dilation.setStructElementWidth(state.getMorphologyWidth());
-                dilation.setImageUri(state.getCurrentImageUri());
-                if (state.getCurrentImageUri() != null) {
-                    dilation.setImageBitmap(fileTools.getImageBitmap(context, state.currentImageUri));
-                } else if (state.getBitmap() != null) {
-                    dilation.setImageBitmap(state.getBitmap());
-                }
-                return dilation;
-        }
-        throw new AssertionError("resolver not provided for operation: " + type.name());
-    }
-
-    private DilationCustomDialog showDilationDialog() {
-        FragmentManager fm = provideActivity().getSupportFragmentManager();
-        DilationCustomDialog dialog = DilationCustomDialog.newInstance("Dilation parameters", openCvTypes.getStructuringElementTypes());
-        dialog.show(fm, "operation_parameters");
-        return dialog;
-    }
-
-    static class HomeViewModelState {
-        Long previousOperationId = null;
-        ImageOperationType type;
-        ImageOperationParameter parameter;
-        Uri currentImageUri;
-        Bitmap bitmap;
+    public static class HomeViewModelState {
+        private Long previousOperationId = null;
+        private ImageOperationType operationType;
+        private ImageOperationParameter parameter;
+        private Uri currentImageUri;
+        private Bitmap bitmap;
         private int morphologyWidth;
         private int morphologyHeight;
         private int morphologyElementType;
+        public int threshold;
+        private int matrixHeight;
+        private int matrixWidth;
+        private int[] matrix;
 
         public HomeViewModelState() {
 
@@ -215,12 +227,12 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
             this.previousOperationId = previousOperationId;
         }
 
-        public ImageOperationType getType() {
-            return type;
+        public ImageOperationType getOperationType() {
+            return operationType;
         }
 
-        public void setType(ImageOperationType type) {
-            this.type = type;
+        public void setOperationType(ImageOperationType operationType) {
+            this.operationType = operationType;
         }
 
         public ImageOperationParameter getParameter() {
@@ -271,6 +283,39 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
         public int getMorphologyElementType() {
             return morphologyElementType;
         }
+
+        public void setThreshold(int threshold) {
+            this.threshold = threshold;
+        }
+
+        public int getThreshold() {
+            return threshold;
+        }
+
+        public int getMatrixHeight() {
+            return matrixHeight;
+        }
+
+        public void setMatrixHeight(int matrixHeight) {
+            this.matrixHeight = matrixHeight;
+        }
+
+        public int getMatrixWidth() {
+            return matrixWidth;
+        }
+
+        public void setMatrixWidth(int matrixWidth) {
+            this.matrixWidth = matrixWidth;
+        }
+
+        public int[] getMatrix() {
+            return matrix;
+        }
+
+        public void setMatrix(int[] matrix) {
+            this.matrix = matrix;
+        }
     }
+
 
 }

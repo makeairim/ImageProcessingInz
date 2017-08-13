@@ -24,6 +24,9 @@ abstract  public class BasicOperation{
      */
     abstract protected Map<String,String> validateParameters() throws Exception;
 
+    public BasicOperation(ImageOperationParameter parameter) {
+        this.parameter = parameter;
+    }
 
     public ImageOperationParameter getParameter() {
         return parameter;

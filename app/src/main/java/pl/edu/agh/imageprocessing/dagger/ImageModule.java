@@ -1,5 +1,7 @@
 package pl.edu.agh.imageprocessing.dagger;
 
+import android.content.Context;
+
 import com.vansuita.pickimage.bundle.PickSetup;
 import com.vansuita.pickimage.dialog.PickImageDialog;
 import com.vansuita.pickimage.enums.EPickType;
@@ -8,9 +10,8 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
-import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationTypeResolver;
+import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolver;
 import pl.edu.agh.imageprocessing.features.detail.images.OpenCvTypes;
 
 /**
@@ -31,8 +32,8 @@ public  class ImageModule {
     }
     @Provides
     @Singleton
-    ImageOperationTypeResolver imageOperationTypeResolver(){
-        return new ImageOperationTypeResolver();
+    ImageOperationResolver imageOperationTypeResolver(Context context,FileTools fileTools){
+        return new ImageOperationResolver(context,fileTools);
     }
     @Provides
     @Singleton

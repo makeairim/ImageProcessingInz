@@ -1,0 +1,111 @@
+package pl.edu.agh.imageprocessing.features.detail.images;
+
+import android.content.Context;
+import android.util.Log;
+
+import java.io.IOException;
+
+import javax.inject.Inject;
+
+import pl.edu.agh.imageprocessing.data.ImageOperationType;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.BinarizationOperation;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.DilationOperation;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.ErosionOperation;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.FilterOperation;
+import pl.edu.agh.imageprocessing.features.detail.viemodel.HomeViewModel;
+
+/**
+ * Created by bwolcerz on 03.08.2017.
+ */
+
+public class ImageOperationResolver {
+    public static final String TAG = ImageOperationResolver.class.getSimpleName();
+    @Inject
+    FileTools fileTools;
+    @Inject
+    Context context;
+
+    @Inject
+    public ImageOperationResolver(Context context, FileTools fileTools) {
+        this.fileTools = fileTools;
+        this.context = context;
+    }
+
+    public BasicOperation resolveOperation(ImageOperationType type, HomeViewModel.HomeViewModelState state) throws IOException {
+        Log.i(TAG, "resolveOperation: " + type.name());
+        switch (type) {
+            case BINARIZATION:
+                return new BinarizationOperation(imageOperationParameterResolver(type, state));
+            case DILATION:
+                return new DilationOperation(imageOperationParameterResolver(type, state));
+            case EROSION:
+                return new ErosionOperation(imageOperationParameterResolver(type,state));
+            case FILTER:
+                return new FilterOperation(imageOperationParameterResolver(type,state));
+            default:
+                throw new AssertionError("resolver not provided for operation: " + type.name());
+        }
+    }
+
+    private ImageOperationParameter imageOperationParameterResolver(ImageOperationType type, HomeViewModel.HomeViewModelState parameters) throws IOException {
+        ImageOperationParameter result = null;
+        switch (type) {
+            case BINARIZATION:
+                result = mapBinarizationParameter(parameters);
+                break;
+            case DILATION:
+                result = mapDilationParameter(parameters);
+                break;
+            case EROSION:
+                result = mapErosionParameter(parameters);
+                break;
+            case FILTER:
+                result = mapFilterParameter(parameters);
+                break;
+            default:
+                throw new AssertionError("resolver not provided for operation: " + type.name());
+        }
+        result.setImageUri(parameters.getCurrentImageUri());
+        if (parameters.getCurrentImageUri() != null) {
+            result.setImageBitmap(fileTools.getImageBitmap(context, parameters.getCurrentImageUri()));
+        } else if (parameters.getBitmap() != null) {
+            result.setImageBitmap(parameters.getBitmap());
+        }
+        return result;
+    }
+
+    private ImageOperationParameter mapFilterParameter(HomeViewModel.HomeViewModelState parameters) {
+        FilterOperation.Parameters result= new FilterOperation.Parameters();
+        result.setHeight(parameters.getMatrixHeight());
+        result.setWidth(parameters.getMatrixWidth());
+        result.setMatrix(parameters.getMatrix());
+        return result;
+    }
+
+    private ImageOperationParameter mapErosionParameter(HomeViewModel.HomeViewModelState parameters) {
+        ErosionOperation.Parameters result;
+        result = new ErosionOperation.Parameters();
+        result.setStructElementHeight(parameters.getMorphologyElementType());
+        result.setStructElementHeight(parameters.getMorphologyHeight());
+        result.setStructElementWidth(parameters.getMorphologyWidth());
+        return result;
+    }
+
+    private BinarizationOperation.Parameters mapBinarizationParameter(HomeViewModel.HomeViewModelState parameters) {
+        BinarizationOperation.Parameters result;
+        result = new BinarizationOperation.Parameters();
+        result.setThreshold(parameters.getThreshold());
+        return result;
+    }
+
+    private DilationOperation.Parameters mapDilationParameter(HomeViewModel.HomeViewModelState parameters) {
+        DilationOperation.Parameters result;
+        result = new DilationOperation.Parameters();
+        result.setStructElementHeight(parameters.getMorphologyElementType());
+        result.setStructElementHeight(parameters.getMorphologyHeight());
+        result.setStructElementWidth(parameters.getMorphologyWidth());
+        return result;
+    }
+
+}

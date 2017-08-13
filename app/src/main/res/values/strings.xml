@@ -5,4 +5,7 @@
     <string name="navi_export_as">Export</string>
     <string name="dialog_height_desc">Height</string>
     <string name="dialog_width_desc">Width</string>
+    <string name="title_dilation_dialog">Choose dilation parameters</string>
+    <string name="title_erosion_dialog">Choose erosion parameters</string>
+    <string name="title_matrix_value_dialog">Choose matrix values</string>
 </resources>

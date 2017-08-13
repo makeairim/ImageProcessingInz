@@ -5,7 +5,7 @@ package pl.edu.agh.imageprocessing.data;
  */
 
 public enum ImageOperationType {
-    FILTER("Filter"),CONVOLUTION("Convolution"), BINARIZATION("Binarization"), DILATION("Dilation");
+    BINARIZATION("Binarization"), DILATION("Dilation"), EROSION("Erosion"), FILTER("Filter");
     private String title;
 
     ImageOperationType(String title) {

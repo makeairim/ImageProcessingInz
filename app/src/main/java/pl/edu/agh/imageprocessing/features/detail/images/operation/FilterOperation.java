@@ -2,11 +2,13 @@ package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
 import android.graphics.Bitmap;
+import android.net.ProxyInfo;
 import android.net.Uri;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.Collections;
@@ -17,57 +19,76 @@ import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.features.detail.android.CoreException;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 
-public class BinarizationOperation  extends BasicOperation{
-    static final ImageOperationType type=ImageOperationType.BINARIZATION;
+public class FilterOperation extends BasicOperation {
+    static final ImageOperationType type = ImageOperationType.DILATION;
 
-    public BinarizationOperation(ImageOperationParameter parameter) {
+    public FilterOperation(ImageOperationParameter parameter) {
         super(parameter);
     }
 
     @Override
     public Bitmap execute() {
         try {
-            if(!validateParameters().isEmpty()){
+            if (!validateParameters().isEmpty()) {
                 throw new AssertionError("should handle on invalid parameters or validate user");
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             //todo handle on invalid params
         }
-        Uri processedImageUri=null;
         Mat src = new Mat(parameter.getImageBitmap().getHeight(), parameter.getImageBitmap().getWidth(), CvType.CV_8UC4);
         Utils.bitmapToMat(parameter.getImageBitmap(), src);
-        Imgproc.cvtColor(src, src, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.adaptiveThreshold(src, src, ((Parameters)parameter).getThreshold(), Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 3, 0);
-
+        Mat kernel = new Mat(3,3,CvType.CV_16SC1); //TODO TYPE ? UP IS ANOTHER
+        //own mask- kernel
+        kernel.put(0, 0, 0, -1, 0, -1, 5, -1, 0, -1, 0);
+        Imgproc.filter2D(src, src, src.depth(), kernel);
         Utils.matToBitmap(src, parameter.getImageBitmap());
         return parameter.getImageBitmap();
 
     }
-    private Operation saveOperation(Uri uri){
-        Operation operation=new Operation();
+
+    private Operation saveOperation(Uri uri) {
+        Operation operation = new Operation();
         operation.setOperationType(type.name());
         operation.setPhotoPath(uri.getPath());
         return operation;
     }
+
     @Override
     protected Map<String, String> validateParameters() throws Exception {
         Map result = Collections.EMPTY_MAP;
         //todo valdiate params
-         if( parameter ==null ){
-             throw new CoreException("Parameter is not set");
-         }
+        if (parameter == null) {
+            throw new CoreException("Parameter is not set");
+        }
         return result;
     }
 
-    public static class Parameters extends ImageOperationParameter{
-        int threshold;
+    public static class Parameters extends ImageOperationParameter {
+        private int width, height;
+        private int[]matrix;
 
-        public int getThreshold() {
-            return threshold;
+        public int getWidth() {
+            return width;
         }
 
-        public void setThreshold(int threshold) {
-            this.threshold = threshold;
+        public void setWidth(int width) {
+            this.width = width;
+        }
+
+        public int getHeight() {
+            return height;
+        }
+
+        public void setHeight(int height) {
+            this.height = height;
+        }
+
+        public int[] getMatrix() {
+            return matrix;
+        }
+
+        public void setMatrix(int[] matrix) {
+            this.matrix = matrix;
         }
     }
 }

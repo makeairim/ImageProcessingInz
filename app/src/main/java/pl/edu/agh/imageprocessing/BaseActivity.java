@@ -12,7 +12,6 @@ import android.support.v7.app.AppCompatActivity;
 import org.greenrobot.eventbus.EventBus;
 
 import dagger.android.AndroidInjection;
-import pl.edu.agh.imageprocessing.databinding.ActivityHomeBinding;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.BaseViewModel;
 
 /**
@@ -22,7 +21,6 @@ import pl.edu.agh.imageprocessing.features.detail.viemodel.BaseViewModel;
 public class BaseActivity extends AppCompatActivity implements LifecycleRegistryOwner {
     protected LifecycleRegistry lifecycleRegistry = new LifecycleRegistry(this);
     protected BaseViewModel viewModel;
-    public ActivityHomeBinding binding;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

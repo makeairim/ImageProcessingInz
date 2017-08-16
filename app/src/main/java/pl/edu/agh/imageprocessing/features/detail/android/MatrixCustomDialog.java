@@ -4,7 +4,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialogFragment;
-import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,7 +24,7 @@ import pl.edu.agh.imageprocessing.R;
 
 public class MatrixCustomDialog extends BottomSheetDialogFragment {
 
-
+    public static final String TAG = MatrixCustomDialog.class.getSimpleName();
     static private final String WIDTH_KEY = "WIDTH_KEY";
     static private final String HEIGHT_KEY = "HEIGHT_KEY";
     private static final String TITLE_KEY = "titleKey";
@@ -76,19 +76,27 @@ public class MatrixCustomDialog extends BottomSheetDialogFragment {
         mMatrix = new int[mWidth * mHeight];
         // Show soft keyboard automatically and request focus to field
         init(view, mWidth, mHeight);
-        new Thread(() -> {
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            getActivity().runOnUiThread(() -> {
-                init(view, 5, 5);
-            });
-        }).start();
         view.findViewById(R.id.accept_params).setOnClickListener(view1 -> {
+            TableLayout stk = view.findViewById(R.id.table_main);
             if (mMatrix == null) {
                 throw new AssertionError("Matrix can not be null");
+            }
+            int childCount = stk.getChildCount();
+            int entryIndex=0;
+            for (int i = 0; i < childCount; ++i) {
+                View child = stk.getChildAt(i);
+                int childCountRow = 0;
+                if (child instanceof TableRow) {
+                    childCountRow = ((TableRow) child).getChildCount();
+                }
+                for (int j = 0; j < childCountRow; ++j) {
+                    View entry = ((TableRow) child).getChildAt(j);
+                    if (entry instanceof EditText) {
+                        EditText ed = (EditText) entry;
+                        Log.i(TAG, "entry is index:"+entryIndex+  " val=" + ed.getText().toString().trim());
+                        mMatrix[entryIndex++] = Integer.parseInt(ed.getText().toString().trim());
+                    }
+                }
             }
             listener.call(mWidth, mHeight, mMatrix);
             dismiss();
@@ -104,7 +112,7 @@ public class MatrixCustomDialog extends BottomSheetDialogFragment {
             TextView tv0 = new TextView(getActivity());
             tv0.setText(String.format(Locale.getDefault(), "%4d", i));
             tv0.setTextColor(Color.WHITE);
-            if( i==0){
+            if (i == 0) {
                 tv0.setText(String.format(Locale.getDefault(), "%5d", i));
                 tv0.setVisibility(View.INVISIBLE);
             }
@@ -116,25 +124,24 @@ public class MatrixCustomDialog extends BottomSheetDialogFragment {
 //        android:layout_height="1dp"
 //        android:background="@android:color/darker_gray"/>
         View separator = new View(getActivity());
-        separator.setLayoutParams(new TableLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,2));
+        separator.setLayoutParams(new TableLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
         separator.setBackground(getActivity().getResources().getDrawable(android.R.color.background_light));
         stk.addView(separator);
         for (int i = 1; i <= height; i++) {
             TableRow tbrow = new TableRow(getActivity());
             for (int j = 0; j < width; ++j) {
-                    if(j==0){
-                        TextView t1v = new TextView(getActivity());
-                        t1v.setText(String.format(Locale.getDefault(), "%3d", i));
-                        t1v.setTextColor(Color.WHITE);
-                        t1v.setGravity(Gravity.CENTER);
-                        tbrow.addView(t1v);
-                    }
-                    EditText t1v = new EditText(getActivity());
-                    t1v.setText(String.format(Locale.getDefault(), "%3d", 1));
+                if (j == 0) {
+                    TextView t1v = new TextView(getActivity());
+                    t1v.setText(String.format(Locale.getDefault(), "%3d", i));
                     t1v.setTextColor(Color.WHITE);
                     t1v.setGravity(Gravity.CENTER);
                     tbrow.addView(t1v);
-
+                }
+                EditText t1v = new EditText(getActivity());
+                t1v.setText(String.format(Locale.getDefault(), "%3d", i * (j + 1)));
+                t1v.setTextColor(Color.WHITE);
+                t1v.setGravity(Gravity.CENTER);
+                tbrow.addView(t1v);
             }
             stk.addView(tbrow);
         }

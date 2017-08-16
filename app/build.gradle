@@ -126,6 +126,9 @@ dependencies {
     compile ('com.github.hamsaadev:RTLMaterialSpinner:V1.0.1'){
         exclude group: 'com.android.support', module: 'appcompat-v7'
     }
+    //sync
+//    compile   "com.github.leomindez:Sync:${libs.sync}"
+    compile 'com.birbit:android-priority-jobqueue:2.0.1'
     //android test
     androidTestCompile "org.mockito:mockito-core:$test.mockito"
     androidTestCompile "com.google.dagger:dagger:$libs.dagger"

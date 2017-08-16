@@ -30,6 +30,7 @@ public class DilationErosionCustomDialog extends BottomSheetDialogFragment {
 
     public interface DialogListener{
         public void call(int width,int height,String elementType);
+
     }
     public DilationErosionCustomDialog() {
         // Empty constructor is required for DialogFragment

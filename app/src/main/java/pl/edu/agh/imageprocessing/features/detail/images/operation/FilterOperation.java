@@ -1,15 +1,11 @@
 package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
-import android.graphics.Bitmap;
-import android.net.ProxyInfo;
-import android.net.Uri;
 import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.Arrays;
@@ -17,19 +13,19 @@ import java.util.Collections;
 import java.util.Map;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
-import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.features.detail.android.CoreException;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 
 public class FilterOperation extends BasicOperation {
-    static final ImageOperationType type = ImageOperationType.DILATION;
-    public static final String TAG=FilterOperation.class.getSimpleName();
+    private static ImageOperationType type = ImageOperationType.DILATION;
+    public static final String TAG = FilterOperation.class.getSimpleName();
+
     public FilterOperation(ImageOperationParameter parameter) {
         super(parameter);
     }
 
     @Override
-    public Bitmap execute() {
+    public BasicOperation execute() {
         try {
             if (!validateParameters().isEmpty()) {
                 throw new AssertionError("should handle on invalid parameters or validate user");
@@ -37,33 +33,26 @@ public class FilterOperation extends BasicOperation {
         } catch (Exception e) {
             //todo handle on invalid params
         }
-        Log.i(TAG, "execute: matrix="+ Arrays.toString(((Parameters) parameter).getMatrix()));
+        Log.i(TAG, "execute: matrix=" + Arrays.toString(((Parameters) parameter).getMatrix()));
         Mat src = new Mat(parameter.getImageBitmap().getHeight(), parameter.getImageBitmap().getWidth(), CvType.CV_8UC4);
         Utils.bitmapToMat(parameter.getImageBitmap(), src);
-        Mat kernel = new Mat( ((Parameters)parameter).getHeight(),((Parameters)parameter).getWidth(),CvType.CV_32S); //TODO TYPE ? UP IS ANOTHERCV_16SC1
+        Mat kernel = new Mat(((Parameters) parameter).getHeight(), ((Parameters) parameter).getWidth(), CvType.CV_32S); //TODO TYPE ? UP IS ANOTHERCV_16SC1
         //own mask- kernel
 //        ((Parameters)parameter).setMatrix(new int[]{0, -1, 0, -1, 5, -1, 0, -1, 0});
 // ernel.put(0, 0, 0, -1, 0, -1, 5, -1, 0, -1, 0);
-        Log.i(TAG, "execute: matrix:"+ ((Parameters)parameter).getMatrix());
+        Log.i(TAG, "execute: matrix:" + ((Parameters) parameter).getMatrix());
 
 //        for(int i=0;i< ((Parameters)parameter).getHeight();++i){
 //            for(int j=0;j<((Parameters)parameter).getWidth();++j){
 //                kernel.put(i, j, ((Parameters)parameter).getMatrix()[i*j]);
 //            }
 //        }
-        kernel.put(0, 0, ((Parameters)parameter).getMatrix());
+        kernel.put(0, 0, ((Parameters) parameter).getMatrix());
         Imgproc.filter2D(src, src, src.depth(), kernel);
         Utils.matToBitmap(src, parameter.getImageBitmap());
-        return parameter.getImageBitmap();
-
+        return this;
     }
 
-    private Operation saveOperation(Uri uri) {
-        Operation operation = new Operation();
-        operation.setOperationType(type.name());
-        operation.setPhotoPath(uri.getPath());
-        return operation;
-    }
 
     @Override
     protected Map<String, String> validateParameters() throws Exception {
@@ -77,7 +66,7 @@ public class FilterOperation extends BasicOperation {
 
     public static class Parameters extends ImageOperationParameter {
         private int width, height;
-        private int[]matrix;
+        private int[] matrix;
 
         public int getWidth() {
             return width;

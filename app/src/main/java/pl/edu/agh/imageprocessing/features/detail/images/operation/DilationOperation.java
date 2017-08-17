@@ -1,9 +1,6 @@
 package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
-import android.graphics.Bitmap;
-import android.net.Uri;
-
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -14,19 +11,18 @@ import java.util.Collections;
 import java.util.Map;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
-import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.features.detail.android.CoreException;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 
 public class DilationOperation extends BasicOperation {
-    static final ImageOperationType type = ImageOperationType.DILATION;
+    static  ImageOperationType type = ImageOperationType.DILATION;
 
     public DilationOperation(ImageOperationParameter parameter) {
         super(parameter);
     }
 
     @Override
-    public Bitmap execute() {
+    public BasicOperation execute() {
         try {
             if (!validateParameters().isEmpty()) {
                 throw new AssertionError("should handle on invalid parameters or validate user");
@@ -40,16 +36,11 @@ public class DilationOperation extends BasicOperation {
         Imgproc.dilate(src, src, kernelDilate);
 
         Utils.matToBitmap(src, parameter.getImageBitmap());
-        return parameter.getImageBitmap();
+        return this;
 
     }
 
-    private Operation saveOperation(Uri uri) {
-        Operation operation = new Operation();
-        operation.setOperationType(type.name());
-        operation.setPhotoPath(uri.getPath());
-        return operation;
-    }
+
 
     @Override
     protected Map<String, String> validateParameters() throws Exception {

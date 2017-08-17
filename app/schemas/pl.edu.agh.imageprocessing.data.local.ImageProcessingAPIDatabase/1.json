@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "a7ece880e1776967afa29ef80795d1be",
+    "identityHash": "0aee50264576ae5e2fa69ca7310c396d",
     "entities": [
       {
         "tableName": "Operation",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `operationChainId` INTEGER, `creationDate` TEXT, `operationType` TEXT, `photoPath` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `operationChainId` INTEGER, `creationDate` TEXT, `operationType` TEXT, `photoUri` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -29,8 +29,8 @@
             "affinity": "TEXT"
           },
           {
-            "fieldPath": "photoPath",
-            "columnName": "photoPath",
+            "fieldPath": "photoUri",
+            "columnName": "photoUri",
             "affinity": "TEXT"
           }
         ],
@@ -138,7 +138,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"a7ece880e1776967afa29ef80795d1be\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"0aee50264576ae5e2fa69ca7310c396d\")"
     ]
   }
 }

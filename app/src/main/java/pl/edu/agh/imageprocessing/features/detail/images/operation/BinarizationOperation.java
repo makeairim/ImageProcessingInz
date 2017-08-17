@@ -1,7 +1,6 @@
 package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
-import android.graphics.Bitmap;
 import android.net.Uri;
 
 import org.opencv.android.Utils;
@@ -13,19 +12,18 @@ import java.util.Collections;
 import java.util.Map;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
-import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.features.detail.android.CoreException;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 
 public class BinarizationOperation  extends BasicOperation{
-    static final ImageOperationType type=ImageOperationType.BINARIZATION;
+    static  ImageOperationType type=ImageOperationType.BINARIZATION;
 
     public BinarizationOperation(ImageOperationParameter parameter) {
         super(parameter);
     }
 
     @Override
-    public Bitmap execute() {
+    public BasicOperation execute() {
         try {
             if(!validateParameters().isEmpty()){
                 throw new AssertionError("should handle on invalid parameters or validate user");
@@ -40,15 +38,9 @@ public class BinarizationOperation  extends BasicOperation{
         Imgproc.adaptiveThreshold(src, src, ((Parameters)parameter).getThreshold(), Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 3, 0);
 
         Utils.matToBitmap(src, parameter.getImageBitmap());
-        return parameter.getImageBitmap();
+        return this;
+    }
 
-    }
-    private Operation saveOperation(Uri uri){
-        Operation operation=new Operation();
-        operation.setOperationType(type.name());
-        operation.setPhotoPath(uri.getPath());
-        return operation;
-    }
     @Override
     protected Map<String, String> validateParameters() throws Exception {
         Map result = Collections.EMPTY_MAP;

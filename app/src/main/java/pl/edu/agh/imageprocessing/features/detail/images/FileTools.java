@@ -10,7 +10,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.Callable;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
@@ -20,6 +22,12 @@ import pl.edu.agh.imageprocessing.app.constants.AppConstants;
  */
 @Singleton
 public class FileTools {
+    @Inject
+    Context context;
+    @Inject
+    public FileTools(Context context) {
+        this.context=context;
+    }
 
     private Uri setImageUri(Context context) {
         ContextWrapper cw = new ContextWrapper(context.getApplicationContext());
@@ -54,5 +62,9 @@ public class FileTools {
         Bitmap bitmap = BitmapFactory.decodeStream(imageStream);
         imageStream.close();
         return bitmap;
+    }
+
+    public Uri saveFile(Bitmap imageBitmap) {
+return saveFile(imageBitmap,context);
     }
 }

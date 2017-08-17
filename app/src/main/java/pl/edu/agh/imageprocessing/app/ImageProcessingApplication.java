@@ -3,6 +3,7 @@ package pl.edu.agh.imageprocessing.app;
 import android.app.Activity;
 import android.app.Application;
 
+import org.greenrobot.eventbus.EventBus;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.OpenCVLoader;
 
@@ -23,6 +24,8 @@ public class ImageProcessingApplication extends Application implements HasActivi
     DispatchingAndroidInjector<Activity> activityDispatchingInjector;
     @Inject
     BaseLoaderCallback baseLoaderCallback;
+
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -37,8 +40,10 @@ public class ImageProcessingApplication extends Application implements HasActivi
                 .inject(this);
     }
 
+
     @Override
     public AndroidInjector<Activity> activityInjector() {
         return activityDispatchingInjector;
     }
+
 }

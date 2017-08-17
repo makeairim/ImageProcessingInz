@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda'
 def cfg = rootProject.ext.configuration
 def libs = rootProject.ext.libraries;
 def test = rootProject.ext.testingLibraries;
@@ -128,7 +129,8 @@ dependencies {
     }
     //sync
 //    compile   "com.github.leomindez:Sync:${libs.sync}"
-    compile 'com.birbit:android-priority-jobqueue:2.0.1'
+    compile 'com.github.dmstocking:support-optional:1.1'
+//    compile 'com.birbit:android-priority-jobqueue:2.0.1'
     //android test
     androidTestCompile "org.mockito:mockito-core:$test.mockito"
     androidTestCompile "com.google.dagger:dagger:$libs.dagger"

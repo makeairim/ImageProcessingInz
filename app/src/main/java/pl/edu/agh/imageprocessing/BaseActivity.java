@@ -1,15 +1,19 @@
 package pl.edu.agh.imageprocessing;
 
 import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleActivity;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.LifecycleRegistry;
 import android.arch.lifecycle.LifecycleRegistryOwner;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import dagger.android.AndroidInjection;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.BaseViewModel;
@@ -20,11 +24,12 @@ import pl.edu.agh.imageprocessing.features.detail.viemodel.BaseViewModel;
 
 public class BaseActivity extends AppCompatActivity implements LifecycleRegistryOwner {
     protected LifecycleRegistry lifecycleRegistry = new LifecycleRegistry(this);
+
+
     protected BaseViewModel viewModel;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        AndroidInjection.inject(this);
         lifecycleRegistry.addObserver(new BaseLifecycle(this));
     }
 
@@ -49,12 +54,22 @@ public class BaseActivity extends AppCompatActivity implements LifecycleRegistry
         @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
         public void onResume() {
             viewModel.setBinding(activity);
-          //  EventBus.getDefault().register(this);
         }
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         public void onPause(){
-           // EventBus.getDefault().unregister(this);
+//            EventBus.getDefault().unregister(this);
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        EventBus.getDefault().unregister(this);
+    }
 }

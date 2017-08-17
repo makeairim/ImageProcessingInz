@@ -13,6 +13,7 @@ import dagger.Provides;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolver;
 import pl.edu.agh.imageprocessing.features.detail.images.OpenCvTypes;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
 
 /**
  * Created by bwolcerz on 25.07.2017.
@@ -27,8 +28,8 @@ public  class ImageModule {
     }
     @Provides
     @Singleton
-    FileTools provideFileTools(){
-        return new FileTools();
+    FileTools provideFileTools(Context context){
+        return new FileTools(context);
     }
     @Provides
     @Singleton
@@ -40,4 +41,5 @@ public  class ImageModule {
     OpenCvTypes provideOpenCvTypesResolver(){
         return new OpenCvTypes();
     }
+
 }

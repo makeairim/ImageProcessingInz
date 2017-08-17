@@ -9,6 +9,8 @@ import android.view.View;
 
 import com.vansuita.pickimage.dialog.PickImageDialog;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
@@ -24,6 +26,7 @@ import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.remote.ImageProcessingAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.DilationErosionCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.MatrixCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.event.SimpleDataMsg;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.OperationHomeListCallback;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
@@ -92,11 +95,10 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     }
 
     private void showImage() {
-        provideActivity().binding.ivPhoto.setImageAlpha(AppConstants.IMAGE_VIEW_FULL_OPAQUE);
         if (state.getCurrentImageUri() != null) {
-            GlideApp.with(provideActivity()).load(state.getCurrentImageUri()).fitCenter().into(provideActivity().binding.ivPhoto);
-        } else if (state.getBitmap() != null) {
-            provideActivity().binding.ivPhoto.setImageBitmap(state.getBitmap());
+            EventBus.getDefault().post(new SimpleDataMsg(state.getCurrentImageUri()));
+        }else{
+            EventBus.getDefault().post(new SimpleDataMsg(state.getBitmap()));
         }
     }
 
@@ -109,6 +111,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                 provideActivity().binding.seekbar.setSeekBarValueChangedListener((i, b) -> {
                             Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
                             state.setThreshold(i);
+
                             provideActivity().binding.textViewSeekbarprogress.setText(String.valueOf(state.getThreshold()));
                             if (BINARIZATION.equals(state.getOperationType())) {
                                 callImageOperation(state.getOperationType());
@@ -168,7 +171,8 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Bitmap resultBitmap = operation.execute();
+        Bitmap resultBitmap = null;
+        resultBitmap = operation.execute().getParameter().getImageBitmap();
         state.setCurrentImageUri(null);
         state.setBitmap(resultBitmap);
         showImage();

@@ -2,6 +2,7 @@ package pl.edu.agh.imageprocessing.data.local.entity;
 
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
+import android.net.Uri;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -26,8 +27,8 @@ public class Operation {
     @SerializedName("operation_type")
     private String operationType;
 
-    @SerializedName("photo_path")
-    private String photoPath;
+    @SerializedName("photo_uri")
+    private String photoUri;
 
     public Operation() {
     }
@@ -64,12 +65,12 @@ public class Operation {
         this.operationType = operationType;
     }
 
-    public String getPhotoPath() {
-        return photoPath;
+    public String getPhotoUri() {
+        return photoUri;
     }
 
-    public void setPhotoPath(String photoPath) {
-        this.photoPath = photoPath;
+    public void setPhotoUri(String photoPath) {
+        this.photoUri = photoPath;
     }
 
     @Override
@@ -79,7 +80,7 @@ public class Operation {
                 ", operationChainId=" + operationChainId +
                 ", creationDate='" + creationDate + '\'' +
                 ", operationType='" + operationType + '\'' +
-                ", photoPath='" + photoPath + '\'' +
+                ", photoUri='" + photoUri + '\'' +
                 '}';
     }
 }

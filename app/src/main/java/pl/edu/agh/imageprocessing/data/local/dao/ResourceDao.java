@@ -10,6 +10,7 @@ import android.arch.persistence.room.Update;
 import java.util.List;
 
 import io.reactivex.Flowable;
+import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 
 /**
@@ -19,6 +20,9 @@ import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 public interface ResourceDao {
     @Query("SELECT * FROM Resource")
     List<Resource> all();
+
+    @Query("SELECT * FROM Resource WHERE operationId = :operationId AND type = :resourceType")
+    List<Resource> getByOperationAndType(long operationId, String resourceType);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Long save(Resource resource);

@@ -1,13 +1,20 @@
 package pl.edu.agh.imageprocessing.features.detail.images;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.inject.Inject;
 
+import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
+import pl.edu.agh.imageprocessing.data.local.ResourceType;
+import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
+import pl.edu.agh.imageprocessing.data.local.entity.Resource;
+import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BinarizationOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.DilationOperation;
@@ -25,24 +32,31 @@ public class ImageOperationResolver {
     FileTools fileTools;
     @Inject
     Context context;
+    @Inject
+    ResourceDao resourceDao;
+    @Inject
+    OperationResourceAPIRepository operationResourceAPIRepository;
 
     @Inject
-    public ImageOperationResolver(Context context, FileTools fileTools) {
+    public ImageOperationResolver(Context context, FileTools fileTools, ResourceDao resourceDao, OperationResourceAPIRepository operationResourceAPIRepository) {
         this.fileTools = fileTools;
         this.context = context;
+        this.resourceDao = resourceDao;
+        this.operationResourceAPIRepository = operationResourceAPIRepository;
     }
 
     public BasicOperation resolveOperation(ImageOperationType type, HomeViewModel.HomeViewModelState state) throws IOException {
         Log.i(TAG, "resolveOperation: " + type.name());
+        ImageOperationParameter params = imageOperationParameterResolver(type, state);
         switch (type) {
             case BINARIZATION:
-                return new BinarizationOperation(imageOperationParameterResolver(type, state));
+                return new BinarizationOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
             case DILATION:
-                return new DilationOperation(imageOperationParameterResolver(type, state));
+                return new DilationOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
             case EROSION:
-                return new ErosionOperation(imageOperationParameterResolver(type,state));
+                return new ErosionOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
             case FILTER:
-                return new FilterOperation(imageOperationParameterResolver(type,state));
+                return new FilterOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
@@ -66,17 +80,17 @@ public class ImageOperationResolver {
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
-        result.setImageUri(parameters.getCurrentImageUri());
-        if (parameters.getCurrentImageUri() != null) {
-            result.setImageBitmap(fileTools.getImageBitmap(context, parameters.getCurrentImageUri()));
-        } else if (parameters.getBitmap() != null) {
-            result.setImageBitmap(parameters.getBitmap());
+        List<Resource> resources = io.reactivex.Observable.just(resourceDao.getByOperationAndType(parameters.getCurrentOperationId(), ResourceType.IMAGE_FILE.name())).observeOn(Schedulers.computation()).blockingFirst();
+        if (resources.size() != 1) { //todo to delete
+            Log.e(TAG, "imageOperationParameterResolver: " + "Could not be more than 1 or less than 0: " + resources.size());
+            throw new AssertionError("Could not be more than 1 or less than 0: " + resources.size());
         }
+        result.setImageUri(Uri.parse(resources.get(0).getContent()));
         return result;
     }
 
     private ImageOperationParameter mapFilterParameter(HomeViewModel.HomeViewModelState parameters) {
-        FilterOperation.Parameters result= new FilterOperation.Parameters();
+        FilterOperation.Parameters result = new FilterOperation.Parameters();
         result.setHeight(parameters.getMatrixHeight());
         result.setWidth(parameters.getMatrixWidth());
         result.setMatrix(parameters.getMatrix());
@@ -108,4 +122,27 @@ public class ImageOperationResolver {
         return result;
     }
 
+    public Uri processResult(BasicOperation execute) {
+        Uri fileUri = fileTools.saveFile(execute.getBitmap());
+        List<Resource> resId = resourceDao.getByOperationAndType(execute.getParameter().getOperationId(), ResourceType.IMAGE_FILE_RESULT.name());
+        if (resId.size() != 0) {
+            if (resId.size() > 1) throw new AssertionError();
+            resId.get(0).setContent(fileUri.toString());
+            resourceDao.update(resId.get(0));
+            return fileUri;
+        }
+        operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE_RESULT,
+                fileUri.toString(), execute
+                        .getParameter()
+                        .getOperationId());
+//        resourceDao.save(new Resource.Builder()
+//                .operationId(execute
+//                        .getParameter()
+//                        .getOperationId())
+//                .type(ResourceType.IMAGE_FILE_RESULT.name())
+//                .creationDate(new Date(System.currentTimeMillis()))
+//                .content(fileUri.toString()).build());
+
+        return fileUri;
+    }
 }

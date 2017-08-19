@@ -1,6 +1,8 @@
 package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
+import android.graphics.Bitmap;
+
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -17,8 +19,8 @@ import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter
 public class ErosionOperation extends BasicOperation {
     static ImageOperationType type = ImageOperationType.EROSION;
 
-    public ErosionOperation(ImageOperationParameter parameter) {
-        super(parameter);
+    public ErosionOperation(ImageOperationParameter parameter, Bitmap imageBitmap) {
+        super(parameter,imageBitmap);
     }
 
     @Override
@@ -30,12 +32,12 @@ public class ErosionOperation extends BasicOperation {
         } catch (Exception e) {
             //todo handle on invalid params
         }
-        Mat src = new Mat(parameter.getImageBitmap().getHeight(), parameter.getImageBitmap().getWidth(), CvType.CV_8UC4);
-        Utils.bitmapToMat(parameter.getImageBitmap(), src);
+        Mat src = new Mat(getBitmap().getHeight(), getBitmap().getWidth(), CvType.CV_8UC4);
+        Utils.bitmapToMat(getBitmap(), src);
         Mat kernelDilate = Imgproc.getStructuringElement(((Parameters) parameter).getStructElement, new Size(((Parameters) parameter).getStructElementWidth(), ((Parameters) parameter).getStructElementHeight()));
         Imgproc.erode(src, src, kernelDilate);
 
-        Utils.matToBitmap(src, parameter.getImageBitmap());
+        Utils.matToBitmap(src, getBitmap());
         return this;
 
     }

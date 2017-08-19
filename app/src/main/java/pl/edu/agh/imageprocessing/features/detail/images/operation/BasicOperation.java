@@ -1,13 +1,17 @@
 package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
+import android.graphics.Bitmap;
 import android.net.Uri;
 
 import java.sql.CallableStatement;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import javax.inject.Inject;
+
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
+import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 
 /**
@@ -15,13 +19,15 @@ import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter
  */
 
 abstract  public class BasicOperation{
-    protected ImageOperationParameter parameter;
 
+    private final Bitmap bitmap;
+    protected ImageOperationParameter parameter;
 
     /**
      * execute flow of operation for set Uri and parameters
      */
     abstract public BasicOperation execute();
+
     /**
      *
      * @return empty map if no error encountered
@@ -29,8 +35,13 @@ abstract  public class BasicOperation{
      */
     abstract protected Map<String,String> validateParameters() throws Exception;
 
-    public BasicOperation(ImageOperationParameter parameter) {
+    public BasicOperation(ImageOperationParameter parameter,Bitmap bitmap) {
         this.parameter = parameter;
+        this.bitmap=bitmap;
+    }
+
+    public Bitmap getBitmap() {
+        return bitmap;
     }
 
     public ImageOperationParameter getParameter() {
@@ -44,9 +55,4 @@ abstract  public class BasicOperation{
         this.parameter = parameter;
     }
 
-    protected Operation saveOperation(Uri uri,ImageOperationType type) {
-        Operation operation = new Operation();
-        operation.setOperationType(type.name());
-        return operation;
-    }
 }

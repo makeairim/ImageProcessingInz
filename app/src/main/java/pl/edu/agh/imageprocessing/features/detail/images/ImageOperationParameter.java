@@ -1,6 +1,5 @@
 package pl.edu.agh.imageprocessing.features.detail.images;
 
-import android.graphics.Bitmap;
 import android.net.Uri;
 
 /**
@@ -8,16 +7,24 @@ import android.net.Uri;
  */
 
 abstract public class ImageOperationParameter {
+    private Uri resultUri;
     protected Uri imageUri;
-    protected Long previousOperation;
-    protected Bitmap imageBitmap;
+    protected Long operationId;
 
-    public Bitmap getImageBitmap() {
-        return imageBitmap;
+    public Long getOperationId() {
+        return operationId;
     }
 
-    public void setImageBitmap(Bitmap imageBitmap) {
-        this.imageBitmap = imageBitmap;
+    public void setOperationId(Long operationId) {
+        this.operationId = operationId;
+    }
+
+    public Uri getResultUri() {
+        return resultUri;
+    }
+
+    public void setResultUri(Uri resultUri) {
+        this.resultUri = resultUri;
     }
 
     public Uri getImageUri() {
@@ -28,13 +35,6 @@ abstract public class ImageOperationParameter {
         this.imageUri = imageUri;
     }
 
-    public Long getPreviousOperation() {
-        return previousOperation;
-    }
-
-    public void setPreviousOperation(Long previousOperation) {
-        this.previousOperation = previousOperation;
-    }
 
 
 }

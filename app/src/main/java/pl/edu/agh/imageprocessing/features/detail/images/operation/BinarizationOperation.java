@@ -1,6 +1,7 @@
 package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
+import android.graphics.Bitmap;
 import android.net.Uri;
 
 import org.opencv.android.Utils;
@@ -13,31 +14,25 @@ import java.util.Map;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.features.detail.android.CoreException;
+import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 
 public class BinarizationOperation  extends BasicOperation{
     static  ImageOperationType type=ImageOperationType.BINARIZATION;
 
-    public BinarizationOperation(ImageOperationParameter parameter) {
-        super(parameter);
+    public BinarizationOperation(ImageOperationParameter parameter, Bitmap imageBitmap) {
+        super(parameter,imageBitmap);
     }
 
     @Override
     public BasicOperation execute() {
-        try {
-            if(!validateParameters().isEmpty()){
-                throw new AssertionError("should handle on invalid parameters or validate user");
-            }
-        }catch(Exception e){
-            //todo handle on invalid params
-        }
-        Uri processedImageUri=null;
-        Mat src = new Mat(parameter.getImageBitmap().getHeight(), parameter.getImageBitmap().getWidth(), CvType.CV_8UC4);
-        Utils.bitmapToMat(parameter.getImageBitmap(), src);
+
+        Mat src = new Mat(getBitmap().getHeight(), getBitmap().getWidth(), CvType.CV_8UC4);
+        Utils.bitmapToMat(getBitmap(), src);
         Imgproc.cvtColor(src, src, Imgproc.COLOR_BGR2GRAY);
         Imgproc.adaptiveThreshold(src, src, ((Parameters)parameter).getThreshold(), Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 3, 0);
 
-        Utils.matToBitmap(src, parameter.getImageBitmap());
+        Utils.matToBitmap(src, getBitmap());
         return this;
     }
 

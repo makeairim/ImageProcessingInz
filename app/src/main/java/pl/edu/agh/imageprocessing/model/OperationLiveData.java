@@ -19,7 +19,6 @@ public class OperationLiveData extends LiveData<Operation> {
     private OperationLiveData(Context context){
         Log.i(TAG,"OperationLiveData -> operation data");
         mContext=context;
-        //TODO last operations
 
     }
     @MainThread

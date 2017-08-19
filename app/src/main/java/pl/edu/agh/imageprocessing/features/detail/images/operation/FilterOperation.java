@@ -1,6 +1,7 @@
 package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import org.opencv.android.Utils;
@@ -20,8 +21,8 @@ public class FilterOperation extends BasicOperation {
     private static ImageOperationType type = ImageOperationType.DILATION;
     public static final String TAG = FilterOperation.class.getSimpleName();
 
-    public FilterOperation(ImageOperationParameter parameter) {
-        super(parameter);
+    public FilterOperation(ImageOperationParameter parameter, Bitmap imageBitmap) {
+        super(parameter,imageBitmap);
     }
 
     @Override
@@ -34,8 +35,8 @@ public class FilterOperation extends BasicOperation {
             //todo handle on invalid params
         }
         Log.i(TAG, "execute: matrix=" + Arrays.toString(((Parameters) parameter).getMatrix()));
-        Mat src = new Mat(parameter.getImageBitmap().getHeight(), parameter.getImageBitmap().getWidth(), CvType.CV_8UC4);
-        Utils.bitmapToMat(parameter.getImageBitmap(), src);
+        Mat src = new Mat(getBitmap().getHeight(), getBitmap().getWidth(), CvType.CV_8UC4);
+        Utils.bitmapToMat(getBitmap(), src);
         Mat kernel = new Mat(((Parameters) parameter).getHeight(), ((Parameters) parameter).getWidth(), CvType.CV_32S); //TODO TYPE ? UP IS ANOTHERCV_16SC1
         //own mask- kernel
 //        ((Parameters)parameter).setMatrix(new int[]{0, -1, 0, -1, 5, -1, 0, -1, 0});
@@ -49,7 +50,7 @@ public class FilterOperation extends BasicOperation {
 //        }
         kernel.put(0, 0, ((Parameters) parameter).getMatrix());
         Imgproc.filter2D(src, src, src.depth(), kernel);
-        Utils.matToBitmap(src, parameter.getImageBitmap());
+        Utils.matToBitmap(src, getBitmap());
         return this;
     }
 

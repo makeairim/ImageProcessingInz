@@ -10,6 +10,8 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
+import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolver;
 import pl.edu.agh.imageprocessing.features.detail.images.OpenCvTypes;
@@ -33,8 +35,8 @@ public  class ImageModule {
     }
     @Provides
     @Singleton
-    ImageOperationResolver imageOperationTypeResolver(Context context,FileTools fileTools){
-        return new ImageOperationResolver(context,fileTools);
+    ImageOperationResolver imageOperationTypeResolver(Context context, FileTools fileTools, ResourceDao resourceDao, OperationResourceAPIRepository operationResourceAPIRepository){
+        return new ImageOperationResolver(context,fileTools,resourceDao,operationResourceAPIRepository);
     }
     @Provides
     @Singleton

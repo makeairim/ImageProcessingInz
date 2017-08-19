@@ -18,7 +18,6 @@ public class Operation {
     @SerializedName("operation_id")
     private long id;
 
-    //TODO mapping, many to many
     @SerializedName("parent_operation_id")
     private Long parentOperationId;
     @SerializedName("next_operation_id")
@@ -27,7 +26,6 @@ public class Operation {
     @SerializedName("creation_date")
     private Date creationDate;
 
-    //TODO store enums like intdef and write type Convertet ?  or store enum like string
     @SerializedName("operation_type")
     private String operationType;
 

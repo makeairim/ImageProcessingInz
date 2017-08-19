@@ -5,5 +5,5 @@ package pl.edu.agh.imageprocessing.data.local;
  */
 
 public enum ResourceType {
-    FILE, IMAGE_OPERATION;
+    IMAGE_FILE, IMAGE_OPERATION, IMAGE_FILE_RESULT;
 }

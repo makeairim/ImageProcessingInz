@@ -1,7 +1,6 @@
 package pl.edu.agh.imageprocessing.features.detail.viemodel;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
@@ -12,11 +11,11 @@ import com.vansuita.pickimage.dialog.PickImageDialog;
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 
-import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.R;
@@ -24,6 +23,7 @@ import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
+import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.DilationErosionCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.MatrixCustomDialog;
@@ -82,29 +82,24 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     public HomeViewModel() {
     }
 
-//operationResourceAPIRepository.saveResource(ResourceType.FILE, o.toString())
+    //operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString())
     public void photoPicker() {
         pickImageDialog.setOnPickResult(pickResult -> {
             io.reactivex.Observable.create(e -> e.onNext(fileTools.saveFile(pickResult.getBitmap(), context)))
                     .observeOn(Schedulers.computation())
                     .subscribe(o ->
-                            operationResourceAPIRepository.saveResource(ResourceType.FILE, o.toString(),operationDao.save(operationResourceAPIRepository.createOperation()))
-                    .observeOn(AndroidSchedulers.mainThread()).subscribe(idRes->{
-                                if (idRes!=null) {
+                            operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(), operationDao.save(operationResourceAPIRepository.createOperation()))
+                                    .observeOn(AndroidSchedulers.mainThread()).subscribe(idRes -> {
+                                    state.setCurrentOperationId(idRes.getOperationId());
                                     state.setCurrentImageUri((Uri) o);
                                     showImage();
-                                } else {
-                                    //todo handle failure
-                                }
-                            } ));
+                            })); //todo failure so excpetion probably
         }).show(provideActivity());
     }
 
     private void showImage() {
         if (state.getCurrentImageUri() != null) {
             EventBus.getDefault().post(new EventSimpleDataMsg(state.getCurrentImageUri()));
-        } else {
-            EventBus.getDefault().post(new EventSimpleDataMsg(state.getBitmap()));
         }
     }
 
@@ -175,22 +170,27 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
         try {
             operation = imageOperationResolver.resolveOperation(imageOperationType, state);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.i(TAG, "callImageOperation: " + e);
         }
-        Bitmap resultBitmap = null;
-        resultBitmap = operation.execute().getParameter().getImageBitmap();
-        state.setCurrentImageUri(null);
-        state.setBitmap(resultBitmap);
+        Operation savedOper=operationDao.get(state.currentOperationId).blockingFirst();
+        Operation processingOperation = new Operation.Builder().creationDate(new Date(System.currentTimeMillis())).operationType(imageOperationType.name()).build();
+        Long processingOperationId = operationDao.save(processingOperation);
+        processingOperation.setId(processingOperationId);
+        operationResourceAPIRepository.chainOperations(savedOper,processingOperation);
+
+        Uri uri = imageOperationResolver.processResult(operation.execute());
+        state.currentOperationId=processingOperationId;
+        state.setCurrentImageUri(uri);
+
         EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
         showImage();
         provideActivity().binding.doOper.setOnClickListener(view -> {
-            //todo save image and operation to DB
-            //todo store as chain or add to existing
+            //todo nothing if accepted
             EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
             EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
         });
         provideActivity().binding.clearOper.setOnClickListener(view -> {
-            //todo restore previous image
+            //todo delete oper
             EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
             EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
         });
@@ -206,11 +206,11 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
 
     public static class HomeViewModelState {
-        private Long previousOperationId = null;
+        private Long previousOperationId;
+        private Long currentOperationId;
         private ImageOperationType operationType;
         private ImageOperationParameter parameter;
         private Uri currentImageUri;
-        private Bitmap bitmap;
         private int morphologyWidth;
         private int morphologyHeight;
         private int morphologyElementType;
@@ -223,6 +223,13 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
         }
 
+        public Long getCurrentOperationId() {
+            return currentOperationId;
+        }
+
+        public void setCurrentOperationId(Long currentOperationId) {
+            this.currentOperationId = currentOperationId;
+        }
 
         public Long getPreviousOperationId() {
             return previousOperationId;
@@ -254,15 +261,6 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
         public void setCurrentImageUri(Uri currentImageUri) {
             this.currentImageUri = currentImageUri;
-        }
-
-
-        public Bitmap getBitmap() {
-            return bitmap;
-        }
-
-        public void setBitmap(Bitmap bitmap) {
-            this.bitmap = bitmap;
         }
 
         public void setMorphologyWidth(int morphologyWidth) {

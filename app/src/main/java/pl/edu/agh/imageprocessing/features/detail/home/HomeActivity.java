@@ -66,7 +66,7 @@ public class HomeActivity extends BaseActivity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
 //        viewModel.setBinding(this);//todo lifecycle event
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_home);
+        binding= DataBindingUtil.setContentView(this,R.layout.activity_home);
         binding.setViewModel(getViewModel());
         setSupportActionBar(binding.toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);

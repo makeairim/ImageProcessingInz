@@ -24,8 +24,11 @@ public interface OperationDao {
     @Query("SELECT * FROM Operation WHERE parentOperationId is NULL")
     public List<Operation> chainRoots();
 
-    @Query("SELECT * FROM operation WHERE parentOperationId=:parentId")
+    @Query("SELECT * FROM Operation WHERE parentOperationId=:parentId")
     public List<Operation> chainByRoot(long parentId);
+
+    @Query("SELECT * FROM Operation WHERE id = :id")
+    public Flowable<Operation> get(long id);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Long save(Operation operation);

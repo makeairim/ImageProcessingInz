@@ -1,28 +1,32 @@
 package pl.edu.agh.imageprocessing.data.local.dao;
 
-import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
+import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
 import android.arch.persistence.room.Query;
+import android.arch.persistence.room.Update;
 
 import java.util.List;
 
-import javax.annotation.Resource;
-
-import pl.edu.agh.imageprocessing.data.local.entity.Chain;
-import pl.edu.agh.imageprocessing.data.local.entity.ResourceFile;
+import io.reactivex.Flowable;
+import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 
 /**
  * Created by bwolcerz on 24.07.2017.
  */
 @Dao
 public interface ResourceDao {
-    @Query("SELECT * FROM ResourceFile")
-    LiveData<List<ResourceFile>> loadFiles();
+    @Query("SELECT * FROM Resource")
+    List<Resource> all();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void saveResourceFile(ResourceFile resourceFile);
+    Long save(Resource resource);
 
+    @Update
+    int update(Resource resource);
+
+    @Delete
+    int delete(Resource resource);
     
 }

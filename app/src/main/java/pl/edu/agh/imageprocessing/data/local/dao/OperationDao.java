@@ -1,14 +1,15 @@
 package pl.edu.agh.imageprocessing.data.local.dao;
 
-import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
+import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
 import android.arch.persistence.room.Query;
-import android.media.VolumeShaper;
+import android.arch.persistence.room.Update;
 
 import java.util.List;
 
+import io.reactivex.Flowable;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 
 /**
@@ -16,11 +17,23 @@ import pl.edu.agh.imageprocessing.data.local.entity.Operation;
  */
 @Dao
 public interface OperationDao {
+
     @Query("SELECT * FROM Operation")
-    LiveData<List<Operation>> loadOperations();
+    List<Operation> all();
+
+    @Query("SELECT * FROM Operation WHERE parentOperationId is NULL")
+    public List<Operation> chainRoots();
+
+    @Query("SELECT * FROM operation WHERE parentOperationId=:parentId")
+    public List<Operation> chainByRoot(long parentId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void saveOperation(Operation operation);
+    Long save(Operation operation);
 
+    @Delete
+    int delete(Operation operation);
+
+    @Update
+    int update(Operation operation);
 
 }

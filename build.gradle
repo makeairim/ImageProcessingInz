@@ -10,7 +10,7 @@ ext {
             version_name        : "1.0",
     ]
     libraries = [
-            supportVersion      : "26.0.0-beta1",
+            supportVersion      : "26.0.1",
             dagger              : "2.10",
             google_dagger       : "2.11-rc2",
             rxjava              : "2.0.1",
@@ -42,7 +42,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-beta1'
+        classpath 'com.android.tools.build:gradle:3.0.0-beta2'
         classpath 'me.tatarka:gradle-retrolambda:3.7.0'
 
         // NOTE: Do not place your application dependencies here; they belong

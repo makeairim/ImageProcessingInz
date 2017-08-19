@@ -2,99 +2,41 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "0aee50264576ae5e2fa69ca7310c396d",
+    "identityHash": "6700dee338e0fd880eace6135e7a5475",
     "entities": [
       {
-        "tableName": "Operation",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `operationChainId` INTEGER, `creationDate` TEXT, `operationType` TEXT, `photoUri` TEXT)",
+        "tableName": "operation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `parentOperationId` INTEGER, `nextOperationId` INTEGER, `creationDate` INTEGER, `operationType` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "operationChainId",
-            "columnName": "operationChainId",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "creationDate",
-            "columnName": "creationDate",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "operationType",
-            "columnName": "operationType",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "photoUri",
-            "columnName": "photoUri",
-            "affinity": "TEXT"
-          }
-        ],
-        "primaryKey": {
-          "columnNames": [
-            "id"
-          ],
-          "autoGenerate": true
-        },
-        "indices": [],
-        "foreignKeys": []
-      },
-      {
-        "tableName": "Chain",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `creationDate` TEXT, `chainName` TEXT)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "creationDate",
-            "columnName": "creationDate",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "chainName",
-            "columnName": "chainName",
-            "affinity": "TEXT"
-          }
-        ],
-        "primaryKey": {
-          "columnNames": [
-            "id"
-          ],
-          "autoGenerate": true
-        },
-        "indices": [],
-        "foreignKeys": []
-      },
-      {
-        "tableName": "chain_has_operations",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `chainId` INTEGER, `parentOperationId` INTEGER, `childOperationId` INTEGER)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "chainId",
-            "columnName": "chainId",
-            "affinity": "INTEGER"
+            "affinity": "INTEGER",
+            "notNull": true
           },
           {
             "fieldPath": "parentOperationId",
             "columnName": "parentOperationId",
-            "affinity": "INTEGER"
+            "affinity": "INTEGER",
+            "notNull": false
           },
           {
-            "fieldPath": "childOperationId",
-            "columnName": "childOperationId",
-            "affinity": "INTEGER"
+            "fieldPath": "nextOperationId",
+            "columnName": "nextOperationId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "creationDate",
+            "columnName": "creationDate",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "operationType",
+            "columnName": "operationType",
+            "affinity": "TEXT",
+            "notNull": false
           }
         ],
         "primaryKey": {
@@ -107,23 +49,38 @@
         "foreignKeys": []
       },
       {
-        "tableName": "ResourceFile",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `creationDate` TEXT, `fileUri` TEXT)",
+        "tableName": "resource",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `operationId` INTEGER, `creationDate` INTEGER, `content` TEXT, `type` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "INTEGER"
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "operationId",
+            "columnName": "operationId",
+            "affinity": "INTEGER",
+            "notNull": false
           },
           {
             "fieldPath": "creationDate",
             "columnName": "creationDate",
-            "affinity": "TEXT"
+            "affinity": "INTEGER",
+            "notNull": false
           },
           {
-            "fieldPath": "fileUri",
-            "columnName": "fileUri",
-            "affinity": "TEXT"
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": false
           }
         ],
         "primaryKey": {
@@ -138,7 +95,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"0aee50264576ae5e2fa69ca7310c396d\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"6700dee338e0fd880eace6135e7a5475\")"
     ]
   }
 }

@@ -21,12 +21,20 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
-import pl.edu.agh.imageprocessing.dagger.GlideApp;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
-import pl.edu.agh.imageprocessing.data.remote.ImageProcessingAPIRepository;
+import pl.edu.agh.imageprocessing.data.local.ResourceType;
+import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
+import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.DilationErosionCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.MatrixCustomDialog;
-import pl.edu.agh.imageprocessing.features.detail.android.event.SimpleDataMsg;
+import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
+import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
+import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
+import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
+import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
+import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewSeekBarVisibility;
+import pl.edu.agh.imageprocessing.features.detail.android.event.EventSimpleDataMsg;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.OperationHomeListCallback;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
@@ -35,8 +43,6 @@ import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolver;
 import pl.edu.agh.imageprocessing.features.detail.images.OpenCvTypes;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
 
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
 import static pl.edu.agh.imageprocessing.data.ImageOperationType.BINARIZATION;
 
 /**
@@ -46,7 +52,9 @@ import static pl.edu.agh.imageprocessing.data.ImageOperationType.BINARIZATION;
 public class HomeViewModel extends BaseViewModel implements OperationHomeListCallback {
     public static final String TAG = HomeViewModel.class.getSimpleName();
     @Inject
-    ImageProcessingAPIRepository imageProcessingAPIRepository;
+    OperationResourceAPIRepository operationResourceAPIRepository;
+    @Inject
+    OperationDao operationDao;
     @Inject
     PickImageDialog pickImageDialog;
     @Inject
@@ -66,8 +74,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
     HomeViewModelState state = new HomeViewModelState();
     public Callable<Void> onOutsideListClick = () -> {
-        provideActivity().binding.parentRecyclerView.setVisibility(GONE);
-        provideActivity().binding.ivPhoto.setImageAlpha(AppConstants.IMAGE_VIEW_FULL_OPAQUE);
+        EventBus.getDefault().post(new ShowMainViewVisibilityEventBasicView(EventBasicView.ViewState.VISIBLE));
         return null;
     };
 
@@ -75,30 +82,29 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     public HomeViewModel() {
     }
 
-
+//operationResourceAPIRepository.saveResource(ResourceType.FILE, o.toString())
     public void photoPicker() {
         pickImageDialog.setOnPickResult(pickResult -> {
             io.reactivex.Observable.create(e -> e.onNext(fileTools.saveFile(pickResult.getBitmap(), context)))
                     .observeOn(Schedulers.computation())
                     .subscribe(o ->
-                            Observable.just(imageProcessingAPIRepository.saveResource((Uri) o))
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe(t -> {
-                                        if (t) {
-                                            state.setCurrentImageUri((Uri) o);
-                                            showImage();
-                                        } else {
-                                            //todo handle failure
-                                        }
-                                    }));
+                            operationResourceAPIRepository.saveResource(ResourceType.FILE, o.toString(),operationDao.save(operationResourceAPIRepository.createOperation()))
+                    .observeOn(AndroidSchedulers.mainThread()).subscribe(idRes->{
+                                if (idRes!=null) {
+                                    state.setCurrentImageUri((Uri) o);
+                                    showImage();
+                                } else {
+                                    //todo handle failure
+                                }
+                            } ));
         }).show(provideActivity());
     }
 
     private void showImage() {
         if (state.getCurrentImageUri() != null) {
-            EventBus.getDefault().post(new SimpleDataMsg(state.getCurrentImageUri()));
-        }else{
-            EventBus.getDefault().post(new SimpleDataMsg(state.getBitmap()));
+            EventBus.getDefault().post(new EventSimpleDataMsg(state.getCurrentImageUri()));
+        } else {
+            EventBus.getDefault().post(new EventSimpleDataMsg(state.getBitmap()));
         }
     }
 
@@ -106,23 +112,23 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     public void onImageOperationClicked(ImageOperationType imageOperationType, View sharedView) {
         Log.i(TAG, "onImageOperationClicked: " + imageOperationType.name());
         state.setOperationType(imageOperationType);
+        EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.HIDEN));
+        EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
+        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
         switch (imageOperationType) {
             case BINARIZATION:
                 provideActivity().binding.seekbar.setSeekBarValueChangedListener((i, b) -> {
                             Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
                             state.setThreshold(i);
-
-                            provideActivity().binding.textViewSeekbarprogress.setText(String.valueOf(state.getThreshold()));
+                            EventBus.getDefault().post(new EventSimpleDataMsg(String.valueOf(state.getThreshold())));
                             if (BINARIZATION.equals(state.getOperationType())) {
                                 callImageOperation(state.getOperationType());
                             }
                         }
                 );
-                provideActivity().binding.seekbar.setVisibility(VISIBLE);
-                provideActivity().binding.textViewSeekbarprogress.setVisibility(VISIBLE);
+                EventBus.getDefault().post(new EventBasicViewSeekBarVisibility(EventBasicView.ViewState.VISIBLE));
                 provideActivity().binding.seekbar.setMaxValue(AppConstants.MAX_ADAPTIVE_THRESHOLD);
-                provideActivity().binding.parentRecyclerView.setVisibility(GONE);
-                provideActivity().binding.ivPhoto.setAlpha(AppConstants.IMAGE_VIEW_FULL_OPAQUE);
+                EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
                 break;
             case EROSION:
                 showErosionDilationDialog(provideActivity().getString(R.string.title_erosion_dialog), imageOperationType);
@@ -175,30 +181,25 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
         resultBitmap = operation.execute().getParameter().getImageBitmap();
         state.setCurrentImageUri(null);
         state.setBitmap(resultBitmap);
+        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
         showImage();
-        provideActivity().binding.btnBottom.setVisibility(VISIBLE);
         provideActivity().binding.doOper.setOnClickListener(view -> {
             //todo save image and operation to DB
             //todo store as chain or add to existing
-            provideActivity().binding.seekbar.setVisibility(GONE);
-            provideActivity().binding.textViewSeekbarprogress.setVisibility(GONE);
-            provideActivity().binding.btnBottom.setVisibility(GONE);
+            EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
+            EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
         });
         provideActivity().binding.clearOper.setOnClickListener(view -> {
             //todo restore previous image
-            provideActivity().binding.seekbar.setVisibility(GONE);
-            provideActivity().binding.textViewSeekbarprogress.setVisibility(GONE);
-            provideActivity().binding.btnBottom.setVisibility(GONE);
+            EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
+            EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
         });
     }
 
     public void provideOperationTypes() {
-        imageProcessingAPIRepository.getImageOperationTypes()
+        operationResourceAPIRepository.getImageOperationTypes()
                 .subscribe(resources -> {
-                    provideActivity().binding.ivPhoto.setImageAlpha(AppConstants.IMAGE_VIEW_PARTIAL_TRANSPARENT);
-                    provideActivity().binding.parentRecyclerView.setVisibility(VISIBLE);
-                    provideActivity().binding.seekbar.setVisibility(GONE);
-                    provideActivity().binding.recyclerView.setAlpha(1.0f);
+                    EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.VISIBLE));
                     provideActivity().binding.setResource(resources);
                 });
     }

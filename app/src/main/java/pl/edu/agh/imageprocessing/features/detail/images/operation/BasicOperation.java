@@ -47,7 +47,6 @@ abstract  public class BasicOperation{
     protected Operation saveOperation(Uri uri,ImageOperationType type) {
         Operation operation = new Operation();
         operation.setOperationType(type.name());
-        operation.setPhotoUri(uri.toString());
         return operation;
     }
 }

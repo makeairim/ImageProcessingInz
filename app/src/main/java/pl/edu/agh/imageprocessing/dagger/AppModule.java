@@ -9,7 +9,6 @@ import android.view.View;
 import com.vansuita.pickimage.bundle.PickSetup;
 import com.vansuita.pickimage.enums.EPickType;
 
-import org.greenrobot.eventbus.EventBus;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 
@@ -18,7 +17,6 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import pl.edu.agh.imageprocessing.data.local.ImageProcessingAPIDatabase;
-import pl.edu.agh.imageprocessing.data.local.dao.ChainDao;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.ImageProcessingViewModelFactory;
@@ -51,11 +49,6 @@ public class AppModule {
         return imageProcessingAPIDatabase.operationDao();
     }
 
-    @Provides
-    @Singleton
-    ChainDao provideOperationChainDao(ImageProcessingAPIDatabase imageProcessingAPIDatabase) {
-        return imageProcessingAPIDatabase.operationChainDao();
-    }
 
     @Provides
     @Singleton

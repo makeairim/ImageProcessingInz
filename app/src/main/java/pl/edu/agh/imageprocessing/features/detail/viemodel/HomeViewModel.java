@@ -16,7 +16,11 @@ import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.internal.operators.observable.ObservablePublish;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
@@ -41,7 +45,6 @@ import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolver;
 import pl.edu.agh.imageprocessing.features.detail.images.OpenCvTypes;
-import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
 
 import static pl.edu.agh.imageprocessing.data.ImageOperationType.BINARIZATION;
 
@@ -90,9 +93,9 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                     .subscribe(o ->
                             operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(), operationDao.save(operationResourceAPIRepository.createOperation()))
                                     .observeOn(AndroidSchedulers.mainThread()).subscribe(idRes -> {
-                                    state.setCurrentOperationId(idRes.getOperationId());
-                                    state.setCurrentImageUri((Uri) o);
-                                    showImage();
+                                state.setCurrentOperationId(idRes.getOperationId());
+                                state.setCurrentImageUri((Uri) o);
+                                showImage();
                             })); //todo failure so excpetion probably
         }).show(provideActivity());
     }
@@ -106,6 +109,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     @Override
     public void onImageOperationClicked(ImageOperationType imageOperationType, View sharedView) {
         Log.i(TAG, "onImageOperationClicked: " + imageOperationType.name());
+        state.setPreviousOperationId(state.currentOperationId);
         state.setOperationType(imageOperationType);
         EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.HIDEN));
         EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
@@ -166,34 +170,51 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     }
 
     private void callImageOperation(ImageOperationType imageOperationType) {
-        BasicOperation operation = null;
-        try {
-            operation = imageOperationResolver.resolveOperation(imageOperationType, state);
-        } catch (IOException e) {
-            Log.i(TAG, "callImageOperation: " + e);
-        }
-        Operation savedOper=operationDao.get(state.currentOperationId).blockingFirst();
-        Operation processingOperation = new Operation.Builder().creationDate(new Date(System.currentTimeMillis())).operationType(imageOperationType.name()).build();
-        Long processingOperationId = operationDao.save(processingOperation);
-        processingOperation.setId(processingOperationId);
-        operationResourceAPIRepository.chainOperations(savedOper,processingOperation);
 
-        Uri uri = imageOperationResolver.processResult(operation.execute());
-        state.currentOperationId=processingOperationId;
-        state.setCurrentImageUri(uri);
+//        Operation savedOper=operationDao.get(state.currentOperationId).blockingFirst();
 
-        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
-        showImage();
-        provideActivity().binding.doOper.setOnClickListener(view -> {
-            //todo nothing if accepted
-            EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
-            EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
-        });
-        provideActivity().binding.clearOper.setOnClickListener(view -> {
-            //todo delete oper
-            EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
-            EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
-        });
+        Observable.create((ObservableOnSubscribe<Long>) e -> e.onNext(operationDao.save(
+                new Operation.Builder()
+                        .creationDate(new Date(System.currentTimeMillis()))
+                        .operationType(imageOperationType.name())
+                        .parentOperationId(state.previousOperationId).build())))
+                .subscribeOn(Schedulers.computation())
+                .observeOn(Schedulers.computation())
+                .subscribe(processingOperationId -> {
+                    try {
+                        Observable.just(imageOperationResolver.resolveOperation(imageOperationType, state, processingOperationId))
+                                .map(basicOperation ->
+                                        imageOperationResolver.processResult(basicOperation.execute()))
+                                .subscribeOn(Schedulers.computation())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(uri -> {
+                                    state.setCurrentImageUri(uri);
+
+                                    EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
+                                    showImage();
+                                    provideActivity().binding.doOper.setOnClickListener(view -> {
+                                        //todo nothing if accepted
+                                        Observable.create((ObservableOnSubscribe<Boolean>) e->operationResourceAPIRepository
+                                                .chainOperations(operationDao
+                                                                .get(state.previousOperationId).blockingFirst(),
+                                                        operationDao
+                                                                .get(processingOperationId).blockingFirst()))
+                                                .subscribeOn(Schedulers.computation())
+                                                .observeOn(AndroidSchedulers.mainThread()).subscribe(aBoolean -> state.currentOperationId = processingOperationId);
+                                        EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
+                                        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
+                                    });
+                                    provideActivity().binding.clearOper.setOnClickListener(view -> {
+                                        //todo delete oper
+                                        EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
+                                        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
+                                    });
+                                });
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+
     }
 
     public void provideOperationTypes() {

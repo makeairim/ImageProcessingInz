@@ -51,11 +51,12 @@ public class OperationResourceAPIRepository {
         return Observable.just(res1);
     }
 
-    public void chainOperations(Operation parent, Operation child) {
+    public boolean chainOperations(Operation parent, Operation child) {
         parent.setNextOperationId(child.getId());
         child.setParentOperationId(parent.getParentOperationId() != null ? parent.getParentOperationId() : parent.getId());
         operationDao.update(parent);
         operationDao.update(child);
+        return true;
     }
 
     public Operation createOperation(){

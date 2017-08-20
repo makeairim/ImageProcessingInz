@@ -31,7 +31,7 @@ public interface OperationDao {
     public Flowable<Operation> get(long id);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    Long save(Operation operation);
+    long save(Operation operation);
 
     @Delete
     int delete(Operation operation);

@@ -25,7 +25,7 @@ public interface ResourceDao {
     List<Resource> getByOperationAndType(long operationId, String resourceType);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    Long save(Resource resource);
+    long save(Resource resource);
 
     @Update
     int update(Resource resource);

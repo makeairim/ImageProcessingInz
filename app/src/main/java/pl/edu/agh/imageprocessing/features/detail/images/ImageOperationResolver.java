@@ -6,6 +6,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Observable;
 
 import javax.inject.Inject;
 
@@ -13,6 +14,7 @@ import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
+import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
@@ -45,9 +47,10 @@ public class ImageOperationResolver {
         this.operationResourceAPIRepository = operationResourceAPIRepository;
     }
 
-    public BasicOperation resolveOperation(ImageOperationType type, HomeViewModel.HomeViewModelState state) throws IOException {
+    public BasicOperation resolveOperation(ImageOperationType type, HomeViewModel.HomeViewModelState state,long processingOperationId) throws IOException {
         Log.i(TAG, "resolveOperation: " + type.name());
         ImageOperationParameter params = imageOperationParameterResolver(type, state);
+        params.setOperationId(processingOperationId);
         switch (type) {
             case BINARIZATION:
                 return new BinarizationOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
@@ -80,7 +83,7 @@ public class ImageOperationResolver {
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
-        List<Resource> resources = io.reactivex.Observable.just(resourceDao.getByOperationAndType(parameters.getCurrentOperationId(), ResourceType.IMAGE_FILE.name())).observeOn(Schedulers.computation()).blockingFirst();
+        List<Resource> resources = resourceDao.getByOperationAndType(parameters.getCurrentOperationId(), ResourceType.IMAGE_FILE.name());
         if (resources.size() != 1) { //todo to delete
             Log.e(TAG, "imageOperationParameterResolver: " + "Could not be more than 1 or less than 0: " + resources.size());
             throw new AssertionError("Could not be more than 1 or less than 0: " + resources.size());
@@ -124,17 +127,17 @@ public class ImageOperationResolver {
 
     public Uri processResult(BasicOperation execute) {
         Uri fileUri = fileTools.saveFile(execute.getBitmap());
-        List<Resource> resId = resourceDao.getByOperationAndType(execute.getParameter().getOperationId(), ResourceType.IMAGE_FILE_RESULT.name());
+        List<Resource> resId = resourceDao.getByOperationAndType(execute.getParameter().getOperationId(), ResourceType.IMAGE_FILE.name());
         if (resId.size() != 0) {
             if (resId.size() > 1) throw new AssertionError();
             resId.get(0).setContent(fileUri.toString());
             resourceDao.update(resId.get(0));
             return fileUri;
         }
-        operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE_RESULT,
+        operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
                 fileUri.toString(), execute
-                        .getParameter()
-                        .getOperationId());
+                .getParameter()
+                .getOperationId());
 //        resourceDao.save(new Resource.Builder()
 //                .operationId(execute
 //                        .getParameter()

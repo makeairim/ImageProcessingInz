@@ -3,18 +3,15 @@ package pl.edu.agh.imageprocessing.features.detail.home;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
-import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.Window;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
@@ -23,30 +20,31 @@ import javax.inject.Inject;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import dagger.android.AndroidInjection;
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.support.HasSupportFragmentInjector;
 import pl.edu.agh.imageprocessing.BaseActivity;
 import pl.edu.agh.imageprocessing.R;
-import pl.edu.agh.imageprocessing.app.constants.AppConstants;
-import pl.edu.agh.imageprocessing.dagger.GlideApp;
 import pl.edu.agh.imageprocessing.databinding.ActivityHomeBinding;
-import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
-import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
-import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
-import pl.edu.agh.imageprocessing.features.detail.android.event.EventSimpleDataMsg;
+import pl.edu.agh.imageprocessing.features.detail.android.ViewUtils;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
+import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
-import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewSeekBarVisibility;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.HomeViewModel;
 
-import static android.view.View.GONE;
-import static android.view.View.INVISIBLE;
-import static android.view.View.VISIBLE;
 import static pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView.ViewState.HIDEN;
 
-public class HomeActivity extends BaseActivity {
+public class HomeActivity extends BaseActivity implements HasSupportFragmentInjector {
 
     private final String TAG = HomeActivity.class.getSimpleName();
     public static final String KEY_HOME_ACTIVITY_ID = "key__home_activity_id";
+    @Inject
+    ViewUtils viewUtils;
+
+    @Inject
+    DispatchingAndroidInjector<Fragment> fragmentDispatchingAndroidInjector;
 
     public ActivityHomeBinding binding;
 
@@ -66,22 +64,17 @@ public class HomeActivity extends BaseActivity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
 //        viewModel.setBinding(this);//todo lifecycle event
-        binding= DataBindingUtil.setContentView(this,R.layout.activity_home);
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_home);
         binding.setViewModel(getViewModel());
         setSupportActionBar(binding.toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-        ButterKnife.bind(this);
+        ButterKnife.bind(this);//todo po co to ?
         //when get operation list so on click method in viewmodel
         //
         binding.recyclerView.setOnNoChildClickListener(getViewModel().onOutsideListClick);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerView.setAdapter(new OperationHomeListAdapter(getViewModel()));
 
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
     }
 
 
@@ -114,90 +107,32 @@ public class HomeActivity extends BaseActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void triggerConfirmAction(EventBasicViewConfirmActionVisiblity eventBasicViewConfirmActionVisiblity) {
-        triggerViewVisiblity(binding.clearOper, eventBasicViewConfirmActionVisiblity.getStateToChange());
-        triggerViewVisiblity(binding.doOper, eventBasicViewConfirmActionVisiblity.getStateToChange());
-    }
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void triggerHideActionParameters(EventBasicViewHideBottomActionParameters event) {
-        triggerViewVisiblity(binding.seekbar,event.getStateToChange());
-        triggerViewVisiblity(binding.textViewSeekbarprogress,event.getStateToChange());
-    }
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void showImage(EventSimpleDataMsg event) {
-        triggerViewVisiblity(binding.ivPhoto, EventBasicView.ViewState.VISIBLE);
-        if (event.getData() instanceof Uri) {
-            GlideApp.with(this).load(event.getData()).fitCenter().into(binding.ivPhoto);
-        } else if (event.getData() instanceof Bitmap) {
-            binding.ivPhoto.setImageBitmap((Bitmap) event.getData());
-        }
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void setProgressBarText(EventSimpleDataMsg event) {
-        if (event.getData() instanceof CharSequence) {
-            triggerViewVisiblity(binding.textViewSeekbarprogress, EventBasicView.ViewState.VISIBLE);
-            binding.textViewSeekbarprogress.setText((CharSequence) event.getData());
-        }
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void setVisiblitySeekBar(EventBasicViewSeekBarVisibility event) {
-        triggerViewVisiblity(binding.seekbar, event.getStateToChange());
+//        viewUtils.triggerViewVisiblity(binding.clearOper, eventBasicViewConfirmActionVisiblity.getStateToChange());
+//        viewUtils.triggerViewVisiblity(binding.doOper, eventBasicViewConfirmActionVisiblity.getStateToChange());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void setOperationList(EventBasicViewListOperationsVisiblity event) {
-        triggerViewVisiblity(binding.parentRecyclerView, event.getStateToChange());
-        if(event.getStateToChange() == EventBasicView.ViewState.VISIBLE) {
-            triggerViewVisiblity(binding.ivPhoto, HIDEN);
-        }else{
-            triggerViewVisiblity(binding.ivPhoto, EventBasicView.ViewState.VISIBLE);
+        viewUtils.triggerViewVisiblity(binding.parentRecyclerView, event.getStateToChange());
+        if (event.getStateToChange() == EventBasicView.ViewState.VISIBLE) {
+            EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.HIDEN));
+        } else {
+            EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
         }
     }
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void setOperationList(EventBasicViewMainPhoto event) {
-        triggerViewVisiblity(binding.ivPhoto, event.getStateToChange());
-    }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void triggerMainView(ShowMainViewVisibilityEventBasicView event) {
-        triggerViewVisiblity(binding.ivPhoto, event.getStateToChange());
-        if(event.getStateToChange() == EventBasicView.ViewState.VISIBLE)
-        triggerViewVisiblity(binding.parentRecyclerView, HIDEN);
+        EventBus.getDefault().post(new EventBasicViewMainPhoto(event.getStateToChange()));
+        if (event.getStateToChange() == EventBasicView.ViewState.VISIBLE)
+            viewUtils.triggerViewVisiblity(binding.parentRecyclerView, HIDEN);
         else
-            triggerViewVisiblity(binding.parentRecyclerView, EventBasicView.ViewState.VISIBLE);
+            viewUtils.triggerViewVisiblity(binding.parentRecyclerView, EventBasicView.ViewState.VISIBLE);
     }
 
-    private void triggerViewVisiblity(View view, EventBasicView.ViewState stateToChange) {
-        if (view instanceof ImageView &&  ! (view instanceof ImageButton)) {
-            switch (((ImageView) view).getImageAlpha()) {
-                case AppConstants.IMAGE_VIEW_FULL_OPAQUE:
-                    if (stateToChange == EventBasicView.ViewState.HIDEN) {
-                        ((ImageView) view).setImageAlpha(AppConstants.IMAGE_VIEW_PARTIAL_TRANSPARENT);
-                    }
-                    return;
-                case AppConstants.IMAGE_VIEW_PARTIAL_TRANSPARENT:
-                    if (stateToChange == EventBasicView.ViewState.VISIBLE) {
-                        ((ImageView) view).setImageAlpha(AppConstants.IMAGE_VIEW_FULL_OPAQUE);
-                    }
-                    return;
-            }
-        }
-        switch (view.getVisibility()) {
-            case GONE:
-            case INVISIBLE:
-                if (stateToChange == EventBasicView.ViewState.VISIBLE) {
-                    view.setVisibility(View.VISIBLE);
-                }
-
-                break;
-            case VISIBLE:
-                if (stateToChange == HIDEN) {
-                    view.setVisibility(GONE);
-                }
-                break;
-        }
+    @Override
+    public AndroidInjector<Fragment> supportFragmentInjector() {
+        return fragmentDispatchingAndroidInjector;
     }
-
 }

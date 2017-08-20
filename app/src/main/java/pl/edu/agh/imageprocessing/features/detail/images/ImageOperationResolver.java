@@ -23,6 +23,7 @@ import pl.edu.agh.imageprocessing.features.detail.images.operation.DilationOpera
 import pl.edu.agh.imageprocessing.features.detail.images.operation.ErosionOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.FilterOperation;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.HomeViewModel;
+import pl.edu.agh.imageprocessing.features.detail.viemodel.ImageOperationViewModel;
 
 /**
  * Created by bwolcerz on 03.08.2017.
@@ -47,7 +48,7 @@ public class ImageOperationResolver {
         this.operationResourceAPIRepository = operationResourceAPIRepository;
     }
 
-    public BasicOperation resolveOperation(ImageOperationType type, HomeViewModel.HomeViewModelState state,long processingOperationId) throws IOException {
+    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationViewModel.ImageOperationViewModelState state, long processingOperationId) throws IOException {
         Log.i(TAG, "resolveOperation: " + type.name());
         ImageOperationParameter params = imageOperationParameterResolver(type, state);
         params.setOperationId(processingOperationId);
@@ -65,7 +66,7 @@ public class ImageOperationResolver {
         }
     }
 
-    private ImageOperationParameter imageOperationParameterResolver(ImageOperationType type, HomeViewModel.HomeViewModelState parameters) throws IOException {
+    private ImageOperationParameter imageOperationParameterResolver(ImageOperationType type, ImageOperationViewModel.ImageOperationViewModelState parameters) throws IOException {
         ImageOperationParameter result = null;
         switch (type) {
             case BINARIZATION:
@@ -83,16 +84,17 @@ public class ImageOperationResolver {
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
-        List<Resource> resources = resourceDao.getByOperationAndType(parameters.getCurrentOperationId(), ResourceType.IMAGE_FILE.name());
-        if (resources.size() != 1) { //todo to delete
-            Log.e(TAG, "imageOperationParameterResolver: " + "Could not be more than 1 or less than 0: " + resources.size());
-            throw new AssertionError("Could not be more than 1 or less than 0: " + resources.size());
-        }
-        result.setImageUri(Uri.parse(resources.get(0).getContent()));
+//        List<Resource> resources = resourceDao.getByOperationAndType(parameters.getOperationId(), ResourceType.IMAGE_FILE.name());
+//        if (resources.size() != 1) { //todo to delete
+//            Log.e(TAG, "imageOperationParameterResolver: " + "Could not be more than 1 or less than 0: " + resources.size());
+//            throw new AssertionError("Could not be more than 1 or less than 0: " + resources.size());
+//        }
+
+        result.setImageUri(Uri.parse(parameters.getResourcePreviousOperation().getContent()));
         return result;
     }
 
-    private ImageOperationParameter mapFilterParameter(HomeViewModel.HomeViewModelState parameters) {
+    private ImageOperationParameter mapFilterParameter(ImageOperationViewModel.ImageOperationViewModelState parameters) {
         FilterOperation.Parameters result = new FilterOperation.Parameters();
         result.setHeight(parameters.getMatrixHeight());
         result.setWidth(parameters.getMatrixWidth());
@@ -100,7 +102,7 @@ public class ImageOperationResolver {
         return result;
     }
 
-    private ImageOperationParameter mapErosionParameter(HomeViewModel.HomeViewModelState parameters) {
+    private ImageOperationParameter mapErosionParameter(ImageOperationViewModel.ImageOperationViewModelState parameters) {
         ErosionOperation.Parameters result;
         result = new ErosionOperation.Parameters();
         result.setStructElementHeight(parameters.getMorphologyElementType());
@@ -109,14 +111,14 @@ public class ImageOperationResolver {
         return result;
     }
 
-    private BinarizationOperation.Parameters mapBinarizationParameter(HomeViewModel.HomeViewModelState parameters) {
+    private BinarizationOperation.Parameters mapBinarizationParameter(ImageOperationViewModel.ImageOperationViewModelState parameters) {
         BinarizationOperation.Parameters result;
         result = new BinarizationOperation.Parameters();
         result.setThreshold(parameters.getThreshold());
         return result;
     }
 
-    private DilationOperation.Parameters mapDilationParameter(HomeViewModel.HomeViewModelState parameters) {
+    private DilationOperation.Parameters mapDilationParameter(ImageOperationViewModel.ImageOperationViewModelState parameters) {
         DilationOperation.Parameters result;
         result = new DilationOperation.Parameters();
         result.setStructElementHeight(parameters.getMorphologyElementType());
@@ -125,19 +127,19 @@ public class ImageOperationResolver {
         return result;
     }
 
-    public Uri processResult(BasicOperation execute) {
+    public Resource processResult(BasicOperation execute) {
         Uri fileUri = fileTools.saveFile(execute.getBitmap());
         List<Resource> resId = resourceDao.getByOperationAndType(execute.getParameter().getOperationId(), ResourceType.IMAGE_FILE.name());
         if (resId.size() != 0) {
             if (resId.size() > 1) throw new AssertionError();
             resId.get(0).setContent(fileUri.toString());
             resourceDao.update(resId.get(0));
-            return fileUri;
+            return resId.get(0);
         }
-        operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
+        return operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
                 fileUri.toString(), execute
                 .getParameter()
-                .getOperationId());
+                .getOperationId()).blockingSingle();
 //        resourceDao.save(new Resource.Builder()
 //                .operationId(execute
 //                        .getParameter()
@@ -145,7 +147,5 @@ public class ImageOperationResolver {
 //                .type(ResourceType.IMAGE_FILE_RESULT.name())
 //                .creationDate(new Date(System.currentTimeMillis()))
 //                .content(fileUri.toString()).build());
-
-        return fileUri;
     }
 }

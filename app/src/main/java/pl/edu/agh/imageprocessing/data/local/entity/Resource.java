@@ -2,16 +2,22 @@ package pl.edu.agh.imageprocessing.data.local.entity;
 
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Date;
 
 /**
  * Created by bwolcerz on 25.07.2017.
  */
 @Entity(tableName = "resource")
-public class Resource {
+public class Resource implements Parcelable{
     @PrimaryKey(autoGenerate = true)
     @SerializedName("resource_id")
     private long id;
@@ -79,6 +85,7 @@ public class Resource {
         this.type = type;
     }
 
+
     public static final class Builder {
         private long id;
         private Long operationId;
@@ -129,4 +136,39 @@ public class Resource {
                 ", type='" + type + '\'' +
                 '}';
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeValue(this.operationId);
+        dest.writeLong(this.creationDate != null ? this.creationDate.getTime() : -1);
+        dest.writeString(this.content);
+        dest.writeString(this.type);
+    }
+
+    protected Resource(Parcel in) {
+        this.id = in.readLong();
+        this.operationId = (Long) in.readValue(Long.class.getClassLoader());
+        long tmpCreationDate = in.readLong();
+        this.creationDate = tmpCreationDate == -1 ? null : new Date(tmpCreationDate);
+        this.content = in.readString();
+        this.type = in.readString();
+    }
+
+    public static final Creator<Resource> CREATOR = new Creator<Resource>() {
+        @Override
+        public Resource createFromParcel(Parcel source) {
+            return new Resource(source);
+        }
+
+        @Override
+        public Resource[] newArray(int size) {
+            return new Resource[size];
+        }
+    };
 }

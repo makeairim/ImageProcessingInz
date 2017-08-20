@@ -16,22 +16,27 @@ import javax.inject.Singleton;
 
 import pl.edu.agh.imageprocessing.dagger.ViewModelSubComponent;
 
-
+@Singleton
 public class ImageProcessingViewModelFactory implements ViewModelProvider.Factory {
 
 //    private final HashMap<Class, Callable<? extends ViewModel>> creators;
-    private ViewModel model;
+    private HomeViewModel homeViewModel;
+    private ImageOperationViewModel imageOperationViewModel;
     @Inject
-    public ImageProcessingViewModelFactory(HomeViewModel model) {
+    public ImageProcessingViewModelFactory(HomeViewModel model,ImageOperationViewModel imageOperationViewModel) {
 //        creators = new HashMap<>();
 //        creators.put(HomeViewModel.class, );
-        this.model=model;
+        this.homeViewModel=model;
+        this.imageOperationViewModel=imageOperationViewModel;
     }
 
     @Override
     public <T extends ViewModel> T create(Class<T> modelClass) {
         if (modelClass.isAssignableFrom(HomeViewModel.class)) {
-            return (T) model;
+            return (T) homeViewModel;
+        }
+        if (modelClass.isAssignableFrom(ImageOperationViewModel.class)) {
+            return (T) imageOperationViewModel;
         }
         throw new IllegalArgumentException("Unknown class name");
 //        Callable<? extends ViewModel> creator = creators.get(modelClass);

@@ -80,7 +80,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:tint="@color/colorAccent"
-            app:srcCompat="@drawable/ic_done_black_24dp"
+            app:srcCompat="@drawable/old_ic_done_black_24dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/button_state"
             app:layout_constraintTop_toTopOf="parent"

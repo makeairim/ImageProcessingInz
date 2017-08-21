@@ -75,25 +75,28 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
                 <LinearLayout
-                    android:layout_alignParentRight="true"
+                    android:layout_centerHorizontal="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_alignParentEnd="true">
+                    android:gravity="center_vertical">
                     <com.robertlevonyan.views.customfloatingactionbutton.CustomFloatingActionButton
                         android:id="@+id/do_oper"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_margin="5dp"
-                        app:srcCompat="@drawable/ic_done_black_24dp"
-                        android:layout_gravity="bottom|end" />
+                        app:fabIcon="@drawable/ic_done"
+                        app:fabIconColor="@color/colorAccent"
+                        app:fabColor="@color/colorPrimary" />
                     <com.robertlevonyan.views.customfloatingactionbutton.CustomFloatingActionButton
                         android:id="@+id/clear_oper"
-                        app:srcCompat="@drawable/ic_clear_black_24dp"
+                        app:fabIcon="@drawable/ic_clear"
+                        app:fabIconColor="@color/colorPrimaryDark"
+                        app:fabColor="@color/colorPrimary"
                         android:layout_width="wrap_content"
                         android:layout_margin="5dp"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="bottom|end" />
+                         />
 
                 </LinearLayout>
                     <!--<de.halfbit.fabuless.FabView-->
@@ -102,7 +105,7 @@
                         <!--android:layout_height="wrap_content"-->
                         <!--android:background="@color/colorAccent"-->
                         <!--android:paddingTop="3dp"-->
-                        <!--app:srcCompat="@drawable/ic_done_black_24dp"-->
+                        <!--app:srcCompat="@drawaold_ic_done_black_24dp24dp"-->
                         <!--fabview:fabuless_attachTo="@id/container"-->
                         <!--fabview:fabuless_attachAt="bottom_right"-->
                         <!--fabview:fabuless_attachType="border"-->
@@ -116,7 +119,7 @@
                         <!--android:layout_height="wrap_content"-->
                         <!--android:background="@color/colorAccent"-->
                         <!--android:paddingTop="3dp"-->
-                        <!--app:srcCompat="@drawable/ic_done_black_24dp"-->
+                        <!--app:srcCompat="@drawaold_ic_done_black_24dp24dp"-->
                         <!--fabview:fabuless_attachTo="@id/container"-->
                         <!--fabview:fabuless_attachAt="bottom_right"-->
                         <!--fabview:fabuless_attachType="border"-->

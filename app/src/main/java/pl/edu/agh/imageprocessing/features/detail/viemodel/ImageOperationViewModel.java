@@ -7,7 +7,6 @@ import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.IOException;
 import java.util.Date;
@@ -18,7 +17,7 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
-import pl.edu.agh.imageprocessing.BaseActivity;
+import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
@@ -43,13 +42,15 @@ import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolver;
 import pl.edu.agh.imageprocessing.features.detail.images.OpenCvTypes;
 
 import static pl.edu.agh.imageprocessing.data.ImageOperationType.BINARIZATION;
+import static pl.edu.agh.imageprocessing.data.ImageOperationType.DILATION;
+import static pl.edu.agh.imageprocessing.data.ImageOperationType.EROSION;
 
 /**
  * Created by bwolcerz on 20.08.2017.
  */
 
 public class ImageOperationViewModel extends BaseViewModel {
-    public static final String TAG=ImageOperationFragment.class.getSimpleName();
+    public static final String TAG = ImageOperationFragment.class.getSimpleName();
     @Inject
     OperationResourceAPIRepository operationResourceAPIRepository;
     @Inject
@@ -113,15 +114,16 @@ public class ImageOperationViewModel extends BaseViewModel {
 
     private void callImageOperation(ImageOperationType imageOperationType) {
 
-        if ( state.getResourcePreviousOperation()==null){
+        if (state.getResourcePreviousOperation() == null) {
             state.setResourcePreviousOperation(state.getResource());
         }
-        Observable.create((ObservableOnSubscribe<Long>) e ->{
+        Observable.create((ObservableOnSubscribe<Long>) e -> {
             Operation oper = new Operation.Builder()
                     .creationDate(new Date(System.currentTimeMillis()))
                     .operationType(imageOperationType.name())
                     .parentOperationId(state.getResourcePreviousOperation().getId()).build();
-            e.onNext(operationDao.save(oper));})
+            e.onNext(operationDao.save(oper));
+        })
                 .subscribeOn(Schedulers.computation())
                 .observeOn(Schedulers.computation())
                 .subscribe(processingOperationId -> {
@@ -162,28 +164,48 @@ public class ImageOperationViewModel extends BaseViewModel {
     }
 
     @Subscribe
-    public void showBinarization(ShowBinarizationEvent event){
+    public void showBinarization(ShowBinarizationEvent event) {
         state.setOperationType(BINARIZATION);
-                        provideFragment().binding.seekbar.setSeekBarValueChangedListener((i, b) -> {
-                            Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
-                            state.setThreshold(i);
-                            EventBus.getDefault().post(new EventSimpleDataMsg(String.valueOf(state.getThreshold())));
-                                callImageOperation(state.getOperationType());
+        provideFragment().binding.seekbar.setSeekBarValueChangedListener((i, b) -> {
+                    Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
+                    state.setThreshold(i);
+                    EventBus.getDefault().post(new EventSimpleDataMsg(String.valueOf(state.getThreshold())));
+                    callImageOperation(state.getOperationType());
 
-                        }
-                );
-                EventBus.getDefault().post(new EventBasicViewSeekBarVisibility(EventBasicView.ViewState.VISIBLE));
-                provideFragment().binding.seekbar.setMaxValue(AppConstants.MAX_ADAPTIVE_THRESHOLD);
-                EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
+                }
+        );
+        EventBus.getDefault().post(new EventBasicViewSeekBarVisibility(EventBasicView.ViewState.VISIBLE));
+        provideFragment().binding.seekbar.setMaxValue(AppConstants.MAX_ADAPTIVE_THRESHOLD);
+        EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
     }
 
     @Subscribe
-    public void showDilationAndErosion(ShowErosionAndDilationEvent event){
+    public void showErosionAndDilation(ShowErosionAndDilationEvent event) {
+        if (event.getData() instanceof String) {
+            String title = null;
+            ImageOperationType type = null;
+            switch (ImageOperationType.valueOf((String) event.getData())) {
+                case DILATION:
+                    title = provideFragment().getString(R.string.title_dilation_dialog);
+                    type = DILATION;
+                    break;
+                case EROSION:
+                    title = provideFragment().getString(R.string.title_erosion_dialog);
+                    type = EROSION;
+                    break;
+
+            }
+            if (title != null) {
+                showErosionDilationDialog(title, type);
+            }
+        }
     }
 
     @Subscribe
-    public void showFilter(ShowFilterEvent event){
+    public void showFilter(ShowFilterEvent event) {
+        showMatrixDialog(provideFragment().getString(R.string.title_matrix_value_dialog), 3, 3, ImageOperationType.FILTER);
     }
+
 
     public void setData(Resource data) {
         state.setResource(data);

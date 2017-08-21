@@ -108,7 +108,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                 break;
             case EROSION:
             case DILATION:
-                EventBus.getDefault().post(new ShowErosionAndDilationEvent());
+                EventBus.getDefault().post(new ShowErosionAndDilationEvent(imageOperationType.name()));
 //                showErosionDilationDialog(provideActivity().getString(R.string.title_dilation_dialog), imageOperationType);
                 break;
             case FILTER:

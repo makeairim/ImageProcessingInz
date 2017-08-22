@@ -1,68 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <data>
-        <import type="android.view.View"/>
-        <variable name="viewModel" type="pl.edu.agh.imageprocessing.features.detail.viemodel.ImageOperationViewModel"/>
+
+        <variable
+            name="resource"
+            type="pl.edu.agh.imageprocessing.data.remote.Resource" />
+
+        <import type="android.view.View" />
+        <variable
+            name="viewModel"
+            type="pl.edu.agh.imageprocessing.features.detail.viemodel.ImageOperationViewModel" />
     </data>
-<LinearLayout
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/parent"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.9">
-    <ImageView
-        android:id="@+id/iv_photo"
+
+    <LinearLayout xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/parent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:adjustViewBounds="true"
-        android:visibility="visible"
-        />
-    </RelativeLayout>
-    <RelativeLayout
-        android:id="@+id/parent_seekbar"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_gravity="bottom"
-        android:layout_weight="0.1"
-        android:background="@color/colorPrimary"
-        android:orientation="vertical"
-        android:visibility="gone">
+        android:orientation="vertical">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:layout_height="0dp"
+            android:layout_weight="0.9">
 
-            <com.projects.alshell.android.TerminalSeekBar
-                android:id="@+id/seekbar"
-                android:layout_width="266dp"
-                android:layout_height="27dp"
-                android:paddingTop="3dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
-                android:paddingRight="6dp"
-                android:paddingEnd="6dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:layout_marginBottom="8dp" />
-            <!--todo change to edittext-->
-            <TextView
-                android:id="@+id/textView_seekbarprogress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginBottom="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginStart="8dp"
-                tools:text="200" />
-        </LinearLayout>
-    </RelativeLayout>
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:resource="@{resource}" />
 
-</LinearLayout>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/parent_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_gravity="bottom"
+            android:layout_weight="0.1"
+            android:background="@color/colorPrimary"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <com.projects.alshell.android.TerminalSeekBar
+                    android:id="@+id/seekbar"
+                    android:layout_width="266dp"
+                    android:layout_height="27dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:paddingEnd="6dp"
+                    android:paddingRight="6dp"
+                    android:paddingTop="3dp"
+                    app:layout_constraintBottom_toBottomOf="parent" />
+                <!--todo change to edittext-->
+                <TextView
+                    android:id="@+id/textView_seekbarprogress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginStart="8dp"
+                    tools:text="200" />
+            </LinearLayout>
+        </RelativeLayout>
+
+    </LinearLayout>
 
 </layout>

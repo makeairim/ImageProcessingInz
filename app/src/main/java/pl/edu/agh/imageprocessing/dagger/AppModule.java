@@ -18,6 +18,7 @@ import dagger.Module;
 import dagger.Provides;
 import pl.edu.agh.imageprocessing.data.local.ImageProcessingAPIDatabase;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
+import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.ImageProcessingViewModelFactory;
 
@@ -48,7 +49,11 @@ public class AppModule {
     OperationDao provideOperationDao(ImageProcessingAPIDatabase imageProcessingAPIDatabase) {
         return imageProcessingAPIDatabase.operationDao();
     }
-
+    @Provides
+    @Singleton
+    OperationWithChainAndResourceDao provideOperationWithChainAndResourceDao(ImageProcessingAPIDatabase imageProcessingAPIDatabase) {
+        return imageProcessingAPIDatabase.operationWithChainAndResourceDao();
+    }
 
     @Provides
     @Singleton

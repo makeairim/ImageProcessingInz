@@ -5,8 +5,8 @@
     <data>
 
         <variable
-            name="resource"
-            type="pl.edu.agh.imageprocessing.data.remote.Resource" />
+        name="resource"
+        type="pl.edu.agh.imageprocessing.data.remote.Resource" />
 
         <import type="android.view.View"/>
             <variable name="viewModel" type="pl.edu.agh.imageprocessing.features.detail.viemodel.HomeViewModel"/>

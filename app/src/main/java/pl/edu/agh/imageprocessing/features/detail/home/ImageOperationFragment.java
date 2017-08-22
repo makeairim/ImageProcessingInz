@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -86,6 +87,8 @@ public class ImageOperationFragment  extends BaseFragment {
         super.onCreateView(inflater,container,savedInstanceState);
         binding= DataBindingUtil.inflate(inflater, R.layout.photo_view,container,false);
         binding.setViewModel(getViewModel());
+        binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.recyclerView.setAdapter(new OperationFragmentListAdapter(getViewModel()));
         return binding.getRoot();
     }
 
@@ -99,17 +102,18 @@ public class ImageOperationFragment  extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void showImage(EventSimpleDataMsg event) {
-        viewUtils.triggerViewVisiblity(binding.ivPhoto, EventBasicView.ViewState.VISIBLE);
-        if (event.getData() instanceof Uri) {
-            GlideApp.with(this).load(event.getData()).fitCenter().into(binding.ivPhoto);
-        } else if (event.getData() instanceof Bitmap) {
-            binding.ivPhoto.setImageBitmap((Bitmap) event.getData());
-        }
+//        viewUtils.triggerViewVisiblity(binding.ivPhoto, EventBasicView.ViewState.VISIBLE);
+        //todo
+//        if (event.getData() instanceof Uri) {
+//            GlideApp.with(this).load(event.getData()).fitCenter().into(binding.ivPhoto);
+//        } else if (event.getData() instanceof Bitmap) {
+//            binding.ivPhoto.setImageBitmap((Bitmap) event.getData());
+//        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void setProgressBarText(EventSimpleDataMsg event) {
-        if (event.getData() instanceof CharSequence) {
+        if ( !(event.getData() instanceof Uri) && !(event.getData() instanceof Bitmap)) {
             viewUtils.triggerViewVisiblity(binding.textViewSeekbarprogress, EventBasicView.ViewState.VISIBLE);
             binding.textViewSeekbarprogress.setText((CharSequence) event.getData());
         }
@@ -126,6 +130,6 @@ public class ImageOperationFragment  extends BaseFragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void setPhotoView(EventBasicViewMainPhoto event) {
-        viewUtils.triggerViewVisiblity(binding.ivPhoto, event.getStateToChange());
+        viewUtils.triggerViewVisiblity(binding.recyclerView, event.getStateToChange());
     }
 }

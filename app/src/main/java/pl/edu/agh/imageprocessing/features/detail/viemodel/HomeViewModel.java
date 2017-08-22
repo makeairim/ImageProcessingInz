@@ -76,6 +76,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     public void photoPicker() {
         pickImageDialog.setOnPickResult(pickResult -> {
             Observable.create(e -> e.onNext(fileTools.saveFile(pickResult.getBitmap(), context)))
+                    .subscribeOn(Schedulers.computation())
                     .observeOn(Schedulers.computation())
                     .subscribe(o ->{
                             Operation operation=operationResourceAPIRepository.createOperation();
@@ -115,11 +116,9 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
             case EROSION:
             case DILATION:
                 EventBus.getDefault().post(new ShowErosionAndDilationEvent(imageOperationType.name()));
-//                showErosionDilationDialog(provideActivity().getString(R.string.title_dilation_dialog), imageOperationType);
                 break;
             case FILTER:
                 EventBus.getDefault().post(new ShowFilterEvent());
-//                showMatrixDialog(provideActivity().getString(R.string.title_matrix_value_dialog), 3, 3, imageOperationType);
                 break;
             default:
                 throw new AssertionError("Could not resolve operation type");

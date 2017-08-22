@@ -9,13 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
-import pl.edu.agh.imageprocessing.databinding.ItemImageOperationsListBinding;
+
+import pl.edu.agh.imageprocessing.databinding.ItemImageOperationTypeListBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.BaseAdapter;
 
-
-/**
- * Created by Anil on 6/7/2017.
- */
 
 public class OperationHomeListAdapter extends BaseAdapter<OperationHomeListAdapter.OperationViewHolder, ImageOperationType> {
 
@@ -60,13 +57,13 @@ public class OperationHomeListAdapter extends BaseAdapter<OperationHomeListAdapt
     static class OperationViewHolder extends RecyclerView.ViewHolder {
 
         public static OperationViewHolder create(LayoutInflater inflater, ViewGroup parent, OperationHomeListCallback callback) {
-            ItemImageOperationsListBinding itemOperationListBinding = ItemImageOperationsListBinding.inflate(inflater, parent, false);
+            ItemImageOperationTypeListBinding itemOperationListBinding = ItemImageOperationTypeListBinding.inflate(inflater, parent, false);
             return new OperationViewHolder(itemOperationListBinding, callback);
         }
 
-        ItemImageOperationsListBinding binding;
+        ItemImageOperationTypeListBinding binding;
 
-        public OperationViewHolder(ItemImageOperationsListBinding binding, OperationHomeListCallback callback) {
+        public OperationViewHolder(ItemImageOperationTypeListBinding binding, OperationHomeListCallback callback) {
             super(binding.getRoot());
             this.binding = binding;
             binding.getRoot().setOnClickListener(v ->

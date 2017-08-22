@@ -39,4 +39,11 @@ public interface OperationDao {
     @Update
     int update(Operation operation);
 
+//    @Query("DELETE FROM Operation WHERE operationType =:type " +
+//            "AND parentId Is NULL AND nextOperationId is NULL")
+//    int deleteNotAssignedOperationsByType(String type);
+//
+//    @Query("SELECT * FROM Operation WHERE operationType =:type " +
+//            "AND parentId Is NULL AND nextOperationId is NULL")
+//    Flowable<Operation> getUnchainedOperationsByType(String type);
 }

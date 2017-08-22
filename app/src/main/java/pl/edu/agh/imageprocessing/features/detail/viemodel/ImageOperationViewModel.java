@@ -4,11 +4,12 @@ import android.content.Context;
 import android.net.Uri;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
+import android.view.View;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-import java.io.IOException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
@@ -30,6 +32,7 @@ import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.DilationErosionCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.MatrixCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ChainOperationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
@@ -41,8 +44,8 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDi
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
+import pl.edu.agh.imageprocessing.features.detail.home.OperationFragmentListCallback;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
-import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolver;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolverParameters;
 import pl.edu.agh.imageprocessing.features.detail.images.OpenCvTypes;
@@ -55,7 +58,7 @@ import static pl.edu.agh.imageprocessing.data.ImageOperationType.EROSION;
  * Created by bwolcerz on 20.08.2017.
  */
 
-public class ImageOperationViewModel extends BaseViewModel {
+public class ImageOperationViewModel extends BaseViewModel implements OperationFragmentListCallback {
     public static final String TAG = ImageOperationFragment.class.getSimpleName();
     @Inject
     OperationResourceAPIRepository operationResourceAPIRepository;
@@ -87,8 +90,13 @@ public class ImageOperationViewModel extends BaseViewModel {
         return (HomeActivity) super.provideActivity();
     }
 
+    @Override
+    public void onImageOperationClicked(OperationWithChainAndResource operationWithChainAndResource, View sharedView) {
+
+    }
+
     private void showImage(Resource resource) {
-        if (resource==null || resource.getContent() ==null)
+        if (resource == null || resource.getContent() == null)
             throw new AssertionError(); //todo to delete after check
         EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
     }
@@ -101,7 +109,11 @@ public class ImageOperationViewModel extends BaseViewModel {
             state.setMatrixWidth(width1);
             state.setMatrixHeight(height1);
             state.setMatrix(matrix);
-            callImageOperation(state.getBaseResource(),mapStateToParameter(state),imageOperationType);
+            callImageOperation(mapStateToParameter(state), imageOperationType).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
+                state.setProcessingResource(resource);
+                EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
+                EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
+            });
         });
 
     }
@@ -114,61 +126,35 @@ public class ImageOperationViewModel extends BaseViewModel {
             state.setMorphologyWidth(width);
             state.setMorphologyHeight(height);
             state.setMorphologyElementType(OpenCvTypes.MORPH_ELEMENTS.getTypeFromName(elementType));
-            callImageOperation(state.getBaseResource(),mapStateToParameter(state),imageOperationType);
+            callImageOperation(mapStateToParameter(state), imageOperationType).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
+                state.setProcessingResource(resource);
+                EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
+                EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
+            });
         });
     }
 
-    private void callImageOperation(Resource base, ImageOperationResolverParameters parameter, ImageOperationType imageOperationType) {
-
-        Observable.create((ObservableOnSubscribe<Long>) e -> {
-            Operation oper = new Operation.Builder()
-                    .creationDate(new Date(System.currentTimeMillis()))
-                    .operationType(imageOperationType.name()).build();
-            e.onNext(operationDao.save(oper));
-        })
+    private Observable<Resource> callImageOperation(ImageOperationResolverParameters parameter, ImageOperationType imageOperationType) {
+        Operation oper = new Operation.Builder()
+                .creationDate(new Date(System.currentTimeMillis()))
+                .operationType(imageOperationType.name()).build();
+        Observable<Long> prcessingOperationObservable = Observable.create(e -> {
+            try {
+                Long id = operationDao.save(oper);
+                e.onNext(id);
+                e.onComplete();
+            } catch (Exception error) {
+                e.onError(error);
+            }
+        });
+       return prcessingOperationObservable.subscribeOn(Schedulers.computation())
+                .doOnError(throwable -> Log.i(TAG, "callImageOperation: " + throwable.getMessage()))
+                .map(id -> imageOperationResolver.processResult(imageOperationResolver.resolveOperation(imageOperationType, parameter, id).execute()))
                 .subscribeOn(Schedulers.computation())
-                .observeOn(Schedulers.computation())
-                .subscribe(processingOperationId -> {
-                    try {
-                        Observable.just(imageOperationResolver.resolveOperation(imageOperationType,parameter , processingOperationId))
-                                .map(basicOperation ->
-                                        imageOperationResolver.processResult(basicOperation.execute()))
-                                .subscribeOn(Schedulers.computation())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(resource -> {
-                                    EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
-                                    showImage(resource);
-                                    provideActivity().binding.doOper.setOnFabClickListener(view -> {
-                                        //todo nothing if accepted
-                                        Observable.create((ObservableOnSubscribe<Boolean>) e -> e.onNext(operationResourceAPIRepository
-                                                .chainOperations(operationDao
-                                                                .get(base.getOperationId()).blockingFirst(),
-                                                        operationDao
-                                                                .get(processingOperationId).blockingFirst())))
-                                                .subscribeOn(Schedulers.computation())
-                                                .observeOn(AndroidSchedulers.mainThread()).subscribe(
-                                                        aBoolean -> {
-                                                            state.setBaseResource(resource);
-                                                            showImage(state.getBaseResource());
-                                                        }
-                                        );
-                                        EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
-                                        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
-                                    });
-                                    provideActivity().binding.clearOper.setOnFabClickListener(view -> {
-                                        //todo delete oper
-                                        showImage(base);
-                                        EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
-                                        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
-                                    });
-                                });
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-
+                .observeOn(AndroidSchedulers.mainThread());
     }
-    private ImageOperationResolverParameters mapStateToParameter(ImageOperationViewModelState state){
+
+    private ImageOperationResolverParameters mapStateToParameter(ImageOperationViewModelState state) {
         return new ImageOperationResolverParameters.Builder()
                 .imageUri(Uri.parse(state.getBaseResource().getContent()))
                 .matrix(state.getMatrix())
@@ -180,6 +166,7 @@ public class ImageOperationViewModel extends BaseViewModel {
                 .threshold(state.getThreshold())
                 .build();
     }
+
     @Subscribe
     public void showBinarization(ShowBinarizationEvent event) {
         state.setOperationType(BINARIZATION);
@@ -187,7 +174,11 @@ public class ImageOperationViewModel extends BaseViewModel {
                     Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
                     state.setThreshold(i);
                     EventBus.getDefault().post(new EventSimpleDataMsg(String.valueOf(state.getThreshold())));
-                    callImageOperation(state.getBaseResource(),mapStateToParameter(state),state.getOperationType());
+                    callImageOperation(mapStateToParameter(state), BINARIZATION).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
+                        state.setProcessingResource(resource);
+                        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
+                        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
+                    });
 
                 }
         );
@@ -223,15 +214,15 @@ public class ImageOperationViewModel extends BaseViewModel {
         showMatrixDialog(provideFragment().getString(R.string.title_matrix_value_dialog), 3, 3, ImageOperationType.FILTER);
     }
 
-    private List<Resource> getResourceByTypeFromOperationWithResourceEntity(OperationWithChainAndResource operationWithChainAndResource, ResourceType resourceType, int limit){
-        if( operationWithChainAndResource == null  || operationWithChainAndResource.getResource()==null || operationWithChainAndResource.getResource().size()==0 ){
+    private List<Resource> getResourceByTypeFromOperationWithResourceEntity(OperationWithChainAndResource operationWithChainAndResource, ResourceType resourceType, int limit) {
+        if (operationWithChainAndResource == null || operationWithChainAndResource.getResource() == null || operationWithChainAndResource.getResource().size() == 0) {
             throw new AssertionError();
         }
         List<Resource> result = new LinkedList<>();
         for (int i = 0; i < operationWithChainAndResource.getResource().size(); i++) {
-            if ( ResourceType.valueOf(operationWithChainAndResource.getResource().get(i).getType()) == resourceType){
+            if (ResourceType.valueOf(operationWithChainAndResource.getResource().get(i).getType()) == resourceType) {
                 result.add(operationWithChainAndResource.getResource().get(i));
-                if(limit<=result.size()){
+                if (limit <= result.size()) {
                     return result;
                 }
             }
@@ -239,11 +230,57 @@ public class ImageOperationViewModel extends BaseViewModel {
 
         return result;
     }
+
     public void setData(OperationWithChainAndResource data) {
-        state.setOperationWithResource=data;
-        state.setBaseResource(getResourceByTypeFromOperationWithResourceEntity(data,ResourceType.IMAGE_FILE,1).get(0));
+        state.setOperationWithResource = data;
+        state.setBaseResource(getResourceByTypeFromOperationWithResourceEntity(data, ResourceType.IMAGE_FILE, 1).get(0));
+        setUp();
         EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(state.getBaseResource().getContent())));
+//        provideFragment().binding. new pl.edu.agh.imageprocessing.data.remote.Resource(Arrays.asList(data)))
+        data.getOperation().setOperationType("basic image");
+        provideFragment().binding.setResource(new pl.edu.agh.imageprocessing.data.remote.Resource(Arrays.asList(data)));
+
     }
+
+    @Subscribe
+    public void chainOperation(ChainOperationEvent event) {
+        Observable.create((ObservableOnSubscribe<Boolean>) e -> {
+                    e.onNext(operationResourceAPIRepository
+                            .chainOperations(operationDao
+                                            .get(event.getBaseOperationId()).blockingFirst(),
+                                    operationDao
+                                            .get(event.getProcessingOperationId()).blockingFirst()));
+                        e.onComplete();
+        }
+                        )
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread()).subscribe(
+                aBoolean -> {
+                    Log.i(TAG, "chainOperation: operationParent=" + event.getBaseOperationId() + " child=" + event.getProcessingOperationId());
+                    //showImage(state.getBaseResource());
+
+                    //todo update item list view status
+                    //todo handle failure ?
+                });
+    }
+
+    private void setUp() {
+        provideActivity().binding.doOper.setOnFabClickListener(view -> {
+            //todo nothing if accepted
+            state.setBaseResource(state.getProcessingResource());
+            EventBus.getDefault().post(new ChainOperationEvent(state.getBaseResource().getOperationId(), state.getProcessingResource().getOperationId()));
+            EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
+            EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
+            operationResourceAPIRepository.deleteUnchainedOperations();
+        });
+        provideActivity().binding.clearOper.setOnFabClickListener(view -> {
+            EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(state.getBaseResource().getContent())));
+            EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
+            EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
+            operationResourceAPIRepository.deleteUnchainedOperations();
+        });
+    }
+
 
     public class ImageOperationViewModelState {
         private Resource processingResource;

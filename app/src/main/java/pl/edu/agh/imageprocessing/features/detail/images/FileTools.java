@@ -67,4 +67,11 @@ public class FileTools {
     public Uri saveFile(Bitmap imageBitmap) {
 return saveFile(imageBitmap,context);
     }
+    public boolean deleteFile(Uri uri){
+        File file = new File(uri.getPath());
+        if(file.exists()){
+            file.delete();
+        }
+        return true;
+    }
 }

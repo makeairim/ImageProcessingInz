@@ -4,9 +4,10 @@
 
     <style name="NoActionBar" parent="AppTheme.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColor">@color/colorText</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:actionMenuTextColor">@android:color/black</item>
         <item name="android:itemTextAppearance">@android:color/black</item>
@@ -18,7 +19,7 @@
         <item name="windowNoTitle">true</item>
     </style>
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" >
-        <item name="actionMenuTextColor">@android:color/black</item>
+        <item name="actionMenuTextColor">@color/colorText</item>
         <item name="android:actionOverflowButtonStyle">@style/MenuBtnStyle</item>
     </style>
 
@@ -32,6 +33,7 @@
     </style>
     <style name="AppDialogTheme" parent="Theme.AppCompat.Light.Dialog">
         <item name="android:windowIsTranslucent">true</item>
+        <item name="android:textColor">@color/colorPrimaryDark</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <!-- ...other stuff here... -->
     </style>

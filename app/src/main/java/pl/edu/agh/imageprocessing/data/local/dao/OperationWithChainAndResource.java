@@ -2,6 +2,8 @@ package pl.edu.agh.imageprocessing.data.local.dao;
 
 import android.arch.persistence.room.Embedded;
 import android.arch.persistence.room.Relation;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import java.util.List;
 
@@ -12,7 +14,7 @@ import pl.edu.agh.imageprocessing.data.local.entity.Resource;
  * Created by bwolcerz on 19.08.2017.
  */
 
-public class OperationWithChainAndResource {
+public class OperationWithChainAndResource implements Parcelable{
     @Embedded
     private Operation operation;
 
@@ -20,6 +22,11 @@ public class OperationWithChainAndResource {
     private List<Resource> resource;
 
     public OperationWithChainAndResource() {
+    }
+
+    private OperationWithChainAndResource(Builder builder) {
+        setOperation(builder.operation);
+        setResource(builder.resource);
     }
 
     public Operation getOperation() {
@@ -38,4 +45,54 @@ public class OperationWithChainAndResource {
         this.resource = resource;
     }
 
+
+    public static final class Builder {
+        private Operation operation;
+        private List<Resource> resource;
+
+        public Builder() {
+        }
+
+        public Builder operation(Operation val) {
+            operation = val;
+            return this;
+        }
+
+        public Builder resource(List<Resource> val) {
+            resource = val;
+            return this;
+        }
+
+        public OperationWithChainAndResource build() {
+            return new OperationWithChainAndResource(this);
+        }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeParcelable(this.operation, flags);
+        dest.writeTypedList(this.resource);
+    }
+
+    protected OperationWithChainAndResource(Parcel in) {
+        this.operation = in.readParcelable(Operation.class.getClassLoader());
+        this.resource = in.createTypedArrayList(Resource.CREATOR);
+    }
+
+    public static final Creator<OperationWithChainAndResource> CREATOR = new Creator<OperationWithChainAndResource>() {
+        @Override
+        public OperationWithChainAndResource createFromParcel(Parcel source) {
+            return new OperationWithChainAndResource(source);
+        }
+
+        @Override
+        public OperationWithChainAndResource[] newArray(int size) {
+            return new OperationWithChainAndResource[size];
+        }
+    };
 }

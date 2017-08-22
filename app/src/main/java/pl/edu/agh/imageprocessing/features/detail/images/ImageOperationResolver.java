@@ -6,15 +6,12 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Observable;
 
 import javax.inject.Inject;
 
-import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
-import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
@@ -22,7 +19,6 @@ import pl.edu.agh.imageprocessing.features.detail.images.operation.BinarizationO
 import pl.edu.agh.imageprocessing.features.detail.images.operation.DilationOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.ErosionOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.FilterOperation;
-import pl.edu.agh.imageprocessing.features.detail.viemodel.HomeViewModel;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.ImageOperationViewModel;
 
 /**
@@ -48,9 +44,9 @@ public class ImageOperationResolver {
         this.operationResourceAPIRepository = operationResourceAPIRepository;
     }
 
-    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationViewModel.ImageOperationViewModelState state, long processingOperationId) throws IOException {
+    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationResolverParameters parameters, long processingOperationId) throws IOException {
         Log.i(TAG, "resolveOperation: " + type.name());
-        ImageOperationParameter params = imageOperationParameterResolver(type, state);
+        ImageOperationParameter params = imageOperationParameterResolver(type, parameters);
         params.setOperationId(processingOperationId);
         switch (type) {
             case BINARIZATION:
@@ -66,7 +62,7 @@ public class ImageOperationResolver {
         }
     }
 
-    private ImageOperationParameter imageOperationParameterResolver(ImageOperationType type, ImageOperationViewModel.ImageOperationViewModelState parameters) throws IOException {
+    private ImageOperationParameter imageOperationParameterResolver(ImageOperationType type, ImageOperationResolverParameters parameters) throws IOException {
         ImageOperationParameter result = null;
         switch (type) {
             case BINARIZATION:
@@ -89,12 +85,12 @@ public class ImageOperationResolver {
 //            Log.e(TAG, "imageOperationParameterResolver: " + "Could not be more than 1 or less than 0: " + resources.size());
 //            throw new AssertionError("Could not be more than 1 or less than 0: " + resources.size());
 //        }
-
-        result.setImageUri(Uri.parse(parameters.getResourcePreviousOperation().getContent()));
+        result.setImageUri(parameters.getImageUri());
+        //result.setImageUri(Uri.parse(parameters.getBaseResource().getContent()));
         return result;
     }
 
-    private ImageOperationParameter mapFilterParameter(ImageOperationViewModel.ImageOperationViewModelState parameters) {
+    private ImageOperationParameter mapFilterParameter(ImageOperationResolverParameters parameters) {
         FilterOperation.Parameters result = new FilterOperation.Parameters();
         result.setHeight(parameters.getMatrixHeight());
         result.setWidth(parameters.getMatrixWidth());
@@ -102,7 +98,7 @@ public class ImageOperationResolver {
         return result;
     }
 
-    private ImageOperationParameter mapErosionParameter(ImageOperationViewModel.ImageOperationViewModelState parameters) {
+    private ImageOperationParameter mapErosionParameter(ImageOperationResolverParameters parameters) {
         ErosionOperation.Parameters result;
         result = new ErosionOperation.Parameters();
         result.setStructElementHeight(parameters.getMorphologyElementType());
@@ -111,14 +107,14 @@ public class ImageOperationResolver {
         return result;
     }
 
-    private BinarizationOperation.Parameters mapBinarizationParameter(ImageOperationViewModel.ImageOperationViewModelState parameters) {
+    private BinarizationOperation.Parameters mapBinarizationParameter(ImageOperationResolverParameters parameters) {
         BinarizationOperation.Parameters result;
         result = new BinarizationOperation.Parameters();
         result.setThreshold(parameters.getThreshold());
         return result;
     }
 
-    private DilationOperation.Parameters mapDilationParameter(ImageOperationViewModel.ImageOperationViewModelState parameters) {
+    private DilationOperation.Parameters mapDilationParameter(ImageOperationResolverParameters parameters) {
         DilationOperation.Parameters result;
         result = new DilationOperation.Parameters();
         result.setStructElementHeight(parameters.getMorphologyElementType());
@@ -148,4 +144,5 @@ public class ImageOperationResolver {
 //                .creationDate(new Date(System.currentTimeMillis()))
 //                .content(fileUri.toString()).build());
     }
+
 }

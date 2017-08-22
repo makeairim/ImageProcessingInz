@@ -107,8 +107,7 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void triggerConfirmAction(EventBasicViewConfirmActionVisiblity eventBasicViewConfirmActionVisiblity) {
-//        viewUtils.triggerViewVisiblity(binding.clearOper, eventBasicViewConfirmActionVisiblity.getStateToChange());
-//        viewUtils.triggerViewVisiblity(binding.doOper, eventBasicViewConfirmActionVisiblity.getStateToChange());
+        viewUtils.triggerViewVisiblity(binding.parentConfirm, eventBasicViewConfirmActionVisiblity.getStateToChange());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

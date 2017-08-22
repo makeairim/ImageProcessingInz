@@ -3,6 +3,8 @@ package pl.edu.agh.imageprocessing.data.local.entity;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -13,7 +15,7 @@ import java.util.Date;
  */
 
 @Entity(tableName = "operation")
-public class Operation {
+public class Operation implements Parcelable{
     @PrimaryKey(autoGenerate = true)
     @SerializedName("operation_id")
     private long id;
@@ -121,4 +123,39 @@ public class Operation {
             return new Operation(this);
         }
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeValue(this.parentOperationId);
+        dest.writeValue(this.nextOperationId);
+        dest.writeLong(this.creationDate != null ? this.creationDate.getTime() : -1);
+        dest.writeString(this.operationType);
+    }
+
+    protected Operation(Parcel in) {
+        this.id = in.readLong();
+        this.parentOperationId = (Long) in.readValue(Long.class.getClassLoader());
+        this.nextOperationId = (Long) in.readValue(Long.class.getClassLoader());
+        long tmpCreationDate = in.readLong();
+        this.creationDate = tmpCreationDate == -1 ? null : new Date(tmpCreationDate);
+        this.operationType = in.readString();
+    }
+
+    public static final Creator<Operation> CREATOR = new Creator<Operation>() {
+        @Override
+        public Operation createFromParcel(Parcel source) {
+            return new Operation(source);
+        }
+
+        @Override
+        public Operation[] newArray(int size) {
+            return new Operation[size];
+        }
+    };
 }

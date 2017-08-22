@@ -10,6 +10,8 @@ import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -20,7 +22,9 @@ import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
+import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
+import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
@@ -38,7 +42,9 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
+import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolver;
+import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolverParameters;
 import pl.edu.agh.imageprocessing.features.detail.images.OpenCvTypes;
 
 import static pl.edu.agh.imageprocessing.data.ImageOperationType.BINARIZATION;
@@ -81,10 +87,10 @@ public class ImageOperationViewModel extends BaseViewModel {
         return (HomeActivity) super.provideActivity();
     }
 
-    private void showImage() {
-        if (state.getResource() == null || state.getResource().getContent() == null)
+    private void showImage(Resource resource) {
+        if (resource==null || resource.getContent() ==null)
             throw new AssertionError(); //todo to delete after check
-        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(state.getResource().getContent())));
+        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
     }
 
     public void showMatrixDialog(String title, int height, int width, ImageOperationType imageOperationType) {
@@ -95,7 +101,7 @@ public class ImageOperationViewModel extends BaseViewModel {
             state.setMatrixWidth(width1);
             state.setMatrixHeight(height1);
             state.setMatrix(matrix);
-            callImageOperation(imageOperationType);
+            callImageOperation(state.getBaseResource(),mapStateToParameter(state),imageOperationType);
         });
 
     }
@@ -108,50 +114,50 @@ public class ImageOperationViewModel extends BaseViewModel {
             state.setMorphologyWidth(width);
             state.setMorphologyHeight(height);
             state.setMorphologyElementType(OpenCvTypes.MORPH_ELEMENTS.getTypeFromName(elementType));
-            callImageOperation(imageOperationType);
+            callImageOperation(state.getBaseResource(),mapStateToParameter(state),imageOperationType);
         });
     }
 
-    private void callImageOperation(ImageOperationType imageOperationType) {
+    private void callImageOperation(Resource base, ImageOperationResolverParameters parameter, ImageOperationType imageOperationType) {
 
-        if (state.getResourcePreviousOperation() == null) {
-            state.setResourcePreviousOperation(state.getResource());
-        }
         Observable.create((ObservableOnSubscribe<Long>) e -> {
             Operation oper = new Operation.Builder()
                     .creationDate(new Date(System.currentTimeMillis()))
-                    .operationType(imageOperationType.name())
-                    .parentOperationId(state.getResourcePreviousOperation().getId()).build();
+                    .operationType(imageOperationType.name()).build();
             e.onNext(operationDao.save(oper));
         })
                 .subscribeOn(Schedulers.computation())
                 .observeOn(Schedulers.computation())
                 .subscribe(processingOperationId -> {
                     try {
-                        Observable.just(imageOperationResolver.resolveOperation(imageOperationType, state, processingOperationId))
+                        Observable.just(imageOperationResolver.resolveOperation(imageOperationType,parameter , processingOperationId))
                                 .map(basicOperation ->
                                         imageOperationResolver.processResult(basicOperation.execute()))
                                 .subscribeOn(Schedulers.computation())
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(resource -> {
-                                    state.setResource(resource);
-
                                     EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
-                                    showImage();
-                                    provideActivity().binding.doOper.setOnClickListener(view -> {
+                                    showImage(resource);
+                                    provideActivity().binding.doOper.setOnFabClickListener(view -> {
                                         //todo nothing if accepted
-                                        Observable.create((ObservableOnSubscribe<Boolean>) e -> operationResourceAPIRepository
+                                        Observable.create((ObservableOnSubscribe<Boolean>) e -> e.onNext(operationResourceAPIRepository
                                                 .chainOperations(operationDao
-                                                                .get(state.getResourcePreviousOperation().getOperationId()).blockingFirst(),
+                                                                .get(base.getOperationId()).blockingFirst(),
                                                         operationDao
-                                                                .get(processingOperationId).blockingFirst()))
+                                                                .get(processingOperationId).blockingFirst())))
                                                 .subscribeOn(Schedulers.computation())
-                                                .observeOn(AndroidSchedulers.mainThread()).subscribe(aBoolean -> state.setResourcePreviousOperation(resource));
+                                                .observeOn(AndroidSchedulers.mainThread()).subscribe(
+                                                        aBoolean -> {
+                                                            state.setBaseResource(resource);
+                                                            showImage(state.getBaseResource());
+                                                        }
+                                        );
                                         EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
                                         EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
                                     });
-                                    provideActivity().binding.clearOper.setOnClickListener(view -> {
+                                    provideActivity().binding.clearOper.setOnFabClickListener(view -> {
                                         //todo delete oper
+                                        showImage(base);
                                         EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
                                         EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
                                     });
@@ -162,7 +168,18 @@ public class ImageOperationViewModel extends BaseViewModel {
                 });
 
     }
-
+    private ImageOperationResolverParameters mapStateToParameter(ImageOperationViewModelState state){
+        return new ImageOperationResolverParameters.Builder()
+                .imageUri(Uri.parse(state.getBaseResource().getContent()))
+                .matrix(state.getMatrix())
+                .matrixHeight(state.getMatrixHeight())
+                .matrixWidth(state.getMatrixWidth())
+                .morphologyElementType(state.getMorphologyElementType())
+                .morphologyHeight(state.getMorphologyHeight())
+                .morphologyWidth(state.getMorphologyWidth())
+                .threshold(state.getThreshold())
+                .build();
+    }
     @Subscribe
     public void showBinarization(ShowBinarizationEvent event) {
         state.setOperationType(BINARIZATION);
@@ -170,7 +187,7 @@ public class ImageOperationViewModel extends BaseViewModel {
                     Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
                     state.setThreshold(i);
                     EventBus.getDefault().post(new EventSimpleDataMsg(String.valueOf(state.getThreshold())));
-                    callImageOperation(state.getOperationType());
+                    callImageOperation(state.getBaseResource(),mapStateToParameter(state),state.getOperationType());
 
                 }
         );
@@ -206,23 +223,40 @@ public class ImageOperationViewModel extends BaseViewModel {
         showMatrixDialog(provideFragment().getString(R.string.title_matrix_value_dialog), 3, 3, ImageOperationType.FILTER);
     }
 
+    private List<Resource> getResourceByTypeFromOperationWithResourceEntity(OperationWithChainAndResource operationWithChainAndResource, ResourceType resourceType, int limit){
+        if( operationWithChainAndResource == null  || operationWithChainAndResource.getResource()==null || operationWithChainAndResource.getResource().size()==0 ){
+            throw new AssertionError();
+        }
+        List<Resource> result = new LinkedList<>();
+        for (int i = 0; i < operationWithChainAndResource.getResource().size(); i++) {
+            if ( ResourceType.valueOf(operationWithChainAndResource.getResource().get(i).getType()) == resourceType){
+                result.add(operationWithChainAndResource.getResource().get(i));
+                if(limit<=result.size()){
+                    return result;
+                }
+            }
+        }
 
-    public void setData(Resource data) {
-        state.setResource(data);
-        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(data.getContent())));
+        return result;
+    }
+    public void setData(OperationWithChainAndResource data) {
+        state.setOperationWithResource=data;
+        state.setBaseResource(getResourceByTypeFromOperationWithResourceEntity(data,ResourceType.IMAGE_FILE,1).get(0));
+        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(state.getBaseResource().getContent())));
     }
 
     public class ImageOperationViewModelState {
-        private Resource resourcePreviousOperation;
-        private Resource resource;
+        private Resource processingResource;
+        private Resource baseResource;
         private ImageOperationType operationType;
         private int morphologyWidth;
         private int morphologyHeight;
         private int morphologyElementType;
-        public int threshold;
+        private int threshold;
         private int matrixHeight;
         private int matrixWidth;
         private int[] matrix;
+        public OperationWithChainAndResource setOperationWithResource;
 
         public ImageOperationType getOperationType() {
             return operationType;
@@ -232,20 +266,20 @@ public class ImageOperationViewModel extends BaseViewModel {
             this.operationType = operationType;
         }
 
-        public Resource getResourcePreviousOperation() {
-            return resourcePreviousOperation;
+        public Resource getProcessingResource() {
+            return processingResource;
         }
 
-        public void setResourcePreviousOperation(Resource resourcePreviousOperation) {
-            this.resourcePreviousOperation = resourcePreviousOperation;
+        public void setProcessingResource(Resource processingResource) {
+            this.processingResource = processingResource;
         }
 
-        public Resource getResource() {
-            return resource;
+        public Resource getBaseResource() {
+            return baseResource;
         }
 
-        public void setResource(Resource resource) {
-            this.resource = resource;
+        public void setBaseResource(Resource baseResource) {
+            this.baseResource = baseResource;
         }
 
         public int getMorphologyWidth() {

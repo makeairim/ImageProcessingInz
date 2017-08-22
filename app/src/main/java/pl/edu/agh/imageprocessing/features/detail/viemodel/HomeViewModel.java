@@ -10,16 +10,20 @@ import com.vansuita.pickimage.dialog.PickImageDialog;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.Collections;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.exceptions.OnErrorNotImplementedException;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
+import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
+import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
@@ -71,23 +75,25 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
     public void photoPicker() {
         pickImageDialog.setOnPickResult(pickResult -> {
-            io.reactivex.Observable.create(e -> e.onNext(fileTools.saveFile(pickResult.getBitmap(), context)))
+            Observable.create(e -> e.onNext(fileTools.saveFile(pickResult.getBitmap(), context)))
                     .observeOn(Schedulers.computation())
-                    .subscribe(o ->
-                            operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(), operationDao.save(operationResourceAPIRepository.createOperation()))
+                    .subscribe(o ->{
+                            Operation operation=operationResourceAPIRepository.createOperation();
+                            operation.setId(operationDao.save(operation));
+                            operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(),operation.getId())
                                     .observeOn(AndroidSchedulers.mainThread()).subscribe(res -> {
                                 //todo pass to fragment ids
 //                                state.setCurrentOperationId(idRes.getOperationId());
 //                                state.setCurrentImageUri((Uri) o);
-                                showImageOperation(res);
-                            })); //todo failure so excpetion probably
+                                showImageOperation(new OperationWithChainAndResource.Builder().operation(operation).resource(Collections.singletonList(res)).build());
+                            });}); //todo failure so excpetion probably
         }).show(provideActivity());
     }
 
-    private void showImageOperation(Resource res) {
+    private void showImageOperation(OperationWithChainAndResource  data) {
         //todo
         FragmentTransaction ft = provideActivity().getSupportFragmentManager().beginTransaction();
-        ft.replace(provideActivity().binding.container.getId(), ImageOperationFragment.newInstance(res));
+        ft.replace(provideActivity().binding.container.getId(), ImageOperationFragment.newInstance(data));
         ft.commit();
     }
 

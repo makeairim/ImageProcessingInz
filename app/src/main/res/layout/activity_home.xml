@@ -79,20 +79,23 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:visibility="gone"
+                    android:id="@+id/parent_confirm">
                     <com.robertlevonyan.views.customfloatingactionbutton.CustomFloatingActionButton
                         android:id="@+id/do_oper"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_margin="5dp"
                         app:fabIcon="@drawable/ic_done"
-                        app:fabIconColor="@color/colorAccent"
-                        app:fabColor="@color/colorPrimary" />
+                        app:fabIconColor="@color/colorFabIconMine"
+                        app:fabColor="@color/colorAccent" />
                     <com.robertlevonyan.views.customfloatingactionbutton.CustomFloatingActionButton
                         android:id="@+id/clear_oper"
                         app:fabIcon="@drawable/ic_clear"
                         app:fabIconColor="@color/colorPrimaryDark"
-                        app:fabColor="@color/colorPrimary"
+                        app:fabColor="@color/colorAccent"
+                        android:foreground="@android:color/transparent"
                         android:layout_width="wrap_content"
                         android:layout_margin="5dp"
                         android:layout_height="wrap_content"

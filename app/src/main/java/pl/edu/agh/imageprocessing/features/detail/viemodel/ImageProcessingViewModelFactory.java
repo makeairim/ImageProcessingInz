@@ -19,15 +19,16 @@ import pl.edu.agh.imageprocessing.dagger.ViewModelSubComponent;
 @Singleton
 public class ImageProcessingViewModelFactory implements ViewModelProvider.Factory {
 
-//    private final HashMap<Class, Callable<? extends ViewModel>> creators;
+    private ListOperationsViewModel listOperationsViewModel;
     private HomeViewModel homeViewModel;
     private ImageOperationViewModel imageOperationViewModel;
     @Inject
-    public ImageProcessingViewModelFactory(HomeViewModel model,ImageOperationViewModel imageOperationViewModel) {
+    public ImageProcessingViewModelFactory(HomeViewModel model,ImageOperationViewModel imageOperationViewModel,ListOperationsViewModel listOperationsViewModel) {
 //        creators = new HashMap<>();
 //        creators.put(HomeViewModel.class, );
         this.homeViewModel=model;
         this.imageOperationViewModel=imageOperationViewModel;
+        this.listOperationsViewModel = listOperationsViewModel;
     }
 
     @Override
@@ -37,6 +38,9 @@ public class ImageProcessingViewModelFactory implements ViewModelProvider.Factor
         }
         if (modelClass.isAssignableFrom(ImageOperationViewModel.class)) {
             return (T) imageOperationViewModel;
+        }
+        if (modelClass.isAssignableFrom(ListOperationsViewModel.class)) {
+            return (T) listOperationsViewModel;
         }
         throw new IllegalArgumentException("Unknown class name");
 //        Callable<? extends ViewModel> creator = creators.get(modelClass);

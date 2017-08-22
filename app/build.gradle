@@ -133,6 +133,7 @@ dependencies {
 //    compile 'com.birbit:android-priority-jobqueue:2.0.1'
 //    compile 'com.github.beworker:fabuless:0d29e51478'
     compile 'com.robertlevonyan.view:CustomFloatingActionButton:1.0.3'
+    compile 'com.github.chuross:expandable-layout:1.0.5'
     //android test
     androidTestCompile "org.mockito:mockito-core:$test.mockito"
     androidTestCompile "com.google.dagger:dagger:$libs.dagger"

@@ -1,13 +1,19 @@
 package pl.edu.agh.imageprocessing.features.detail.home;
 
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.databinding.ItemImageOperationListBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.BaseAdapter;
@@ -72,7 +78,20 @@ public class OperationFragmentListAdapter extends BaseAdapter<OperationFragmentL
 
         public void onBind(OperationWithChainAndResource operationWithChainAndResource) {
             binding.setResource(operationWithChainAndResource);
+            Glide.with(binding.ivPhoto.getContext())
+                    .load(Uri.parse(operationWithChainAndResource.getImageFile())).apply(RequestOptions.placeholderOf(R.drawable.placeholder))
+                    .into(binding.ivPhoto);
+            binding.tvName.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (binding.expandLayout.isCollapsed())
+                        binding.expandLayout.expand();
+                    else
+                        binding.expandLayout.collapse();
+                }
+            });
             binding.executePendingBindings();
         }
     }
+
 }

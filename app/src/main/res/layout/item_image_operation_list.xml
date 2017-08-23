@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
-
         <variable
             name="resource"
             type="pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource" />
@@ -30,14 +30,22 @@
                 android:text="@{resource.operation.operationType}"
                 android:layout_margin="5dp"
                 tools:text="NAME"/>
-
+            <com.github.chuross.library.ExpandableLayout
+                android:id="@+id/expand_layout"
+                android:layout_below="@id/tv_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:exl_collapseHeight="10dp">
+                <!-- any child views -->
                 <ImageView
                     android:layout_below="@id/tv_name"
                     android:id="@+id/iv_photo"
+                    android:layout_marginBottom="10dp"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:adjustViewBounds="true" />
-
+                    android:adjustViewBounds="true"
+                    android:scaleType="fitXY" />
+            </com.github.chuross.library.ExpandableLayout>
 
             <!--android:text="@{@string/author(article.author)}"-->
         </RelativeLayout>

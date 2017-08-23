@@ -1,5 +1,6 @@
 package pl.edu.agh.imageprocessing.data.local.dao;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Query;
 
@@ -24,4 +25,7 @@ public interface OperationWithChainAndResourceDao {
     @Query("SELECT * FROM Operation op WHERE op.operationType =:type " +
             "AND op.parentOperationId Is NULL AND op.nextOperationId is NULL")
     Flowable<List<OperationWithChainAndResource>> getUnchainedOperationsByType(String type);
+    @Query("SELECT * FROM Operation op WHERE op.parentOperationId =:parentId OR op.parentOperationId is NULL AND op.nextOperationId is NOT NULL" +
+            " ORDER BY op.nextOperationId ASC ")
+    List<OperationWithChainAndResource> getChainOperationsSortedAsc(long parentId);
 }

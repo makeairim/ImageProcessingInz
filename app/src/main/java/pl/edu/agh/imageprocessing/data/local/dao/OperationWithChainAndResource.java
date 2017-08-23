@@ -2,19 +2,27 @@ package pl.edu.agh.imageprocessing.data.local.dao;
 
 import android.arch.persistence.room.Embedded;
 import android.arch.persistence.room.Relation;
+import android.databinding.BindingMethod;
+import android.databinding.BindingMethods;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.util.List;
 
+import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 
 /**
  * Created by bwolcerz on 19.08.2017.
  */
-
-public class OperationWithChainAndResource implements Parcelable{
+@BindingMethods({
+@BindingMethod(type = ImageView.class,
+        attribute = "android:url",
+        method = "getImageFile")})
+public class OperationWithChainAndResource implements Parcelable {
     @Embedded
     private Operation operation;
 
@@ -95,4 +103,15 @@ public class OperationWithChainAndResource implements Parcelable{
             return new OperationWithChainAndResource[size];
         }
     };
+
+    public String getImageFile() {
+        if (resource != null && resource.size() > 0) {
+            for (int i = 0; i < resource.size(); i++) {
+                if (ResourceType.IMAGE_FILE.equals(ResourceType.valueOf(resource.get(i).getType()))) {
+                    return resource.get(0).getContent();
+                }
+            }
+        }
+        return null;
+    }
 }

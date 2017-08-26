@@ -1,5 +1,6 @@
 package pl.edu.agh.imageprocessing;
 
+import android.app.Activity;
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleActivity;
 import android.arch.lifecycle.LifecycleObserver;
@@ -49,27 +50,25 @@ public class BaseActivity extends AppCompatActivity implements LifecycleRegistry
         @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
         public void onCreate() {
             viewModel.setBinding(activity);
+            EventBus.getDefault().register(viewModel);
         }
 
         @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
         public void onResume() {
             viewModel.setBinding(activity);
+            EventBus.getDefault().register(activity);
+            if(!EventBus.getDefault().isRegistered(viewModel)) {
+                EventBus.getDefault().register(viewModel);
+            }
+            viewModel.setUp();
+
         }
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         public void onPause(){
-//            EventBus.getDefault().unregister(this);
+            EventBus.getDefault().unregister(activity);
+            EventBus.getDefault().unregister(viewModel);
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        EventBus.getDefault().register(this);
-    }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        EventBus.getDefault().unregister(this);
-    }
 }

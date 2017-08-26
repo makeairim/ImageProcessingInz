@@ -91,6 +91,9 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
             case R.id.export:
                 getViewModel().provideOperationTypes();
                 return true;
+            case R.id.grid:
+                getViewModel().showOperationRoots();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }

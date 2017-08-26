@@ -9,6 +9,7 @@
             type="pl.edu.agh.imageprocessing.data.remote.Resource" />
 
         <import type="android.view.View" />
+
         <variable
             name="viewModel"
             type="pl.edu.agh.imageprocessing.features.detail.viemodel.ImageOperationViewModel" />

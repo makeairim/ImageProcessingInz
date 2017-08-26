@@ -35,6 +35,8 @@ public class Operation implements Parcelable{
 
     @SerializedName("status")
     private OperationStatus status;
+    @SerializedName("parameters")
+    private String object;
 
     public Operation() {
     }
@@ -46,6 +48,15 @@ public class Operation implements Parcelable{
         setCreationDate(builder.creationDate);
         setOperationType(builder.operationType);
         setStatus(builder.status);
+        setObject(builder.object);
+    }
+
+    public String getObject() {
+        return object;
+    }
+
+    public void setObject(String object) {
+        this.object = object;
     }
 
     public long getId() {
@@ -103,6 +114,7 @@ public class Operation implements Parcelable{
         private Date creationDate;
         private String operationType;
         private OperationStatus status;
+        private String object;
 
         public Builder() {
         }
@@ -137,6 +149,11 @@ public class Operation implements Parcelable{
             return this;
         }
 
+        public Builder object(String val) {
+            object = val;
+            return this;
+        }
+
         public Operation build() {
             return new Operation(this);
         }
@@ -155,6 +172,7 @@ public class Operation implements Parcelable{
         dest.writeLong(this.creationDate != null ? this.creationDate.getTime() : -1);
         dest.writeString(this.operationType);
         dest.writeInt(this.status == null ? -1 : this.status.ordinal());
+        dest.writeString(this.object);
     }
 
     protected Operation(Parcel in) {
@@ -166,6 +184,7 @@ public class Operation implements Parcelable{
         this.operationType = in.readString();
         int tmpStatus = in.readInt();
         this.status = tmpStatus == -1 ? null : OperationStatus.values()[tmpStatus];
+        this.object = in.readString();
     }
 
     public static final Creator<Operation> CREATOR = new Creator<Operation>() {

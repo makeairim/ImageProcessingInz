@@ -33,4 +33,5 @@ public abstract class BaseViewModel extends ViewModel {
         return activity;
     }
 
+    public abstract void setUp();
 }

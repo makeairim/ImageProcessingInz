@@ -8,6 +8,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
+import android.util.EventLog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,22 +46,14 @@ import pl.edu.agh.imageprocessing.features.detail.viemodel.ListOperationsViewMod
 public class ListOperationsFragment extends BaseFragment {
     public ListOperationsViewBinding binding;
 
-    public static final String KEY_DATA="KEY_DATA";
     @Inject
     ViewUtils viewUtils;
     @Inject
     ViewModelProvider.Factory viewModelFactory;
+    public ListOperationFragmentListAdapter adapter;
 
-    private List<Operation> operationsRoots;
-
-    public static ListOperationsFragment newInstance(pl.edu.agh.imageprocessing.data.remote.Resource<List<Operation>> data) {
+    public static ListOperationsFragment newInstance() {
         ListOperationsFragment f = new ListOperationsFragment();
-
-        // Supply  index input as an argument.
-        Bundle args = new Bundle();
-        args.putParcelableArray(KEY_DATA,data.getData().toArray(new Operation[0]));
-        args.putString("LAMBADA","TEST");
-        f.setArguments(args);
         return f;
     }
 
@@ -75,13 +69,6 @@ public class ListOperationsFragment extends BaseFragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         Bundle bundle = getArguments();
-        if(!EventBus.getDefault().isRegistered(this)){
-            EventBus.getDefault().register(this);
-        }
-        if( bundle!=null){
-            this.operationsRoots=bundle.getParcelableArrayList(KEY_DATA);
-            bindDataToModel(operationsRoots);
-        }
     }
 
     @Nullable
@@ -90,15 +77,18 @@ public class ListOperationsFragment extends BaseFragment {
         super.onCreateView(inflater,container,savedInstanceState);
         binding= DataBindingUtil.inflate(inflater, R.layout.list_operations_view,container,false);
         binding.setViewModel(getViewModel());
+        binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapter=new ListOperationFragmentListAdapter(getViewModel());
+        binding.recyclerView.setAdapter(adapter);
         return binding.getRoot();
     }
 
-    private void bindDataToModel(List<Operation> data){
-        getViewModel().setData(data);
-        EventBus.getDefault().register(viewModel);
-    }
     private ListOperationsViewModel getViewModel() {
         return (ListOperationsViewModel) viewModel;
+    }
+    @Subscribe
+    public void mock(EventSimpleDataMsg eventSimpleDataMsg){
+
     }
 
 

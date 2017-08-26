@@ -72,9 +72,6 @@ public class ImageOperationFragment  extends BaseFragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         Bundle bundle = getArguments();
-        if(!EventBus.getDefault().isRegistered(this)){
-            EventBus.getDefault().register(this);
-        }
         if( bundle!=null){
             this.rootOperationId=bundle.getLong(KEY_ROOT_ID);
             bindDataToModel(rootOperationId);
@@ -94,8 +91,7 @@ public class ImageOperationFragment  extends BaseFragment {
     }
 
     private void bindDataToModel(Long rootOperationId){
-        getViewModel().setData(rootOperationId);
-        EventBus.getDefault().register(viewModel);
+        getViewModel().setUp(rootOperationId);
     }
     private ImageOperationViewModel getViewModel() {
         return (ImageOperationViewModel) viewModel;

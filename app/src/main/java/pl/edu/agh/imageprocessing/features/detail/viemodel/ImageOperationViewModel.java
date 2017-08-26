@@ -6,9 +6,13 @@ import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import android.view.View;
 
+import com.google.gson.GsonBuilder;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,6 +22,7 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
@@ -105,8 +110,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread())
                 .subscribe(operationWithChainAndResources -> {
                     state.setOperationChainAndResource(operationWithChainAndResources);
-                    provideFragment().adapter.setData(state.getOperationChainAndResource());
-                    provideFragment().adapter.notifyDataSetChanged();
+                    EventBus.getDefault().post(new DataChangedEvent());
 //            provideFragment().binding.setResource(new pl.edu.agh.imageprocessing.data.remote.Resource(state.getOperationChainAndResource()));
 //            provideFragment().binding.notifyChange();
 //            provideFragment().binding.recyclerView.invalidate();
@@ -114,12 +118,32 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                 });
     }
 
-    private void showImage(Resource resource) {
-        if (resource == null || resource.getContent() == null)
-            throw new AssertionError(); //todo to delete after check
-        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
-    }
 
+    private Operation creteOperation(ImageOperationType type, ImageOperationResolverParameters parameters){
+        return new Operation.Builder()
+                .creationDate(new Date(System.currentTimeMillis()))
+                .operationType(type.name())
+                .object(new GsonBuilder().create().toJson(parameters)).build();
+    }
+    private void saveOperation(Operation oper){
+        Observable<Long> prcessingOperationObservable = Observable.create(e -> {
+            try {
+                oper.setStatus(OperationStatus.CREATED);
+                Long id = operationDao.save(oper);
+                e.onNext(id);
+                e.onComplete();
+            } catch (Exception error) {
+                e.onError(error);
+            }
+        });
+        OperationWithChainAndResource previous = state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1);
+        prcessingOperationObservable.subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).subscribe(o -> {
+            oper.setId(o);
+            state.getOperationChainAndResource().add(new OperationWithChainAndResource.Builder().operation(oper).resource(Collections.emptyList()).build());
+            EventBus.getDefault().post(new DataChangedEvent());
+            EventBus.getDefault().post(new ChainOperationEvent(previous.getOperation().getId(),o));
+        });//todo handle dispisable
+    }
     public void showMatrixDialog(String title, int height, int width, ImageOperationType imageOperationType) {
         FragmentManager fm = provideActivity().getSupportFragmentManager();
         MatrixCustomDialog dialog = MatrixCustomDialog.newInstance(title, width, height);
@@ -128,11 +152,13 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             state.setMatrixWidth(width1);
             state.setMatrixHeight(height1);
             state.setMatrix(matrix);
-            callImageOperation(mapStateToParameter(state), imageOperationType).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
-                state.setProcessingResource(resource);
-                EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
-                EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
-            });
+            saveOperation(creteOperation(imageOperationType, mapStateToParameter(state)));
+            //todo notify data changed;
+//            callImageOperation(mapStateToParameter(state), imageOperationType).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
+//                state.setProcessingResource(resource);
+//                EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
+//                EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
+//            });
         });
 
     }
@@ -145,38 +171,31 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             state.setMorphologyWidth(width);
             state.setMorphologyHeight(height);
             state.setMorphologyElementType(OpenCvTypes.MORPH_ELEMENTS.getTypeFromName(elementType));
-            callImageOperation(mapStateToParameter(state), imageOperationType).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
-                state.setProcessingResource(resource);
-                EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
-                EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
-            });
+            saveOperation(creteOperation(imageOperationType, mapStateToParameter(state)));
+            //            callImageOperation(mapStateToParameter(state), imageOperationType).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
+//                state.setProcessingResource(resource);
+//                EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
+//                EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
+//            });
         });
     }
 
-    private Observable<Resource> callImageOperation(ImageOperationResolverParameters parameter, ImageOperationType imageOperationType) {
-        Operation oper = new Operation.Builder()
-                .creationDate(new Date(System.currentTimeMillis()))
-                .operationType(imageOperationType.name()).build();
-        Observable<Long> prcessingOperationObservable = Observable.create(e -> {
-            try {
-                oper.setStatus(OperationStatus.CREATED);
-                Long id = operationDao.save(oper);
-                e.onNext(id);
-                e.onComplete();
-            } catch (Exception error) {
-                e.onError(error);
-            }
-        });
-        return prcessingOperationObservable.subscribeOn(Schedulers.computation())
-                .doOnError(throwable -> Log.i(TAG, "callImageOperation: " + throwable.getMessage()))
-                .map(id -> imageOperationResolver.processResult(imageOperationResolver.resolveOperation(imageOperationType, parameter, id).execute()))
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread());
-    }
+//    private Observable<Resource> callImageOperation(ImageOperationResolverParameters parameter, ImageOperationType imageOperationType) {
+//
+//        return prcessingOperationObservable.subscribeOn(Schedulers.computation())
+//                .doOnError(throwable -> Log.i(TAG, "callImageOperation: " + throwable.getMessage()))
+//                .map(id -> imageOperationResolver.processResult(imageOperationResolver.resolveOperation(imageOperationType, parameter, id).execute()))
+//                .subscribeOn(Schedulers.computation())
+//                .observeOn(AndroidSchedulers.mainThread());
+//    }
 
     private ImageOperationResolverParameters mapStateToParameter(ImageOperationViewModelState state) {
+        List<Resource> lastOperationResource = getResourceByTypeFromOperationWithResourceEntity(
+                state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1),
+                ResourceType.IMAGE_FILE,
+                1);
         return new ImageOperationResolverParameters.Builder()
-                .imageUri(Uri.parse(state.getBaseResource().getContent()))
+                .imageUri(Uri.parse(lastOperationResource.get(0).getContent()))
                 .matrix(state.getMatrix())
                 .matrixHeight(state.getMatrixHeight())
                 .matrixWidth(state.getMatrixWidth())
@@ -194,11 +213,12 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                     Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
                     state.setThreshold(i);
                     EventBus.getDefault().post(new EventSimpleDataMsg(String.valueOf(state.getThreshold())));
-                    callImageOperation(mapStateToParameter(state), BINARIZATION).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
-                        state.setProcessingResource(resource);
-                        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
-                        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
-                    });
+                    saveOperation(creteOperation(BINARIZATION, mapStateToParameter(state)));
+                    //                    callImageOperation(mapStateToParameter(state), BINARIZATION).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
+//                        state.setProcessingResource(resource);
+//                        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
+//                        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
+//                    });
 
                 }
         );
@@ -235,7 +255,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     }
 
     private List<Resource> getResourceByTypeFromOperationWithResourceEntity(OperationWithChainAndResource operationWithChainAndResource, ResourceType resourceType, int limit) {
-        if (operationWithChainAndResource == null || operationWithChainAndResource.getResource() == null || operationWithChainAndResource.getResource().size() == 0) {
+        if (operationWithChainAndResource == null || operationWithChainAndResource.getResource() == null || operationWithChainAndResource.getResource().isEmpty()) {
             throw new AssertionError(); //todo to delete
         }
         List<Resource> result = new LinkedList<>();
@@ -264,10 +284,6 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     }
 
     @Subscribe
-    public void setExpandedOperationId(Long operationId){
-        state.setExpandedOperationId(operationId);
-    }
-    @Subscribe
     public void chainOperation(ChainOperationEvent event) {
         Observable.create((ObservableOnSubscribe<Boolean>) e -> {
                     e.onNext(operationResourceAPIRepository
@@ -289,37 +305,37 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                 });
     }
 
-    @Subscribe
+    @Subscribe(threadMode = ThreadMode.MAIN)
     public void notifyDataChanged(DataChangedEvent event) {
-
+        provideFragment().adapter.setData(state.getOperationChainAndResource());
+        provideFragment().adapter.notifyDataSetChanged();
     }
-
-    private Long setUp(Long rootOperationId) {
-        loadOperationChain(rootOperationId);
+    public void setUp() {
         provideActivity().binding.doOper.setOnFabClickListener(view -> {
             //todo nothing if accepted
 //            state.setBaseResource(state.getProcessingResource());
-            OperationWithChainAndResource lastFinished = getLastFinishedOperation(state.getOperationChainAndResource());
-            if(lastFinished.getOperation().getParentOperationId()!=null){
-                throw new RuntimeException("Cannot chain already chained operation");
-            }
-            EventBus.getDefault().post(new ChainOperationEvent(lastFinished.getOperation().getId()
-                    , state.getProcessingResource().getOperationId()));
+//            OperationWithChainAndResource lastFinished = getLastFinishedOperation(state.getOperationChainAndResource());
+//            if(lastFinished.getOperation().getParentOperationId()!=null){
+//                throw new RuntimeException("Cannot chain already chained operation");
+//            }
             EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
             EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
             operationResourceAPIRepository.deleteUnchainedOperations();
         });
         provideActivity().binding.clearOper.setOnFabClickListener(view -> {
-            EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(state.getBaseResource().getContent())));
+
+            //            EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(state.getBaseResource().getContent())));
             EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
             EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
             operationResourceAPIRepository.deleteUnchainedOperations();
         });
     }
+    public void setUp(Long rootOperationId) {
+        loadOperationChain(rootOperationId);
+    }
 
 
     public class ImageOperationViewModelState {
-        private Long expandedOperationId;
         private ImageOperationType operationType;
         private int morphologyWidth;
         private int morphologyHeight;
@@ -335,13 +351,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             return operationChainAndResource;
         }
 
-        public Long getExpandedOperationId() {
-            return expandedOperationId;
-        }
 
-        public void setExpandedOperationId(Long expandedOperationId) {
-            this.expandedOperationId = expandedOperationId;
-        }
 
         public Long getRootOperationId() {
             return rootOperationId;

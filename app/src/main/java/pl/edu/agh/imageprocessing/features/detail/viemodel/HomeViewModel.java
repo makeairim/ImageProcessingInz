@@ -9,6 +9,8 @@ import android.view.View;
 import com.vansuita.pickimage.dialog.PickImageDialog;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.Collections;
 import java.util.concurrent.Callable;
@@ -31,12 +33,14 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
+import pl.edu.agh.imageprocessing.features.detail.android.event.OperationsViewEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarizationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
+import pl.edu.agh.imageprocessing.features.detail.home.ListOperationsFragment;
 import pl.edu.agh.imageprocessing.features.detail.home.OperationHomeListCallback;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 
@@ -61,6 +65,11 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     @Override
     protected HomeActivity provideActivity() {
         return (HomeActivity) super.provideActivity();
+    }
+
+    @Override
+    public void setUp() {
+            showOperationRoots();
     }
 
 
@@ -90,15 +99,25 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 //                                state.setCurrentOperationId(idRes.getOperationId());
 //                                state.setCurrentImageUri((Uri) o);
 //                                res.setType(ImageOperationType.BASIC_PHOTO.name());
-                                  showImageOperation(new OperationWithChainAndResource.Builder().operation(operation).resource(Collections.singletonList(res)).build());
+                                state.setLastViewedOperation(res.getOperationId());
+                                EventBus.getDefault().post(new OperationsViewEvent(res.getOperationId()));
+
                             });}); //todo failure so excpetion probably
         }).show(provideActivity());
     }
 
-    private void showImageOperation(OperationWithChainAndResource  data) {
+    @Subscribe(threadMode = ThreadMode.MAIN)
+     public void showImageOperation(OperationsViewEvent event) {
         //todo
         FragmentTransaction ft = provideActivity().getSupportFragmentManager().beginTransaction();
-        ft.replace(provideActivity().binding.container.getId(), ImageOperationFragment.newInstance(data));
+        ft.replace(provideActivity().binding.container.getId(), ImageOperationFragment.newInstance(event.getId()));
+        ft.commit();
+    }
+
+     public void showOperationRoots() {
+        //todo
+        FragmentTransaction ft = provideActivity().getSupportFragmentManager().beginTransaction();
+        ft.replace(provideActivity().binding.container.getId(), ListOperationsFragment.newInstance());
         ft.commit();
     }
 
@@ -106,7 +125,6 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     @Override
     public void onImageOperationClicked(ImageOperationType imageOperationType, View sharedView) {
         Log.i(TAG, "onImageOperationClicked: " + imageOperationType.name());
-        state.setPreviousOperationId(state.currentOperationId);
         state.setOperationType(imageOperationType);
         EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.HIDEN));
 
@@ -141,29 +159,19 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
 
     public static class HomeViewModelState {
-        private Long currentOperationId;
-        private Uri currentImageUri;
-        private Long previousOperationId;
+        private Long lastViewedOperation;
         private ImageOperationType operationType;
 
         public HomeViewModelState() {
 
         }
 
-        public Long getCurrentOperationId() {
-            return currentOperationId;
+        public Long getLastViewedOperation() {
+            return lastViewedOperation;
         }
 
-        public void setCurrentOperationId(Long currentOperationId) {
-            this.currentOperationId = currentOperationId;
-        }
-
-        public void setPreviousOperationId(Long previousOperationId) {
-            this.previousOperationId = previousOperationId;
-        }
-
-        public Long getPreviousOperationId() {
-            return previousOperationId;
+        public void setLastViewedOperation(Long lastViewedOperation) {
+            this.lastViewedOperation = lastViewedOperation;
         }
 
         public void setOperationType(ImageOperationType operationType) {

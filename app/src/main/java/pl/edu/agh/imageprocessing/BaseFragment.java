@@ -68,27 +68,17 @@ public class BaseFragment extends Fragment implements LifecycleRegistryOwner {
         public void onResume() {
             viewModel.setBinding(fragment);
             viewModel.setBinding((BaseActivity) baseActivity);
+            viewModel.setUp();
+            EventBus.getDefault().register(fragment);
+            EventBus.getDefault().register(viewModel);
         }
 
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         public void onPause() {
 //            EventBus.getDefault().unregister(this);
+            EventBus.getDefault().unregister(fragment);
+            EventBus.getDefault().unregister(viewModel);
         }
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        EventBus.getDefault().unregister(this);
-        EventBus.getDefault().unregister(viewModel);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (!EventBus.getDefault().isRegistered(this))
-            EventBus.getDefault().register(this);
-        if (viewModel != null && !EventBus.getDefault().isRegistered(viewModel))
-            EventBus.getDefault().register(viewModel);
-    }
 }

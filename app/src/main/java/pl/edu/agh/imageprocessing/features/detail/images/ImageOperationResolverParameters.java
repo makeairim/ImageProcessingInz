@@ -2,6 +2,13 @@ package pl.edu.agh.imageprocessing.features.detail.images;
 
 import android.net.Uri;
 
+import com.google.gson.GsonBuilder;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 
 /**
@@ -29,6 +36,9 @@ public class ImageOperationResolverParameters{
         matrixHeight = builder.matrixHeight;
         matrixWidth = builder.matrixWidth;
         matrix = builder.matrix;
+    }
+
+    public ImageOperationResolverParameters() {
     }
 
     public Uri getImageUri() {
@@ -66,6 +76,7 @@ public class ImageOperationResolverParameters{
     public int[] getMatrix() {
         return matrix;
     }
+
 
     public static final class Builder {
         private Uri imageUri;
@@ -130,5 +141,6 @@ public class ImageOperationResolverParameters{
             return new ImageOperationResolverParameters(this);
         }
     }
+
 }
 

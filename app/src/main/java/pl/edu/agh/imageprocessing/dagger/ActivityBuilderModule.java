@@ -6,6 +6,7 @@ import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import dagger.Module;
 import dagger.android.ContributesAndroidInjector;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
+import pl.edu.agh.imageprocessing.features.detail.home.ListOperationsFragment;
 
 /**
  * Created by bwolcerz on 20.07.2017.
@@ -21,4 +22,6 @@ public abstract class ActivityBuilderModule {
     abstract BaseFragment baseFragment();
     @ContributesAndroidInjector
     abstract ImageOperationFragment imageOperationFragment();
+    @ContributesAndroidInjector
+    abstract ListOperationsFragment listOperationsFragment();
 }

@@ -20,6 +20,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.exceptions.OnErrorNotImplementedException;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
+import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
@@ -80,13 +81,16 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                     .observeOn(Schedulers.computation())
                     .subscribe(o ->{
                             Operation operation=operationResourceAPIRepository.createOperation();
+                            operation.setOperationType(ImageOperationType.BASIC_PHOTO.name());
+                            operation.setStatus(OperationStatus.FINISHED);
                             operation.setId(operationDao.save(operation));
                             operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(),operation.getId())
                                     .observeOn(AndroidSchedulers.mainThread()).subscribe(res -> {
                                 //todo pass to fragment ids
 //                                state.setCurrentOperationId(idRes.getOperationId());
 //                                state.setCurrentImageUri((Uri) o);
-                                showImageOperation(new OperationWithChainAndResource.Builder().operation(operation).resource(Collections.singletonList(res)).build());
+//                                res.setType(ImageOperationType.BASIC_PHOTO.name());
+                                  showImageOperation(new OperationWithChainAndResource.Builder().operation(operation).resource(Collections.singletonList(res)).build());
                             });}); //todo failure so excpetion probably
         }).show(provideActivity());
     }

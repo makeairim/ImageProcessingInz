@@ -19,6 +19,9 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import io.reactivex.Flowable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.ImageProcessingAPIDatabase;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
@@ -117,8 +120,10 @@ public class DatabaseUnitTest {
         oper1.setId(operationDao.save(oper1));
         chainOperations(oper,oper1);
         List<Operation> all = operationDao.all();
-        List<OperationWithChainAndResource> result = operationWithResDao.getChainOperationsSortedAsc(parentId);
-        assertTrue(result.size()>0);
+        Flowable<List<OperationWithChainAndResource>> result = operationWithResDao.getChainOperationsSortedAsc(parentId);
+        result.subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread()).subscribe(operationWithChainAndResources -> {
+        assertTrue(operationWithChainAndResources.size()>0);
+        });
 
 
     }

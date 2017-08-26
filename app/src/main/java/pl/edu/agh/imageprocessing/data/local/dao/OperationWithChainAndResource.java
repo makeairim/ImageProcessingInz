@@ -2,6 +2,8 @@ package pl.edu.agh.imageprocessing.data.local.dao;
 
 import android.arch.persistence.room.Embedded;
 import android.arch.persistence.room.Relation;
+import android.databinding.BaseObservable;
+import android.databinding.Bindable;
 import android.databinding.BindingMethod;
 import android.databinding.BindingMethods;
 import android.os.Parcel;

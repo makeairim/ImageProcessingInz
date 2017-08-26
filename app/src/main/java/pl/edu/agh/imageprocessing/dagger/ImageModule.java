@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
@@ -35,8 +36,8 @@ public  class ImageModule {
     }
     @Provides
     @Singleton
-    ImageOperationResolver imageOperationTypeResolver(Context context, FileTools fileTools, ResourceDao resourceDao, OperationResourceAPIRepository operationResourceAPIRepository){
-        return new ImageOperationResolver(context,fileTools,resourceDao,operationResourceAPIRepository);
+    ImageOperationResolver imageOperationTypeResolver(Context context, FileTools fileTools, ResourceDao resourceDao, OperationResourceAPIRepository operationResourceAPIRepository, OperationDao operationDao){
+        return new ImageOperationResolver(context,fileTools,resourceDao,operationResourceAPIRepository,operationDao);
     }
     @Provides
     @Singleton

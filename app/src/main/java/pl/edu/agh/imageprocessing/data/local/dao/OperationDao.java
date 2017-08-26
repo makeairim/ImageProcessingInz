@@ -10,6 +10,7 @@ import android.arch.persistence.room.Update;
 import java.util.List;
 
 import io.reactivex.Flowable;
+import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 
 /**
@@ -30,6 +31,7 @@ public interface OperationDao {
     @Query("SELECT * FROM Operation WHERE id = :id")
     public Flowable<Operation> get(long id);
 
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long save(Operation operation);
 
@@ -38,7 +40,8 @@ public interface OperationDao {
 
     @Update
     int update(Operation operation);
-
+    @Query("UPDATE Operation set status = :status WHERE id= :id")
+    int updateStatus(long id, OperationStatus status);
 //    @Query("DELETE FROM Operation WHERE operationType =:type " +
 //            "AND parentId Is NULL AND nextOperationId is NULL")
 //    int deleteNotAssignedOperationsByType(String type);

@@ -9,7 +9,6 @@ import android.view.View;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,22 +16,24 @@ import java.util.List;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
+import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
+import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.DilationErosionCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.MatrixCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ChainOperationEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.DataChangedEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
@@ -63,6 +64,8 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     @Inject
     OperationResourceAPIRepository operationResourceAPIRepository;
     @Inject
+    OperationWithChainAndResourceDao operationWithChainAndResourceDao;
+    @Inject
     OperationDao operationDao;
     @Inject
     FileTools fileTools;
@@ -92,7 +95,23 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
 
     @Override
     public void onImageOperationClicked(OperationWithChainAndResource operationWithChainAndResource, View sharedView) {
+    }
 
+    //    }e->{e.onNext(operationWithChainAndResourceDao.getChainOperationsSortedAsc(rootId));e.onComplete();}
+    private void loadOperationChain(long rootId) {
+        Observable.create((ObservableOnSubscribe<List<OperationWithChainAndResource>>) e -> {
+            e.onNext(operationWithChainAndResourceDao.getChainOperationsSortedAsc(rootId));
+            e.onComplete();
+        }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread())
+                .subscribe(operationWithChainAndResources -> {
+                    state.setOperationChainAndResource(operationWithChainAndResources);
+                    provideFragment().adapter.setData(state.getOperationChainAndResource());
+                    provideFragment().adapter.notifyDataSetChanged();
+//            provideFragment().binding.setResource(new pl.edu.agh.imageprocessing.data.remote.Resource(state.getOperationChainAndResource()));
+//            provideFragment().binding.notifyChange();
+//            provideFragment().binding.recyclerView.invalidate();
+//            provideFragment().binding.executePendingBindings();
+                });
     }
 
     private void showImage(Resource resource) {
@@ -140,6 +159,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                 .operationType(imageOperationType.name()).build();
         Observable<Long> prcessingOperationObservable = Observable.create(e -> {
             try {
+                oper.setStatus(OperationStatus.CREATED);
                 Long id = operationDao.save(oper);
                 e.onNext(id);
                 e.onComplete();
@@ -147,7 +167,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                 e.onError(error);
             }
         });
-       return prcessingOperationObservable.subscribeOn(Schedulers.computation())
+        return prcessingOperationObservable.subscribeOn(Schedulers.computation())
                 .doOnError(throwable -> Log.i(TAG, "callImageOperation: " + throwable.getMessage()))
                 .map(id -> imageOperationResolver.processResult(imageOperationResolver.resolveOperation(imageOperationType, parameter, id).execute()))
                 .subscribeOn(Schedulers.computation())
@@ -216,7 +236,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
 
     private List<Resource> getResourceByTypeFromOperationWithResourceEntity(OperationWithChainAndResource operationWithChainAndResource, ResourceType resourceType, int limit) {
         if (operationWithChainAndResource == null || operationWithChainAndResource.getResource() == null || operationWithChainAndResource.getResource().size() == 0) {
-            throw new AssertionError();
+            throw new AssertionError(); //todo to delete
         }
         List<Resource> result = new LinkedList<>();
         for (int i = 0; i < operationWithChainAndResource.getResource().size(); i++) {
@@ -230,18 +250,23 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
 
         return result;
     }
-
-    public void setData(OperationWithChainAndResource data) {
-        state.setOperationWithResource = data;
-        state.setBaseResource(getResourceByTypeFromOperationWithResourceEntity(data, ResourceType.IMAGE_FILE, 1).get(0));
-        setUp();
-        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(state.getBaseResource().getContent())));
-//        provideFragment().binding. new pl.edu.agh.imageprocessing.data.remote.Resource(Arrays.asList(data)))
-        data.getOperation().setOperationType("basic image");
-        provideFragment().binding.setResource(new pl.edu.agh.imageprocessing.data.remote.Resource(Arrays.asList(data)));
-
+    private OperationWithChainAndResource getLastFinishedOperation(List<OperationWithChainAndResource> operationWithChainAndResources){
+        if( operationWithChainAndResources.size() == 0){
+            Log.e(TAG, "getLastFinishedOperation: ",new AssertionError("Passed zero length list") );
+        }
+        for (int i = operationWithChainAndResources.size()-1; i >=0; i--) {
+            if ( operationWithChainAndResources.get(i).getOperation().getStatus() == OperationStatus.FINISHED ){
+                return operationWithChainAndResources.get(i);
+            }
+        }
+        Log.e(TAG, "getLastFinishedOperation: ", new AssertionError("operation chain with no saved resource file"));
+        throw new RuntimeException();
     }
 
+    @Subscribe
+    public void setExpandedOperationId(Long operationId){
+        state.setExpandedOperationId(operationId);
+    }
     @Subscribe
     public void chainOperation(ChainOperationEvent event) {
         Observable.create((ObservableOnSubscribe<Boolean>) e -> {
@@ -250,9 +275,9 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                                             .get(event.getBaseOperationId()).blockingFirst(),
                                     operationDao
                                             .get(event.getProcessingOperationId()).blockingFirst()));
-                        e.onComplete();
-        }
-                        )
+                    e.onComplete();
+                }
+        )
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread()).subscribe(
                 aBoolean -> {
@@ -264,11 +289,22 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                 });
     }
 
-    private void setUp() {
+    @Subscribe
+    public void notifyDataChanged(DataChangedEvent event) {
+
+    }
+
+    private Long setUp(Long rootOperationId) {
+        loadOperationChain(rootOperationId);
         provideActivity().binding.doOper.setOnFabClickListener(view -> {
             //todo nothing if accepted
-            state.setBaseResource(state.getProcessingResource());
-            EventBus.getDefault().post(new ChainOperationEvent(state.getBaseResource().getOperationId(), state.getProcessingResource().getOperationId()));
+//            state.setBaseResource(state.getProcessingResource());
+            OperationWithChainAndResource lastFinished = getLastFinishedOperation(state.getOperationChainAndResource());
+            if(lastFinished.getOperation().getParentOperationId()!=null){
+                throw new RuntimeException("Cannot chain already chained operation");
+            }
+            EventBus.getDefault().post(new ChainOperationEvent(lastFinished.getOperation().getId()
+                    , state.getProcessingResource().getOperationId()));
             EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
             EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
             operationResourceAPIRepository.deleteUnchainedOperations();
@@ -283,8 +319,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
 
 
     public class ImageOperationViewModelState {
-        private Resource processingResource;
-        private Resource baseResource;
+        private Long expandedOperationId;
         private ImageOperationType operationType;
         private int morphologyWidth;
         private int morphologyHeight;
@@ -293,7 +328,32 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         private int matrixHeight;
         private int matrixWidth;
         private int[] matrix;
-        public OperationWithChainAndResource setOperationWithResource;
+        private List<OperationWithChainAndResource> operationChainAndResource;
+        private Long rootOperationId;
+
+        public List<OperationWithChainAndResource> getOperationChainAndResource() {
+            return operationChainAndResource;
+        }
+
+        public Long getExpandedOperationId() {
+            return expandedOperationId;
+        }
+
+        public void setExpandedOperationId(Long expandedOperationId) {
+            this.expandedOperationId = expandedOperationId;
+        }
+
+        public Long getRootOperationId() {
+            return rootOperationId;
+        }
+
+        public void setRootOperationId(Long rootOperationId) {
+            this.rootOperationId = rootOperationId;
+        }
+
+        public void setOperationChainAndResource(List<OperationWithChainAndResource> operationChainAndResource) {
+            this.operationChainAndResource = operationChainAndResource;
+        }
 
         public ImageOperationType getOperationType() {
             return operationType;
@@ -301,22 +361,6 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
 
         public void setOperationType(ImageOperationType operationType) {
             this.operationType = operationType;
-        }
-
-        public Resource getProcessingResource() {
-            return processingResource;
-        }
-
-        public void setProcessingResource(Resource processingResource) {
-            this.processingResource = processingResource;
-        }
-
-        public Resource getBaseResource() {
-            return baseResource;
-        }
-
-        public void setBaseResource(Resource baseResource) {
-            this.baseResource = baseResource;
         }
 
         public int getMorphologyWidth() {

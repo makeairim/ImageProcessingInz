@@ -10,8 +10,11 @@ import java.util.List;
 import javax.inject.Inject;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
+import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
+import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
+import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
@@ -35,13 +38,16 @@ public class ImageOperationResolver {
     ResourceDao resourceDao;
     @Inject
     OperationResourceAPIRepository operationResourceAPIRepository;
+    @Inject
+    OperationDao operationDao;
 
     @Inject
-    public ImageOperationResolver(Context context, FileTools fileTools, ResourceDao resourceDao, OperationResourceAPIRepository operationResourceAPIRepository) {
+    public ImageOperationResolver(Context context, FileTools fileTools, ResourceDao resourceDao, OperationResourceAPIRepository operationResourceAPIRepository,OperationDao operationDao) {
         this.fileTools = fileTools;
         this.context = context;
         this.resourceDao = resourceDao;
         this.operationResourceAPIRepository = operationResourceAPIRepository;
+        this.operationDao= operationDao;
     }
 
     public BasicOperation resolveOperation(ImageOperationType type, ImageOperationResolverParameters parameters, long processingOperationId) throws IOException {
@@ -126,16 +132,19 @@ public class ImageOperationResolver {
     public Resource processResult(BasicOperation execute) {
         Uri fileUri = fileTools.saveFile(execute.getBitmap());
         List<Resource> resId = resourceDao.getByOperationAndType(execute.getParameter().getOperationId(), ResourceType.IMAGE_FILE.name());
+        Resource result=null;
         if (resId.size() != 0) {
             if (resId.size() > 1) throw new AssertionError();
             resId.get(0).setContent(fileUri.toString());
             resourceDao.update(resId.get(0));
-            return resId.get(0);
+            result=resId.get(0);
         }
-        return operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
+        result= operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
                 fileUri.toString(), execute
                 .getParameter()
                 .getOperationId()).blockingSingle();
+        operationDao.updateStatus(execute.getParameter().getOperationId(), OperationStatus.FINISHED);
+        return result;
 //        resourceDao.save(new Resource.Builder()
 //                .operationId(execute
 //                        .getParameter()

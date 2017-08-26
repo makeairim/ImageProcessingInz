@@ -41,21 +41,21 @@ import pl.edu.agh.imageprocessing.features.detail.viemodel.ImageOperationViewMod
 
 public class ImageOperationFragment  extends BaseFragment {
     public PhotoViewBinding binding;
-    public static final String KEY_RESOURCE="KEY_RESOURCE";
+    public static final String KEY_ROOT_ID="KEY_ROOT_ID";
     @Inject
     ViewUtils viewUtils;
     @Inject
     ViewModelProvider.Factory viewModelFactory;
+    Long rootOperationId;
 
-    private OperationWithChainAndResource resource;
+    public OperationFragmentListAdapter adapter;
 
-    public static ImageOperationFragment newInstance(OperationWithChainAndResource resource) {
+    public static ImageOperationFragment newInstance(Long rootOperationId) {
         ImageOperationFragment f = new ImageOperationFragment();
 
         // Supply  index input as an argument.
         Bundle args = new Bundle();
-        args.putParcelable(KEY_RESOURCE,resource);
-        args.putString("LAMBADA","TEST");
+        args.putLong(KEY_ROOT_ID,rootOperationId);
         f.setArguments(args);
         return f;
     }
@@ -76,8 +76,8 @@ public class ImageOperationFragment  extends BaseFragment {
             EventBus.getDefault().register(this);
         }
         if( bundle!=null){
-            this.resource=bundle.getParcelable(KEY_RESOURCE);
-            bindDataToModel(resource);
+            this.rootOperationId=bundle.getLong(KEY_ROOT_ID);
+            bindDataToModel(rootOperationId);
         }
     }
 
@@ -88,12 +88,13 @@ public class ImageOperationFragment  extends BaseFragment {
         binding= DataBindingUtil.inflate(inflater, R.layout.photo_view,container,false);
         binding.setViewModel(getViewModel());
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.recyclerView.setAdapter(new OperationFragmentListAdapter(getViewModel()));
+        adapter=new OperationFragmentListAdapter(getViewModel());
+        binding.recyclerView.setAdapter(adapter);
         return binding.getRoot();
     }
 
-    private void bindDataToModel(OperationWithChainAndResource data){
-        getViewModel().setData(data);
+    private void bindDataToModel(Long rootOperationId){
+        getViewModel().setData(rootOperationId);
         EventBus.getDefault().register(viewModel);
     }
     private ImageOperationViewModel getViewModel() {

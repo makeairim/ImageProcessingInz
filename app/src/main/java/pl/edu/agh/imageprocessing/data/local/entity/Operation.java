@@ -10,6 +10,8 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.Date;
 
+import pl.edu.agh.imageprocessing.data.local.OperationStatus;
+
 /**
  * Created by bwolcerz on 22.07.2017.
  */
@@ -31,7 +33,8 @@ public class Operation implements Parcelable{
     @SerializedName("operation_type")
     private String operationType;
 
-
+    @SerializedName("status")
+    private OperationStatus status;
 
     public Operation() {
     }
@@ -42,6 +45,7 @@ public class Operation implements Parcelable{
         setNextOperationId(builder.nextOperationId);
         setCreationDate(builder.creationDate);
         setOperationType(builder.operationType);
+        setStatus(builder.status);
     }
 
     public long getId() {
@@ -84,12 +88,21 @@ public class Operation implements Parcelable{
         this.operationType = operationType;
     }
 
+    public OperationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OperationStatus status) {
+        this.status = status;
+    }
+
     public static final class Builder {
         private long id;
         private Long parentOperationId;
         private Long nextOperationId;
         private Date creationDate;
         private String operationType;
+        private OperationStatus status;
 
         public Builder() {
         }
@@ -119,6 +132,11 @@ public class Operation implements Parcelable{
             return this;
         }
 
+        public Builder status(OperationStatus val) {
+            status = val;
+            return this;
+        }
+
         public Operation build() {
             return new Operation(this);
         }
@@ -136,6 +154,7 @@ public class Operation implements Parcelable{
         dest.writeValue(this.nextOperationId);
         dest.writeLong(this.creationDate != null ? this.creationDate.getTime() : -1);
         dest.writeString(this.operationType);
+        dest.writeInt(this.status == null ? -1 : this.status.ordinal());
     }
 
     protected Operation(Parcel in) {
@@ -145,6 +164,8 @@ public class Operation implements Parcelable{
         long tmpCreationDate = in.readLong();
         this.creationDate = tmpCreationDate == -1 ? null : new Date(tmpCreationDate);
         this.operationType = in.readString();
+        int tmpStatus = in.readInt();
+        this.status = tmpStatus == -1 ? null : OperationStatus.values()[tmpStatus];
     }
 
     public static final Creator<Operation> CREATOR = new Creator<Operation>() {

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6700dee338e0fd880eace6135e7a5475",
+    "identityHash": "28f543975e89083c8ddbb1459b86810f",
     "entities": [
       {
         "tableName": "operation",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `parentOperationId` INTEGER, `nextOperationId` INTEGER, `creationDate` INTEGER, `operationType` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `parentOperationId` INTEGER, `nextOperationId` INTEGER, `creationDate` INTEGER, `operationType` TEXT, `status` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -35,6 +35,12 @@
           {
             "fieldPath": "operationType",
             "columnName": "operationType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
             "affinity": "TEXT",
             "notNull": false
           }
@@ -95,7 +101,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"6700dee338e0fd880eace6135e7a5475\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"28f543975e89083c8ddbb1459b86810f\")"
     ]
   }
 }

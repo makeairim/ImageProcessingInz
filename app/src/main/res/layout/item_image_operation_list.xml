@@ -27,9 +27,9 @@
                 android:layout_height="wrap_content"
                 android:textColor="@android:color/black"
                 android:layout_centerHorizontal="true"
-                android:text="@{resource.operation.operationType}"
                 android:layout_margin="5dp"
                 tools:text="NAME"/>
+            <!--android:text="@{resource.operation.operationType}-->
             <com.github.chuross.library.ExpandableLayout
                 android:id="@+id/expand_layout"
                 android:layout_below="@id/tv_name"

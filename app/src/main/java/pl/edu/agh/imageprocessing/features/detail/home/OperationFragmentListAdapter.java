@@ -92,9 +92,11 @@ public class OperationFragmentListAdapter extends BaseAdapter<OperationFragmentL
                     binding.expandLayout.collapse();
                 }
             });
-            Glide.with(binding.ivPhoto.getContext())
-                    .load(Uri.parse(operationWithChainAndResource.getImageFile())).apply(RequestOptions.placeholderOf(R.drawable.placeholder))
-                    .into(binding.ivPhoto);
+            if(operationWithChainAndResource.getImageFile()!=null && !operationWithChainAndResource.getImageFile().isEmpty()) {
+                Glide.with(binding.ivPhoto.getContext())
+                        .load(Uri.parse(operationWithChainAndResource.getImageFile())).apply(RequestOptions.placeholderOf(R.drawable.placeholder))
+                        .into(binding.ivPhoto);
+            }
 //            binding.executePendingBindings();
         }
     }

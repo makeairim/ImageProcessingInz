@@ -91,9 +91,6 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
             case R.id.export:
                 getViewModel().provideOperationTypes();
                 return true;
-            case R.id.grid:
-                getViewModel().showOperationRoots();
-                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -101,6 +98,11 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
     @OnClick(R.id.imageButton)
     public void setPhotoListener() {
         getViewModel().photoPicker();
+    }
+
+    @OnClick(R.id.grid)
+    public void showOperationChains() {
+        getViewModel().showOperationRoots();
     }
 
     @Subscribe

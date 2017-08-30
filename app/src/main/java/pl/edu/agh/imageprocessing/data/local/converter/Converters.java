@@ -1,8 +1,10 @@
-package pl.edu.agh.imageprocessing.data.local;
+package pl.edu.agh.imageprocessing.data.local.converter;
 
 import android.arch.persistence.room.TypeConverter;
 
 import java.util.Date;
+
+import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 
 /**
  * Created by bwolcerz on 19.08.2017.

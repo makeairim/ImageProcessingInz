@@ -31,6 +31,8 @@ public interface OperationDao {
     @Query("SELECT * FROM Operation WHERE id = :id")
     public Flowable<Operation> get(long id);
 
+    @Query("SELECT * FROM Operation WHERE status = 'CREATED' OR status = 'IN_PROGRESS' ORDER BY status DESC ,creationDate ASC LIMIT 1")
+    public Operation getOldestUnresolved();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long save(Operation operation);

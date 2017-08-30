@@ -2,6 +2,8 @@ package pl.edu.agh.imageprocessing.dagger;
 
 import android.app.Service;
 
+import javax.inject.Singleton;
+
 import dagger.Module;
 import dagger.Provides;
 
@@ -17,6 +19,7 @@ public class ServiceModule {
     }
 
     @Provides
+    @Singleton
     Service provideService() {
         return service;
     }

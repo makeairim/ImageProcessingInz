@@ -1,11 +1,11 @@
 package pl.edu.agh.imageprocessing;
 
-import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
 import org.junit.After;
 import org.junit.Before;
@@ -19,19 +19,19 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import io.reactivex.Flowable;
+import io.reactivex.Observable;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.ImageProcessingAPIDatabase;
+import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
-
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
-import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 
 import static org.junit.Assert.assertEquals;
@@ -50,7 +50,7 @@ public class DatabaseUnitTest {
     @Rule
     public ActivityTestRule<HomeActivity> mActivityRule = new ActivityTestRule(HomeActivity.class);
     private ResourceDao resourceDao;
-     OperationWithChainAndResourceDao operationWithResDao;
+    OperationWithChainAndResourceDao operationWithResDao;
 
 
     @Inject
@@ -63,7 +63,7 @@ public class DatabaseUnitTest {
         db = Room.inMemoryDatabaseBuilder(context, ImageProcessingAPIDatabase.class).build();
         operationDao = db.operationDao();
         resourceDao = db.resourceDao();
-        operationWithResDao=db.operationWithChainAndResourceDao();
+        operationWithResDao = db.operationWithChainAndResourceDao();
     }
 
     @After
@@ -87,7 +87,7 @@ public class DatabaseUnitTest {
     public void testRelationOperationResourceChainDao() {
         Operation oper = createOperation();
         operationDao.save(oper);
-        oper=operationDao.all().get(0);
+        oper = operationDao.all().get(0);
 
         resourceDao.save(createResourceFileMock());
         Resource res = createResourceFileMock();
@@ -107,26 +107,42 @@ public class DatabaseUnitTest {
         assertNotNull(operationsWithEntities.get(0).getResource());
         assertTrue(operationsWithEntities.get(0).getResource().get(0).getContent().equals(otherFileName));
     }
+
     @Test
-    public void testOperationChainRetrieve(){
+    public void testOperationChainRetrieve() {
         Operation parent = createOperation();
         parent.setId(operationDao.save(parent));
         long parentId = parent.getId();
         Operation oper = createOperation();
         oper.setParentOperationId(parentId);
         oper.setId(operationDao.save(oper));
-        chainOperations(parent,oper);
+        chainOperations(parent, oper);
         Operation oper1 = createOperation();
         oper1.setId(operationDao.save(oper1));
-        chainOperations(oper,oper1);
+        chainOperations(oper, oper1);
         List<Operation> all = operationDao.all();
-        Flowable<List<OperationWithChainAndResource>> result = operationWithResDao.getChainOperationsSortedAsc(parentId);
-        result.subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread()).subscribe(operationWithChainAndResources -> {
-        assertTrue(operationWithChainAndResources.size()>0);
+        Observable<List<OperationWithChainAndResource>> result = Observable.create((ObservableOnSubscribe<List<OperationWithChainAndResource>>) e -> {
+            e.onNext(operationWithResDao.getChainOperationsSortedAsc(parentId));
+            e.onComplete();
         });
-
-
+        result.subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread()).subscribe(operationWithChainAndResources -> {
+            assertTrue(operationWithChainAndResources.size() > 0);
+        });
     }
+
+    public static final String TAG = DatabaseUnitTest.class.getSimpleName();
+
+    @Test
+    public void testOldestOperationQuery() {
+        Operation oper = createOperation();
+        operationDao.save(oper);
+        operationDao.save(createOperation());
+
+        Operation operation = operationDao.getOldestUnresolved();
+        Log.i(TAG, "testOldestOperationQuery: " + operation.getCreationDate() + " " + operation.getId());
+        assertTrue(oper.getCreationDate().equals(operation.getCreationDate()));
+    }
+
     public Resource createResourceFileMock() {
         Resource res = new Resource();
         res.setContent("some file uri");
@@ -135,8 +151,10 @@ public class DatabaseUnitTest {
     }
 
     private Operation createOperation() {
-        return new Operation.Builder().creationDate(new Date(System.currentTimeMillis())).operationType(ImageOperationType.BINARIZATION.name()).build();
+        return new Operation.Builder().creationDate(new Date(System.currentTimeMillis())).operationType(ImageOperationType.BINARIZATION.name())
+                .status(OperationStatus.CREATED).build();
     }
+
     public boolean chainOperations(Operation parent, Operation child) {
         parent.setNextOperationId(child.getId());
         child.setParentOperationId(parent.getParentOperationId() != null ? parent.getParentOperationId() : parent.getId());

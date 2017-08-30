@@ -22,13 +22,13 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
+import pl.edu.agh.imageprocessing.data.local.converter.UriSerializer;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
@@ -119,11 +119,11 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     }
 
 
-    private Operation creteOperation(ImageOperationType type, ImageOperationResolverParameters parameters){
+    private Operation createOperation(ImageOperationType type, ImageOperationResolverParameters parameters){
         return new Operation.Builder()
                 .creationDate(new Date(System.currentTimeMillis()))
                 .operationType(type.name())
-                .object(new GsonBuilder().create().toJson(parameters)).build();
+                .object(new GsonBuilder().registerTypeAdapter(Uri.class,new UriSerializer()).create().toJson(parameters)).build();
     }
     private void saveOperation(Operation oper){
         Observable<Long> prcessingOperationObservable = Observable.create(e -> {
@@ -152,7 +152,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             state.setMatrixWidth(width1);
             state.setMatrixHeight(height1);
             state.setMatrix(matrix);
-            saveOperation(creteOperation(imageOperationType, mapStateToParameter(state)));
+            saveOperation(createOperation(imageOperationType, mapStateToParameter(state)));
             //todo notify data changed;
 //            callImageOperation(mapStateToParameter(state), imageOperationType).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
 //                state.setProcessingResource(resource);
@@ -171,7 +171,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             state.setMorphologyWidth(width);
             state.setMorphologyHeight(height);
             state.setMorphologyElementType(OpenCvTypes.MORPH_ELEMENTS.getTypeFromName(elementType));
-            saveOperation(creteOperation(imageOperationType, mapStateToParameter(state)));
+            saveOperation(createOperation(imageOperationType, mapStateToParameter(state)));
             //            callImageOperation(mapStateToParameter(state), imageOperationType).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
 //                state.setProcessingResource(resource);
 //                EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
@@ -213,7 +213,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                     Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
                     state.setThreshold(i);
                     EventBus.getDefault().post(new EventSimpleDataMsg(String.valueOf(state.getThreshold())));
-                    saveOperation(creteOperation(BINARIZATION, mapStateToParameter(state)));
+                    saveOperation(createOperation(BINARIZATION, mapStateToParameter(state)));
                     //                    callImageOperation(mapStateToParameter(state), BINARIZATION).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
 //                        state.setProcessingResource(resource);
 //                        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));

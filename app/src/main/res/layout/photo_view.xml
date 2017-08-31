@@ -34,45 +34,6 @@
 
         </RelativeLayout>
 
-        <RelativeLayout
-            android:id="@+id/parent_seekbar"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_gravity="bottom"
-            android:layout_weight="0.1"
-            android:background="@color/colorPrimary"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="horizontal">
-
-                <com.projects.alshell.android.TerminalSeekBar
-                    android:id="@+id/seekbar"
-                    android:layout_width="266dp"
-                    android:layout_height="27dp"
-                    android:layout_marginBottom="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp"
-                    android:paddingEnd="6dp"
-                    android:paddingRight="6dp"
-                    android:paddingTop="3dp"
-                    app:layout_constraintBottom_toBottomOf="parent" />
-                <!--todo change to edittext-->
-                <TextView
-                    android:id="@+id/textView_seekbarprogress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginBottom="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginStart="8dp"
-                    tools:text="200" />
-            </LinearLayout>
-        </RelativeLayout>
 
     </LinearLayout>
 

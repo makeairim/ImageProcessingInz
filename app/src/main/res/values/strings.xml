@@ -8,4 +8,5 @@
     <string name="title_dilation_dialog">Choose dilation parameters</string>
     <string name="title_erosion_dialog">Choose erosion parameters</string>
     <string name="title_matrix_value_dialog">Choose matrix values</string>
+    <string name="dialog_threshold_desc">Threshold</string>
 </resources>

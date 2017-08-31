@@ -4,39 +4,23 @@ import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.databinding.DataBindingUtil;
-import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
-import android.util.EventLog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-
-import java.util.List;
 
 import javax.inject.Inject;
 
 import dagger.android.support.AndroidSupportInjection;
 import pl.edu.agh.imageprocessing.BaseFragment;
 import pl.edu.agh.imageprocessing.R;
-import pl.edu.agh.imageprocessing.dagger.GlideApp;
-import pl.edu.agh.imageprocessing.data.local.entity.Operation;
-import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.databinding.ListOperationsViewBinding;
-import pl.edu.agh.imageprocessing.databinding.PhotoViewBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.ViewUtils;
-import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
-import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
-import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
-import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewSeekBarVisibility;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventSimpleDataMsg;
-import pl.edu.agh.imageprocessing.features.detail.viemodel.ImageOperationViewModel;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.ListOperationsViewModel;
 
 /**

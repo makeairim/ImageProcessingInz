@@ -24,7 +24,6 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.R;
-import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
@@ -35,6 +34,7 @@ import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDa
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
+import pl.edu.agh.imageprocessing.features.detail.android.BinarizationCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.DilationErosionCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.MatrixCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ChainOperationEvent;
@@ -43,8 +43,6 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
-import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewSeekBarVisibility;
-import pl.edu.agh.imageprocessing.features.detail.android.event.EventSimpleDataMsg;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarizationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
@@ -190,12 +188,19 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
 //    }
 
     private ImageOperationResolverParameters mapStateToParameter(ImageOperationViewModelState state) {
-        List<Resource> lastOperationResource = getResourceByTypeFromOperationWithResourceEntity(
-                state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1),
-                ResourceType.IMAGE_FILE,
-                1);
+        OperationWithChainAndResource lastOperationResource = getLastFinishedOperation(state.getOperationChainAndResource());
+        //getResourceByTypeFromOperationWithResourceEntity(
+//                state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1),
+//                ResourceType.IMAGE_FILE,
+//                1);
+        Resource lastFinishedOperationResource=null;
+        for (Resource resource : lastOperationResource.getResource()) {
+            if( ResourceType.IMAGE_FILE.equals(ResourceType.valueOf(resource.getType())) ){
+                lastFinishedOperationResource=resource;
+            }
+        }
         return new ImageOperationResolverParameters.Builder()
-                .imageUri(Uri.parse(lastOperationResource.get(0).getContent()))
+                .imageUri(Uri.parse(lastFinishedOperationResource.getContent()))
                 .matrix(state.getMatrix())
                 .matrixHeight(state.getMatrixHeight())
                 .matrixWidth(state.getMatrixWidth())
@@ -209,22 +214,28 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     @Subscribe
     public void showBinarization(ShowBinarizationEvent event) {
         state.setOperationType(BINARIZATION);
-        provideFragment().binding.seekbar.setSeekBarValueChangedListener((i, b) -> {
-                    Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
-                    state.setThreshold(i);
-                    EventBus.getDefault().post(new EventSimpleDataMsg(String.valueOf(state.getThreshold())));
-                    saveOperation(createOperation(BINARIZATION, mapStateToParameter(state)));
-                    //                    callImageOperation(mapStateToParameter(state), BINARIZATION).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
-//                        state.setProcessingResource(resource);
-//                        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
-//                        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
-//                    });
+        FragmentManager fm = provideActivity().getSupportFragmentManager();
+        BinarizationCustomDialog dialog = BinarizationCustomDialog.newInstance("Binarization threshold");
+        dialog.show(fm, "operation_parameters");
+        dialog.setListener(threshold -> {
+            state.setThreshold(threshold);
+            saveOperation(createOperation(BINARIZATION, mapStateToParameter(state)));
+            EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
+        });
+//        provideFragment().binding.seekbar.setSeekBarValueChangedListener((i, b) -> {
+//                    Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
+//                    state.setThreshold(i);
+//                    EventBus.getDefault().post(new EventSimpleDataMsg(String.valueOf(state.getThreshold())));
+//                    saveOperation(createOperation(BINARIZATION, mapStateToParameter(state)));
+//                    //                    callImageOperation(mapStateToParameter(state), BINARIZATION).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
+////                        state.setProcessingResource(resource);
+////                        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
+////                        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
+////                    });
+//
+//                }
+//        );
 
-                }
-        );
-        EventBus.getDefault().post(new EventBasicViewSeekBarVisibility(EventBasicView.ViewState.VISIBLE));
-        provideFragment().binding.seekbar.setMaxValue(AppConstants.MAX_ADAPTIVE_THRESHOLD);
-        EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
     }
 
     @Subscribe

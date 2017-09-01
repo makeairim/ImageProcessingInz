@@ -26,7 +26,7 @@ public interface OperationWithChainAndResourceDao {
             "AND op.parentOperationId Is NULL AND op.nextOperationId is NULL")
     Flowable<List<OperationWithChainAndResource>> getUnchainedOperationsByType(String type);
     @Query("SELECT * FROM Operation op WHERE op.parentOperationId =:parentId  OR op.id=:parentId" +
-            " ORDER BY op.nextOperationId DESC ")
+            " ORDER BY op.id")
     List<OperationWithChainAndResource> getChainOperationsSortedAsc(long parentId);
 
 }

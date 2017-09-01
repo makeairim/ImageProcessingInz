@@ -24,18 +24,20 @@
             android:text="@string/dialog_threshold_desc"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/txt_width"
+            app:layout_constraintEnd_toStartOf="@+id/txt_threshold"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp"
             app:layout_constraintBottom_toTopOf="@+id/seekbar" />
 
         <EditText
             android:id="@+id/txt_threshold"
-            android:layout_width="24dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/desc1"
             android:imeOptions="actionDone"
             android:inputType="number"
+            android:maxLength="4"
+            android:ems="4"
             app:layout_constraintStart_toEndOf="@+id/desc1"
             app:layout_constraintBottom_toTopOf="@+id/seekbar"
             app:layout_constraintEnd_toStartOf="@+id/accept_params"

@@ -5,6 +5,8 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialogFragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +30,7 @@ import pl.edu.agh.imageprocessing.app.constants.AppConstants;
  */
 
 public class BinarizationCustomDialog extends BottomSheetDialogFragment {
+    public static final String TAG=BinarizationCustomDialog.class.getSimpleName();
 
     private RtlMaterialSpinner spinner;
     private DialogListener listener;
@@ -89,8 +92,24 @@ public class BinarizationCustomDialog extends BottomSheetDialogFragment {
 
                 String text = editable.toString();
                 if( !text.isEmpty() ){
-                    int threshold = Integer.parseInt(text);
-                    mThresholdBar.setProgress(threshold);
+                    try {
+                        int threshold = Integer.parseInt(text);
+                        if(threshold>=0 && threshold<=AppConstants.MAX_ADAPTIVE_THRESHOLD) {
+                            mThresholdBar.setProgress(threshold);
+                        }else{
+                            Toast toast= Toast.makeText(getContext(),
+                            getContext().getString(R.string.toast_invalid_boundary,0,AppConstants.MAX_ADAPTIVE_THRESHOLD), Toast.LENGTH_SHORT);
+                            toast.setGravity(Gravity.TOP| Gravity.CENTER_HORIZONTAL, 0, 0);
+                            toast.show();
+                            if(threshold<0){
+                                mThresholdEditText.setText(String.valueOf(0));
+                            }else{
+                                mThresholdEditText.setText(String.valueOf(AppConstants.MAX_ADAPTIVE_THRESHOLD));
+                            }
+                        }
+                    }catch(NumberFormatException e){
+                        Log.e(TAG, "afterTextChanged: ",e );
+                    }
                 }
             }
         });

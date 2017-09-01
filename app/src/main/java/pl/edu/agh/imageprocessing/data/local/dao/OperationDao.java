@@ -22,7 +22,7 @@ public interface OperationDao {
     @Query("SELECT * FROM Operation")
     List<Operation> all();
 
-    @Query("SELECT * FROM Operation WHERE parentOperationId is NULL")
+    @Query("SELECT * FROM Operation WHERE parentOperationId is NULL ORDER BY creationDate DESC")
     public List<Operation> chainRoots();
 
     @Query("SELECT * FROM Operation WHERE parentOperationId=:parentId")

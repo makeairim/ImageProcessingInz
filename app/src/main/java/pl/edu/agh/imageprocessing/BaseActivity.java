@@ -26,7 +26,6 @@ import pl.edu.agh.imageprocessing.features.detail.viemodel.BaseViewModel;
 public class BaseActivity extends AppCompatActivity implements LifecycleRegistryOwner {
     protected LifecycleRegistry lifecycleRegistry = new LifecycleRegistry(this);
 
-
     protected BaseViewModel viewModel;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -50,16 +49,13 @@ public class BaseActivity extends AppCompatActivity implements LifecycleRegistry
         @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
         public void onCreate() {
             viewModel.setBinding(activity);
-            EventBus.getDefault().register(viewModel);
         }
 
         @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
         public void onResume() {
             viewModel.setBinding(activity);
             EventBus.getDefault().register(activity);
-            if(!EventBus.getDefault().isRegistered(viewModel)) {
-                EventBus.getDefault().register(viewModel);
-            }
+            EventBus.getDefault().register(viewModel);
             viewModel.setUp();
 
         }
@@ -68,7 +64,18 @@ public class BaseActivity extends AppCompatActivity implements LifecycleRegistry
             EventBus.getDefault().unregister(activity);
             EventBus.getDefault().unregister(viewModel);
         }
+
     }
 
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        viewModel.restoreState(savedInstanceState.getBundle(BaseViewModel.STATE_KEY));
+    }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBundle(BaseViewModel.STATE_KEY, viewModel.saveState() );
+    }
 }

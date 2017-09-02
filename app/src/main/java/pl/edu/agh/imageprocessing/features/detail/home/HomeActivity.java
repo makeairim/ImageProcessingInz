@@ -1,5 +1,6 @@
 package pl.edu.agh.imageprocessing.features.detail.home;
 
+import android.app.FragmentManager;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
@@ -24,6 +25,7 @@ import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.support.HasSupportFragmentInjector;
 import pl.edu.agh.imageprocessing.BaseActivity;
+import pl.edu.agh.imageprocessing.BaseFragment;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.databinding.ActivityHomeBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.ViewUtils;
@@ -38,8 +40,10 @@ import static pl.edu.agh.imageprocessing.features.detail.android.event.EventBasi
 
 public class HomeActivity extends BaseActivity implements HasSupportFragmentInjector {
 
+    public static final String RETAINED_FRAGMENT_TAG = "RETAINED_FRAGMENT_TAG";
     private final String TAG = HomeActivity.class.getSimpleName();
     public static final String KEY_HOME_ACTIVITY_ID = "key__home_activity_id";
+
     @Inject
     ViewUtils viewUtils;
 
@@ -55,7 +59,13 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
     @Inject
     ViewModelProvider.Factory viewModelFactory;
 
-
+    public BaseFragment getActiveFragment() {
+        if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+            return null;
+        }
+        String tag = getSupportFragmentManager().getBackStackEntryAt(getSupportFragmentManager().getBackStackEntryCount() - 1).getName();
+        return (BaseFragment) getSupportFragmentManager().findFragmentByTag(tag);
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         AndroidInjection.inject(this);
@@ -74,6 +84,15 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
         binding.recyclerView.setOnNoChildClickListener(getViewModel().onOutsideListClick);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerView.setAdapter(new OperationHomeListAdapter(getViewModel()));
+        // find the retained fragment on activity restarts
+        // create the fragment and data the first time
+//        if (mRetainedFragment == null) {
+//            // add the fragment
+//            mRetainedFragment = new RetainedFragment();
+//            fm.beginTransaction().add(mRetainedFragment, TAG_RETAINED_FRAGMENT).commit();
+//            // load data from a data source or perform any calculation
+//            mRetainedFragment.setData(loadMyData());
+//        }
 
     }
 

@@ -1,7 +1,7 @@
 package pl.edu.agh.imageprocessing.features.detail.viemodel;
 
 import android.content.Context;
-import android.net.Uri;
+import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
@@ -12,22 +12,19 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.util.Collections;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.exceptions.OnErrorNotImplementedException;
 import io.reactivex.schedulers.Schedulers;
+import pl.edu.agh.imageprocessing.BaseFragment;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
-import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
-import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
@@ -69,7 +66,19 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
     @Override
     public void setUp() {
+        BaseFragment mRetainedFragment = provideActivity().getActiveFragment();
+        if ( mRetainedFragment == null){
             showOperationRoots();
+        }
+    }
+
+    @Override
+    public Bundle saveState() {
+        return null;
+    }
+
+    @Override
+    public void restoreState(Bundle bundle){
     }
 
 
@@ -88,36 +97,40 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
             Observable.create(e -> e.onNext(fileTools.saveFile(pickResult.getBitmap(), context)))
                     .subscribeOn(Schedulers.computation())
                     .observeOn(Schedulers.computation())
-                    .subscribe(o ->{
-                            Operation operation=operationResourceAPIRepository.createOperation();
-                            operation.setOperationType(ImageOperationType.BASIC_PHOTO.name());
-                            operation.setStatus(OperationStatus.FINISHED);
-                            operation.setId(operationDao.save(operation));
-                            operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(),operation.getId())
-                                    .observeOn(AndroidSchedulers.mainThread()).subscribe(res -> {
-                                //todo pass to fragment ids
+                    .subscribe(o -> {
+                        Operation operation = operationResourceAPIRepository.createOperation();
+                        operation.setOperationType(ImageOperationType.BASIC_PHOTO.name());
+                        operation.setStatus(OperationStatus.FINISHED);
+                        operation.setId(operationDao.save(operation));
+                        operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(), operation.getId())
+                                .observeOn(AndroidSchedulers.mainThread()).subscribe(res -> {
+                            //todo pass to fragment ids
 //                                state.setCurrentOperationId(idRes.getOperationId());
 //                                state.setCurrentImageUri((Uri) o);
 //                                res.setType(ImageOperationType.BASIC_PHOTO.name());
-                                state.setLastViewedOperation(res.getOperationId());
-                                EventBus.getDefault().post(new OperationsViewEvent(res.getOperationId()));
+                            EventBus.getDefault().post(new OperationsViewEvent(res.getOperationId()));
 
-                            });}); //todo failure so excpetion probably
+                        });
+                    }); //todo failure so excpetion probably
         }).show(provideActivity());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-     public void showImageOperation(OperationsViewEvent event) {
+    public void showImageOperation(OperationsViewEvent event) {
         //todo
         FragmentTransaction ft = provideActivity().getSupportFragmentManager().beginTransaction();
-        ft.replace(provideActivity().binding.container.getId(), ImageOperationFragment.newInstance(event.getId()));
+        ft.replace(provideActivity().binding.container.getId(), ImageOperationFragment.newInstance(event.getId()),HomeActivity.RETAINED_FRAGMENT_TAG);
+        ft.setTransition(FragmentTransaction.TRANSIT_ENTER_MASK);
+        ft.addToBackStack(HomeActivity.RETAINED_FRAGMENT_TAG);
         ft.commit();
     }
 
-     public void showOperationRoots() {
+    public void showOperationRoots() {
         //todo
         FragmentTransaction ft = provideActivity().getSupportFragmentManager().beginTransaction();
-        ft.replace(provideActivity().binding.container.getId(), ListOperationsFragment.newInstance());
+        ft.replace(provideActivity().binding.container.getId(), ListOperationsFragment.newInstance(),HomeActivity.RETAINED_FRAGMENT_TAG);
+        ft.setTransition(FragmentTransaction.TRANSIT_ENTER_MASK);
+        ft.addToBackStack(HomeActivity.RETAINED_FRAGMENT_TAG);
         ft.commit();
     }
 
@@ -125,7 +138,6 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     @Override
     public void onImageOperationClicked(ImageOperationType imageOperationType, View sharedView) {
         Log.i(TAG, "onImageOperationClicked: " + imageOperationType.name());
-        state.setOperationType(imageOperationType);
         EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.HIDEN));
 
         EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN)); //todo handle in fragment
@@ -159,27 +171,5 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
 
     public static class HomeViewModelState {
-        private Long lastViewedOperation;
-        private ImageOperationType operationType;
-
-        public HomeViewModelState() {
-
-        }
-
-        public Long getLastViewedOperation() {
-            return lastViewedOperation;
-        }
-
-        public void setLastViewedOperation(Long lastViewedOperation) {
-            this.lastViewedOperation = lastViewedOperation;
-        }
-
-        public void setOperationType(ImageOperationType operationType) {
-            this.operationType = operationType;
-        }
-
-        public ImageOperationType getOperationType() {
-            return operationType;
-        }
     }
 }

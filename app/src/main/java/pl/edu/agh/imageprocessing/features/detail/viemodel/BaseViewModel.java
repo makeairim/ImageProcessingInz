@@ -1,6 +1,7 @@
 package pl.edu.agh.imageprocessing.features.detail.viemodel;
 
 import android.arch.lifecycle.ViewModel;
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 
@@ -11,6 +12,7 @@ import pl.edu.agh.imageprocessing.BaseActivity;
  */
 
 public abstract class BaseViewModel extends ViewModel {
+    public static final String STATE_KEY="STATE_VIEWMODEL_KEY";
     private BaseActivity activity;
     private Fragment fragment;
     public void setBinding(Fragment fragment) {
@@ -34,4 +36,8 @@ public abstract class BaseViewModel extends ViewModel {
     }
 
     public abstract void setUp();
+    public abstract Bundle saveState();
+    public abstract void restoreState(Bundle bundle);
+
+
 }

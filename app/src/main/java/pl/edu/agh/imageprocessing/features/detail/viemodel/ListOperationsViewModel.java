@@ -1,6 +1,9 @@
 package pl.edu.agh.imageprocessing.features.detail.viemodel;
 
 import android.content.Context;
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.view.View;
 
 import org.greenrobot.eventbus.EventBus;
@@ -28,6 +31,7 @@ import pl.edu.agh.imageprocessing.features.detail.home.ListOperationsFragment;
 
 public class ListOperationsViewModel extends BaseViewModel implements ListOperationFragmentListCallback{
     public static final String TAG = ListOperationsViewModel.class.getSimpleName();
+    public static final String STATE_KEY="LIST_OPERATION_STATE_KEY";
     @Inject
     OperationDao operationDao;
     @Inject
@@ -58,6 +62,21 @@ public class ListOperationsViewModel extends BaseViewModel implements ListOperat
            EventBus.getDefault().post(new DataChangedEvent());
         });
     }
+
+    @Override
+    public Bundle saveState() {
+        Bundle bundle=new Bundle();
+        bundle.putParcelable(this.STATE_KEY,state);
+        return bundle;
+    }
+
+    @Override
+    public void restoreState(Bundle bundle) {
+        if( bundle!=null){
+            state=bundle.getParcelable(this.STATE_KEY);
+        }
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void notifyDataChanged(DataChangedEvent event){
         provideFragment().adapter.setData(state.getOperationRoots());
@@ -73,7 +92,7 @@ public class ListOperationsViewModel extends BaseViewModel implements ListOperat
 
 
 
-    public class ListOperationsViewModelState {
+    static public class ListOperationsViewModelState implements Parcelable{
         private List<Operation> operationRoots;
 
         public void setOperationRoots(List<Operation> operationRoots) {
@@ -83,5 +102,34 @@ public class ListOperationsViewModel extends BaseViewModel implements ListOperat
         public List<Operation> getOperationRoots() {
             return operationRoots;
         }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeTypedList(this.operationRoots);
+        }
+
+        public ListOperationsViewModelState() {
+        }
+
+        protected ListOperationsViewModelState(Parcel in) {
+            this.operationRoots = in.createTypedArrayList(Operation.CREATOR);
+        }
+
+        public static final Creator<ListOperationsViewModelState> CREATOR = new Creator<ListOperationsViewModelState>() {
+            @Override
+            public ListOperationsViewModelState createFromParcel(Parcel source) {
+                return new ListOperationsViewModelState(source);
+            }
+
+            @Override
+            public ListOperationsViewModelState[] newArray(int size) {
+                return new ListOperationsViewModelState[size];
+            }
+        };
     }
 }

@@ -2,6 +2,9 @@ package pl.edu.agh.imageprocessing.features.detail.viemodel;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import android.view.View;
@@ -64,6 +67,8 @@ import static pl.edu.agh.imageprocessing.data.ImageOperationType.EROSION;
 
 public class ImageOperationViewModel extends BaseViewModel implements OperationFragmentListCallback {
     public static final String TAG = ImageOperationFragment.class.getSimpleName();
+    public static final String STATE_KEY="IMAGE_OPERATION_VIEW_MODEL_STATE_KEY";
+
     @Inject
     OperationResourceAPIRepository operationResourceAPIRepository;
     @Inject
@@ -151,12 +156,6 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             state.setMatrixHeight(height1);
             state.setMatrix(matrix);
             saveOperation(createOperation(imageOperationType, mapStateToParameter(state)));
-            //todo notify data changed;
-//            callImageOperation(mapStateToParameter(state), imageOperationType).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
-//                state.setProcessingResource(resource);
-//                EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
-//                EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
-//            });
         });
 
     }
@@ -170,29 +169,12 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             state.setMorphologyHeight(height);
             state.setMorphologyElementType(OpenCvTypes.MORPH_ELEMENTS.getTypeFromName(elementType));
             saveOperation(createOperation(imageOperationType, mapStateToParameter(state)));
-            //            callImageOperation(mapStateToParameter(state), imageOperationType).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
-//                state.setProcessingResource(resource);
-//                EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
-//                EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
-//            });
         });
     }
 
-//    private Observable<Resource> callImageOperation(ImageOperationResolverParameters parameter, ImageOperationType imageOperationType) {
-//
-//        return prcessingOperationObservable.subscribeOn(Schedulers.computation())
-//                .doOnError(throwable -> Log.i(TAG, "callImageOperation: " + throwable.getMessage()))
-//                .map(id -> imageOperationResolver.processResult(imageOperationResolver.resolveOperation(imageOperationType, parameter, id).execute()))
-//                .subscribeOn(Schedulers.computation())
-//                .observeOn(AndroidSchedulers.mainThread());
-//    }
 
     private ImageOperationResolverParameters mapStateToParameter(ImageOperationViewModelState state) {
         OperationWithChainAndResource lastOperationResource = getLastFinishedOperation(state.getOperationChainAndResource());
-        //getResourceByTypeFromOperationWithResourceEntity(
-//                state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1),
-//                ResourceType.IMAGE_FILE,
-//                1);
         Resource lastFinishedOperationResource=null;
         for (Resource resource : lastOperationResource.getResource()) {
             if( ResourceType.IMAGE_FILE.equals(ResourceType.valueOf(resource.getType())) ){
@@ -222,20 +204,6 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             saveOperation(createOperation(BINARIZATION, mapStateToParameter(state)));
             EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
         });
-//        provideFragment().binding.seekbar.setSeekBarValueChangedListener((i, b) -> {
-//                    Log.i(TAG, "HomeViewModel: seekBar value changed:" + i);
-//                    state.setThreshold(i);
-//                    EventBus.getDefault().post(new EventSimpleDataMsg(String.valueOf(state.getThreshold())));
-//                    saveOperation(createOperation(BINARIZATION, mapStateToParameter(state)));
-//                    //                    callImageOperation(mapStateToParameter(state), BINARIZATION).subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(resource -> {
-////                        state.setProcessingResource(resource);
-////                        EventBus.getDefault().post(new EventSimpleDataMsg(Uri.parse(resource.getContent())));
-////                        EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.VISIBLE));
-////                    });
-//
-//                }
-//        );
-
     }
 
     @Subscribe
@@ -323,12 +291,6 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     }
     public void setUp() {
         provideActivity().binding.doOper.setOnFabClickListener(view -> {
-            //todo nothing if accepted
-//            state.setBaseResource(state.getProcessingResource());
-//            OperationWithChainAndResource lastFinished = getLastFinishedOperation(state.getOperationChainAndResource());
-//            if(lastFinished.getOperation().getParentOperationId()!=null){
-//                throw new RuntimeException("Cannot chain already chained operation");
-//            }
             EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
             EventBus.getDefault().post(new EventBasicViewConfirmActionVisiblity(EventBasicView.ViewState.HIDEN));
             operationResourceAPIRepository.deleteUnchainedOperations();
@@ -341,12 +303,28 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             operationResourceAPIRepository.deleteUnchainedOperations();
         });
     }
+
+    @Override
+    public Bundle saveState() {
+        Bundle bundle=new Bundle();
+        bundle.putParcelable(this.STATE_KEY,state);
+        return bundle;
+    }
+
+    @Override
+    public void restoreState(Bundle bundle) {
+        if( bundle != null){
+            state=bundle.getParcelable(this.STATE_KEY);
+        }
+
+    }
+
     public void setUp(Long rootOperationId) {
         loadOperationChain(rootOperationId);
     }
 
 
-    public class ImageOperationViewModelState {
+    static public class ImageOperationViewModelState implements Parcelable{
         private ImageOperationType operationType;
         private int morphologyWidth;
         private int morphologyHeight;
@@ -439,5 +417,53 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         public void setMatrix(int[] matrix) {
             this.matrix = matrix;
         }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeInt(this.operationType == null ? -1 : this.operationType.ordinal());
+            dest.writeInt(this.morphologyWidth);
+            dest.writeInt(this.morphologyHeight);
+            dest.writeInt(this.morphologyElementType);
+            dest.writeInt(this.threshold);
+            dest.writeInt(this.matrixHeight);
+            dest.writeInt(this.matrixWidth);
+            dest.writeIntArray(this.matrix);
+            dest.writeTypedList(this.operationChainAndResource);
+            dest.writeValue(this.rootOperationId);
+        }
+
+        public ImageOperationViewModelState() {
+        }
+
+        protected ImageOperationViewModelState(Parcel in) {
+            int tmpOperationType = in.readInt();
+            this.operationType = tmpOperationType == -1 ? null : ImageOperationType.values()[tmpOperationType];
+            this.morphologyWidth = in.readInt();
+            this.morphologyHeight = in.readInt();
+            this.morphologyElementType = in.readInt();
+            this.threshold = in.readInt();
+            this.matrixHeight = in.readInt();
+            this.matrixWidth = in.readInt();
+            this.matrix = in.createIntArray();
+            this.operationChainAndResource = in.createTypedArrayList(OperationWithChainAndResource.CREATOR);
+            this.rootOperationId = (Long) in.readValue(Long.class.getClassLoader());
+        }
+
+        public static final Creator<ImageOperationViewModelState> CREATOR = new Creator<ImageOperationViewModelState>() {
+            @Override
+            public ImageOperationViewModelState createFromParcel(Parcel source) {
+                return new ImageOperationViewModelState(source);
+            }
+
+            @Override
+            public ImageOperationViewModelState[] newArray(int size) {
+                return new ImageOperationViewModelState[size];
+            }
+        };
     }
 }

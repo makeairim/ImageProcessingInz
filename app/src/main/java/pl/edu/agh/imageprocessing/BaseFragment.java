@@ -25,13 +25,13 @@ import pl.edu.agh.imageprocessing.features.detail.viemodel.BaseViewModel;
 public class BaseFragment extends Fragment implements LifecycleRegistryOwner {
     protected LifecycleRegistry lifecycleRegistry = new LifecycleRegistry(this);
 
-
     protected BaseViewModel viewModel;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = super.onCreateView(inflater, container, savedInstanceState);
+        setRetainInstance(true);
 //        lifecycleRegistry.addObserver(new BaseFragment.BaseLifecycle(this, getActivity()));
         return view;
     }
@@ -68,9 +68,13 @@ public class BaseFragment extends Fragment implements LifecycleRegistryOwner {
         public void onResume() {
             viewModel.setBinding(fragment);
             viewModel.setBinding((BaseActivity) baseActivity);
-            viewModel.setUp();
-            EventBus.getDefault().register(fragment);
-            EventBus.getDefault().register(viewModel);
+            if(!EventBus.getDefault().isRegistered(fragment)) {
+                EventBus.getDefault().register(fragment);
+            }
+            if(!EventBus.getDefault().isRegistered(viewModel)) {
+                EventBus.getDefault().register(viewModel);
+            }
+            viewModel.setUp();//todo check if needed when onRestore called
         }
 
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
@@ -80,5 +84,19 @@ public class BaseFragment extends Fragment implements LifecycleRegistryOwner {
             EventBus.getDefault().unregister(viewModel);
         }
     }
+
+//    @Override
+//    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+//        super.onViewStateRestored(savedInstanceState);
+//        if(savedInstanceState!=null) {
+//            viewModel.restoreState(savedInstanceState.getBundle(BaseViewModel.STATE_KEY));
+//        }
+//    }
+//
+//    @Override
+//    public void onSaveInstanceState(Bundle outState) {
+//        super.onSaveInstanceState(outState);
+//        outState.putBundle(BaseViewModel.STATE_KEY,viewModel.saveState());
+//    }
 
 }

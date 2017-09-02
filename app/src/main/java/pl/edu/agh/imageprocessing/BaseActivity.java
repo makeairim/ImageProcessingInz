@@ -17,6 +17,8 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import dagger.android.AndroidInjection;
+import pl.edu.agh.imageprocessing.app.ImageProcessingApplication;
+import pl.edu.agh.imageprocessing.features.detail.android.event.TriggerServiceWorkEvent;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.BaseViewModel;
 
 /**
@@ -57,12 +59,21 @@ public class BaseActivity extends AppCompatActivity implements LifecycleRegistry
             EventBus.getDefault().register(activity);
             EventBus.getDefault().register(viewModel);
             viewModel.setUp();
+            EventBus.getDefault().post(new TriggerServiceWorkEvent());
 
         }
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         public void onPause(){
             EventBus.getDefault().unregister(activity);
             EventBus.getDefault().unregister(viewModel);
+        }
+        @OnLifecycleEvent(Lifecycle.Event.ON_START)
+        public void onStart(){
+            ((ImageProcessingApplication) getApplication()).bindService();
+        }
+        @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+        public void onStop(){
+            ((ImageProcessingApplication) getApplication()).unbindService();
         }
 
     }

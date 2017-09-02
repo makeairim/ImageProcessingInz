@@ -46,9 +46,11 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
+import pl.edu.agh.imageprocessing.features.detail.android.event.RefreshDataEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarizationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.TriggerServiceWorkEvent;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
 import pl.edu.agh.imageprocessing.features.detail.home.OperationFragmentListCallback;
@@ -67,7 +69,6 @@ import static pl.edu.agh.imageprocessing.data.ImageOperationType.EROSION;
 
 public class ImageOperationViewModel extends BaseViewModel implements OperationFragmentListCallback {
     public static final String TAG = ImageOperationFragment.class.getSimpleName();
-    public static final String STATE_KEY="IMAGE_OPERATION_VIEW_MODEL_STATE_KEY";
 
     @Inject
     OperationResourceAPIRepository operationResourceAPIRepository;
@@ -106,6 +107,10 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     }
 
     //    }e->{e.onNext(operationWithChainAndResourceDao.getChainOperationsSortedAsc(rootId));e.onComplete();}
+    @Subscribe
+    public void refreshData(RefreshDataEvent event) {
+//        loadOperationChain(state.getRootOperationId());
+    }
     private void loadOperationChain(long rootId) {
         Observable.create((ObservableOnSubscribe<List<OperationWithChainAndResource>>) e -> {
             e.onNext(operationWithChainAndResourceDao.getChainOperationsSortedAsc(rootId));
@@ -273,11 +278,15 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                     e.onComplete();
                 }
         )
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread()).subscribe(
+                .subscribeOn(Schedulers.newThread())
+                .subscribe(
                 aBoolean -> {
-                    Log.i(TAG, "chainOperation: operationParent=" + event.getBaseOperationId() + " child=" + event.getProcessingOperationId());
+                    Log.i(TAG, "chainOperation: operationParent=" + event.getBaseOperationId() + " child=" + event.getProcessingOperationId()+
+                    " status:"+aBoolean);
                     //showImage(state.getBaseResource());
+                    if(aBoolean){
+                        EventBus.getDefault().post(new TriggerServiceWorkEvent());
+                    }
 
                     //todo update item list view status
                     //todo handle failure ?
@@ -307,19 +316,20 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     @Override
     public Bundle saveState() {
         Bundle bundle=new Bundle();
-        bundle.putParcelable(this.STATE_KEY,state);
+//        bundle.putParcelable(this.STATE_KEY,state);
         return bundle;
     }
 
     @Override
     public void restoreState(Bundle bundle) {
         if( bundle != null){
-            state=bundle.getParcelable(this.STATE_KEY);
+//            state=bundle.getParcelable(this.STATE_KEY);
         }
 
     }
 
     public void setUp(Long rootOperationId) {
+        state.setRootOperationId(rootOperationId);
         loadOperationChain(rootOperationId);
     }
 

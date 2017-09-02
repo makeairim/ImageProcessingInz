@@ -8,11 +8,14 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Messenger;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.IOException;
 
@@ -25,6 +28,7 @@ import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDa
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
+import pl.edu.agh.imageprocessing.features.detail.android.event.RefreshDataEvent;
 
 /**
  * Created by bwolcerz on 28.08.2017.
@@ -32,8 +36,9 @@ import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 
 public class ImageOperationService extends Service {
     public static final String TAG=ImageOperationService.class.getSimpleName();
-    static final int MSG_CHECK_NEW_OPERATION = 1;
+    public static final int MSG_CHECK_NEW_OPERATION = 1;
     private Looper mServiceLooper;
+    private Messenger mMessenger;
     private ServiceHandler mServiceHandler;
     private FileTools fileTools;
     private OperationDao operationDao;
@@ -75,6 +80,7 @@ public class ImageOperationService extends Service {
                     Log.e(TAG, "handleMessage: ",e);
                 }
                 operationDao.update(oldestOperation);
+                EventBus.getDefault().post(new RefreshDataEvent());
                 //todo notiy about change
                 oldestOperation = operationDao.getOldestUnresolved();
                 if( oldestOperation==null) {
@@ -110,6 +116,7 @@ public class ImageOperationService extends Service {
         // Get the HandlerThread's Looper and use it for our Handler
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper);
+        mMessenger=new Messenger(mServiceHandler);
     }
 
     @Override
@@ -128,8 +135,7 @@ public class ImageOperationService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // We don't provide binding, so return null
-        return null;
+       return mMessenger.getBinder();
     }
 
     @Override

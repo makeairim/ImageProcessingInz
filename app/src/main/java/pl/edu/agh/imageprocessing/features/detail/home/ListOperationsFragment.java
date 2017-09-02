@@ -62,7 +62,7 @@ public class ListOperationsFragment extends BaseFragment {
         binding= DataBindingUtil.inflate(inflater, R.layout.list_operations_view,container,false);
         binding.setViewModel(getViewModel());
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter=new ListOperationFragmentListAdapter(getViewModel());
+        adapter=new ListOperationFragmentListAdapter(getViewModel(),getViewModel(),getViewModel());
         binding.recyclerView.setAdapter(adapter);
         return binding.getRoot();
     }

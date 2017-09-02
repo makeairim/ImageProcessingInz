@@ -1,6 +1,5 @@
 package pl.edu.agh.imageprocessing.features.detail.home;
 
-import android.app.FragmentManager;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
@@ -27,6 +26,7 @@ import dagger.android.support.HasSupportFragmentInjector;
 import pl.edu.agh.imageprocessing.BaseActivity;
 import pl.edu.agh.imageprocessing.BaseFragment;
 import pl.edu.agh.imageprocessing.R;
+import pl.edu.agh.imageprocessing.app.ImageProcessingApplication;
 import pl.edu.agh.imageprocessing.databinding.ActivityHomeBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.ViewUtils;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
@@ -66,6 +66,7 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
         String tag = getSupportFragmentManager().getBackStackEntryAt(getSupportFragmentManager().getBackStackEntryCount() - 1).getName();
         return (BaseFragment) getSupportFragmentManager().findFragmentByTag(tag);
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         AndroidInjection.inject(this);

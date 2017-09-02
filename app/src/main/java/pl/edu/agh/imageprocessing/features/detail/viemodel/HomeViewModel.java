@@ -95,8 +95,8 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     public void photoPicker() {
         pickImageDialog.setOnPickResult(pickResult -> {
             Observable.create(e -> e.onNext(fileTools.saveFile(pickResult.getBitmap(), context)))
-                    .subscribeOn(Schedulers.computation())
-                    .observeOn(Schedulers.computation())
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(Schedulers.newThread())
                     .subscribe(o -> {
                         Operation operation = operationResourceAPIRepository.createOperation();
                         operation.setOperationType(ImageOperationType.BASIC_PHOTO.name());
@@ -104,14 +104,9 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                         operation.setId(operationDao.save(operation));
                         operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(), operation.getId())
                                 .observeOn(AndroidSchedulers.mainThread()).subscribe(res -> {
-                            //todo pass to fragment ids
-//                                state.setCurrentOperationId(idRes.getOperationId());
-//                                state.setCurrentImageUri((Uri) o);
-//                                res.setType(ImageOperationType.BASIC_PHOTO.name());
                             EventBus.getDefault().post(new OperationsViewEvent(res.getOperationId()));
-
                         });
-                    }); //todo failure so excpetion probably
+                    });
         }).show(provideActivity());
     }
 

@@ -16,24 +16,32 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
+import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
+import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.features.detail.android.event.DataChangedEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.OperationsViewEvent;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ListOperationFragmentListCallback;
 import pl.edu.agh.imageprocessing.features.detail.home.ListOperationsFragment;
+import pl.edu.agh.imageprocessing.features.detail.home.ObtainImageFileForOperationCallback;
+import pl.edu.agh.imageprocessing.features.detail.home.RegisterDisposableCallback;
 
 /**
  * Created by bwolcerz on 20.08.2017.
  */
 
-public class ListOperationsViewModel extends BaseViewModel implements ListOperationFragmentListCallback{
+public class ListOperationsViewModel extends BaseViewModel implements ListOperationFragmentListCallback,RegisterDisposableCallback,ObtainImageFileForOperationCallback{
     public static final String TAG = ListOperationsViewModel.class.getSimpleName();
-    public static final String STATE_KEY="LIST_OPERATION_STATE_KEY";
     @Inject
     OperationDao operationDao;
+    @Inject
+    ResourceDao resourceDao;
+
     @Inject
     Context context;
 
@@ -66,15 +74,15 @@ public class ListOperationsViewModel extends BaseViewModel implements ListOperat
     @Override
     public Bundle saveState() {
         Bundle bundle=new Bundle();
-        bundle.putParcelable(this.STATE_KEY,state);
+     //   bundle.putParcelable(this.STATE_KEY,state);
         return bundle;
     }
 
     @Override
     public void restoreState(Bundle bundle) {
-        if( bundle!=null){
-            state=bundle.getParcelable(this.STATE_KEY);
-        }
+//        if( bundle!=null){
+//            state=bundle.getParcelable(this.STATE_KEY);
+
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -90,9 +98,18 @@ public class ListOperationsViewModel extends BaseViewModel implements ListOperat
         EventBus.getDefault().post(new OperationsViewEvent(operation.getId()));
     }
 
+    @Override
+    public void registerDisposableCallback(Disposable disposable) {
+
+    }
+
+    @Override
+    public Observable<Resource> obtainOperationResourceImageFile(long operationId) {
+        return resourceDao.getByOperationAndType(operationId, ResourceType.IMAGE_FILE.name()).toObservable();
+    }
 
 
-    static public class ListOperationsViewModelState implements Parcelable{
+static public class ListOperationsViewModelState implements Parcelable{
         private List<Operation> operationRoots;
 
         public void setOperationRoots(List<Operation> operationRoots) {

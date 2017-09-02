@@ -5,16 +5,16 @@ import android.net.Uri;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.List;
 
 import javax.inject.Inject;
 
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
-import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
@@ -22,7 +22,6 @@ import pl.edu.agh.imageprocessing.features.detail.images.operation.BinarizationO
 import pl.edu.agh.imageprocessing.features.detail.images.operation.DilationOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.ErosionOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.FilterOperation;
-import pl.edu.agh.imageprocessing.features.detail.viemodel.ImageOperationViewModel;
 
 /**
  * Created by bwolcerz on 03.08.2017.
@@ -42,12 +41,12 @@ public class ImageOperationResolver {
     OperationDao operationDao;
 
     @Inject
-    public ImageOperationResolver(Context context, FileTools fileTools, ResourceDao resourceDao, OperationResourceAPIRepository operationResourceAPIRepository,OperationDao operationDao) {
+    public ImageOperationResolver(Context context, FileTools fileTools, ResourceDao resourceDao, OperationResourceAPIRepository operationResourceAPIRepository, OperationDao operationDao) {
         this.fileTools = fileTools;
         this.context = context;
         this.resourceDao = resourceDao;
         this.operationResourceAPIRepository = operationResourceAPIRepository;
-        this.operationDao= operationDao;
+        this.operationDao = operationDao;
     }
 
     public BasicOperation resolveOperation(ImageOperationType type, ImageOperationResolverParameters parameters, long processingOperationId) throws IOException {
@@ -131,18 +130,20 @@ public class ImageOperationResolver {
 
     public Resource processResult(BasicOperation execute) {
         Uri fileUri = fileTools.saveFile(execute.getBitmap());
-        List<Resource> resId = resourceDao.getByOperationAndType(execute.getParameter().getOperationId(), ResourceType.IMAGE_FILE.name());
-        Resource result=null;
-        if (resId.size() != 0) {
-            if (resId.size() > 1) throw new AssertionError();
-            resId.get(0).setContent(fileUri.toString());
-            resourceDao.update(resId.get(0));
-            result=resId.get(0);
-        }
-        result= operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
+//        Maybe<Resource> resSingle=resourceDao.getByOperationAndType(execute.getParameter().getOperationId(), ResourceType.IMAGE_FILE.name());
+
+//        Resource result=resSingle.filter(resource -> resource!=null).map(resource -> {
+//            resource.setContent(fileUri.toString());
+//            resourceDao.update(resource);
+//            return resource;
+//        }).blockingGet();
+
+//      if(result==null){
+        Resource result = operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
                 fileUri.toString(), execute
-                .getParameter()
-                .getOperationId()).blockingSingle();
+                        .getParameter()
+                        .getOperationId()).blockingSingle();
+//        }
         operationDao.updateStatus(execute.getParameter().getOperationId(), OperationStatus.FINISHED);
         return result;
 //        resourceDao.save(new Resource.Builder()

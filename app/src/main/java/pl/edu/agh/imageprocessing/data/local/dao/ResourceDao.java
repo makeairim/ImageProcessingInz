@@ -10,6 +10,8 @@ import android.arch.persistence.room.Update;
 import java.util.List;
 
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 
@@ -22,7 +24,7 @@ public interface ResourceDao {
     List<Resource> all();
 
     @Query("SELECT * FROM Resource WHERE operationId = :operationId AND type = :resourceType")
-    List<Resource> getByOperationAndType(long operationId, String resourceType);
+    Maybe<Resource> getByOperationAndType(long operationId, String resourceType);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long save(Resource resource);

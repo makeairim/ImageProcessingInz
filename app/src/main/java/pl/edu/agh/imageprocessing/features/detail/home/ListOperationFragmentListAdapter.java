@@ -10,41 +10,44 @@ import android.view.ViewGroup;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
-import org.greenrobot.eventbus.EventBus;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import pl.edu.agh.imageprocessing.R;
-import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
-import pl.edu.agh.imageprocessing.databinding.ItemImageOperationListBinding;
 import pl.edu.agh.imageprocessing.databinding.ItemRootOperationBinding;
-import pl.edu.agh.imageprocessing.databinding.ListOperationsViewBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.BaseAdapter;
-import pl.edu.agh.imageprocessing.features.detail.android.event.ExpandedOperationId;
 
 
 public class ListOperationFragmentListAdapter extends BaseAdapter<ListOperationFragmentListAdapter.ListOperationViewHolder, Operation> {
 
 
     private final ListOperationFragmentListCallback operationsListCallback;
+    private final ObtainImageFileForOperationCallback obtainImageFileForOperationCallback;
+    private final RegisterDisposableCallback registerDisposableCallback;
     private List<Operation> operations;
 
-    public ListOperationFragmentListAdapter(@NonNull ListOperationFragmentListCallback listOperationFragmentListCallback) {
+
+    public ListOperationFragmentListAdapter(@NonNull ListOperationFragmentListCallback listOperationFragmentListCallback,
+                                            ObtainImageFileForOperationCallback obtainImageFileForOperationCallback, RegisterDisposableCallback registerDisposableCallback
+    ) {
         operations = new ArrayList<>();
-        this.operationsListCallback=listOperationFragmentListCallback;
+        this.operationsListCallback = listOperationFragmentListCallback;
+        this.obtainImageFileForOperationCallback = obtainImageFileForOperationCallback;
+        this.registerDisposableCallback = registerDisposableCallback;
     }
 
     @Override
     public void setData(List<Operation> operations) {
-        this.operations=operations;
+        this.operations = operations;
         notifyDataSetChanged();
     }
 
     @Override
     public ListOperationViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        return ListOperationViewHolder.create(LayoutInflater.from(viewGroup.getContext()), viewGroup, operationsListCallback);
+        return ListOperationViewHolder.create(LayoutInflater.from(viewGroup.getContext()), viewGroup, operationsListCallback,
+                obtainImageFileForOperationCallback, registerDisposableCallback);
     }
 
     @Override
@@ -68,27 +71,44 @@ public class ListOperationFragmentListAdapter extends BaseAdapter<ListOperationF
     static class ListOperationViewHolder extends RecyclerView.ViewHolder {
 
         private final ItemRootOperationBinding binding;
+        private final ObtainImageFileForOperationCallback obtainResourceCallback;
+        private final RegisterDisposableCallback registerDisposableCallback;
 
-        public static ListOperationViewHolder create(LayoutInflater inflater, ViewGroup parent, ListOperationFragmentListCallback callback) {
+        public static ListOperationViewHolder create(LayoutInflater inflater, ViewGroup parent,
+                                                     ListOperationFragmentListCallback callback,
+                                                     ObtainImageFileForOperationCallback obtainImageFileForOperationCallback,
+                                                     RegisterDisposableCallback registerDisposableCallback) {
             ItemRootOperationBinding itemRootOperationBinding = ItemRootOperationBinding.inflate(inflater, parent, false);
-            return new ListOperationViewHolder(itemRootOperationBinding, callback);
+            return new ListOperationViewHolder(itemRootOperationBinding,
+                    callback, obtainImageFileForOperationCallback,
+                    registerDisposableCallback);
         }
 
 
-        public ListOperationViewHolder(ItemRootOperationBinding binding, ListOperationFragmentListCallback callback) {
+        public ListOperationViewHolder(ItemRootOperationBinding binding, ListOperationFragmentListCallback callback,
+                                       ObtainImageFileForOperationCallback obtainImageFileForOperationCallback,
+                                       RegisterDisposableCallback registerDisposableCallback) {
             super(binding.getRoot());
             this.binding = binding;
             binding.getRoot().setOnClickListener(view -> {
                 callback.onImageOperationClicked(binding.getOperation(), null); //todo binding.imageViewCover
             });
-
+            this.obtainResourceCallback = obtainImageFileForOperationCallback;
+            this.registerDisposableCallback = registerDisposableCallback;
         }
 
         public void onBind(Operation operation) {
             binding.setOperation(operation);
-            binding.textview.setText(DateUtils.formatDateTime(binding.getRoot().getContext(),operation.getCreationDate().getTime(),DateUtils.FORMAT_ABBREV_ALL));
+            binding.tvHeader.setText(DateUtils.formatDateTime(binding.getRoot().getContext(), operation.getCreationDate().getTime(), DateUtils.FORMAT_ABBREV_ALL));
+            binding.tvAdditional.setText(DateUtils.formatDateTime(binding.getRoot().getContext(), operation.getCreationDate().getTime(),DateUtils.FORMAT_SHOW_TIME|DateUtils.FORMAT_NO_NOON));
+            registerDisposableCallback.registerDisposableCallback(obtainResourceCallback.obtainOperationResourceImageFile(operation.getId()).subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(resource ->
+                            Glide.with(binding.ivPreview.getContext()).load(Uri.parse(resource.getContent()))
+                                    .apply(RequestOptions.centerCropTransform()).into(binding.ivPreview)
+                    ));
 
-
+            //todo comment ? tasks done ?
 //            binding.executePendingBindings();
         }
     }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <data>
         <variable
             name="operation"
@@ -13,16 +14,21 @@
     android:layout_height="60dp"
     android:background="#484761"
     >
+
         <LinearLayout
             android:tag="Bottom2"
             android:background="#B0E0E6"
             android:layout_width="60dp"
             android:gravity="center"
             android:layout_height="60dp">
+            <!--android:layout_width="22dp"-->
+            <!--android:layout_height="22dp"-->
             <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/camera"/>
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="1dp"
+                android:id="@+id/iv_preview"
+                android:src="@drawable/placeholder"/>
         </LinearLayout>
 
         <RelativeLayout
@@ -30,38 +36,39 @@
             android:layout_height="match_parent">
             <TextView
                 android:layout_marginLeft="40dp"
-                android:id="@+id/textview"
+                android:id="@+id/tv_header"
                 android:layout_marginTop="8dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Make yourself strong!"
+                tools:text="Make yourself strong!"
                 android:textSize="22sp"
                 android:textColor="#ffffff"
                 />
 
             <TextView
                 android:layout_marginLeft="40dp"
-                android:id="@+id/textview2"
-                android:layout_below="@+id/textview"
+                android:id="@+id/tv_description"
+                android:layout_below="@+id/tv_header"
                 android:layout_marginTop="4dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="I am the best!"
+                tools:text="I am the best!"
                 android:textSize="12sp"
                 android:textColor="#ffffff"
                 />
 
             <TextView
-                android:id="@+id/textview3"
+                android:id="@+id/tv_additional"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignTop="@+id/textview2"
+                android:layout_alignTop="@+id/tv_description"
                 android:layout_alignParentRight="true"
                 android:layout_marginRight="12dp"
                 android:textSize="8sp"
-                android:text="5 min ago"
+                tools:text="5 min ago"
                 android:textColor="#ffffff"
-                />
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="12dp" />
 
         </RelativeLayout>
 

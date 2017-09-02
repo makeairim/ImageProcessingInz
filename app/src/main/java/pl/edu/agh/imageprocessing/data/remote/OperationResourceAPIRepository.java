@@ -74,8 +74,8 @@ public class OperationResourceAPIRepository {
 
     public Disposable deleteUnchainedOperations(){
         return operationWithChainAndResourceDao.getUnchainedOperationsByType(ImageOperationType.BINARIZATION.name())
-                .subscribeOn(Schedulers.computation())
-                .observeOn(Schedulers.computation()).subscribe(operationWithChainAndResources -> {
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(Schedulers.newThread()).subscribe(operationWithChainAndResources -> {
             for (OperationWithChainAndResource operationWithChainAndResource : operationWithChainAndResources) {
                 for (pl.edu.agh.imageprocessing.data.local.entity.Resource resource : operationWithChainAndResource.getResource()) {
                     fileTools.deleteFile(Uri.parse(resource.getContent()));

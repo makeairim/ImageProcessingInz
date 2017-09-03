@@ -69,8 +69,8 @@ public class DilationErosionCustomDialog extends BottomSheetDialogFragment {
         // Show soft keyboard automatically and request focus to field
 
         ArrayList<String> ITEMS = getArguments().getStringArrayList("items");
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity().getBaseContext(), android.R.layout.simple_spinner_item, ITEMS);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity().getBaseContext(),R.layout.spinner_dropdown_item, ITEMS);
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         spinner = view.findViewById(R.id.spinner);
         spinner.setAdapter(adapter);
         spinner.setHint("Structuring element type");

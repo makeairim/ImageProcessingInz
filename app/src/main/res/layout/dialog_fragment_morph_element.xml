@@ -99,13 +99,12 @@
         app:ms_enableFloatingLabel="false"
         app:ms_enableErrorLabel="false"
         app:ms_floatingLabelText="floating label"
-        app:ms_baseColor="@color/colorPrimary"
+        app:ms_baseColor="@color/colorPrimaryDark"
         app:ms_highlightColor="@color/colorPrimaryDark"
         app:ms_errorColor="@color/colorAccent"
         app:ms_thickness="2dp"
         app:ms_hintColor="@android:color/holo_blue_dark"
-        app:ms_arrowColor="@android:color/holo_blue_dark"
-        app:ms_arrowSize="16dp"
+        app:ms_arrowSize="0dp"
         app:ms_alignLabels="false"
         app:ms_floatingLabelColor="@color/colorAccent"/>
 </LinearLayout>

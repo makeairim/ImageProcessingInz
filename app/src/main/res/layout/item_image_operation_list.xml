@@ -8,45 +8,117 @@
             name="resource"
             type="pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource" />
     </data>
+    <LinearLayout
+        android:id="@+id/wrapper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+    <LinearLayout
+        android:id="@+id/parent_header"
+        android:orientation="horizontal" android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="#484761"
+        >
+        <LinearLayout
+            android:orientation="horizontal"
+            android:tag="Bottom2"
+            android:background="#B0E0E6"
+            android:layout_width="60dp"
+            android:gravity="center"
+            android:layout_height="60dp">
+            <!--android:layout_width="22dp"-->
+            <!--android:layout_height="22dp"-->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="1dp"
+                android:id="@+id/iv_preview"
+                android:visibility="gone"
+                android:src="@drawable/placeholder" />
+            <ProgressBar
 
+                android:background="@android:color/white"
+                android:id="@+id/progress_bar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:indeterminate="true"
+                android:indeterminateDrawable="@drawable/progress_bar"
+                style="?android:attr/progressBarStyleSmall"
+                />
+        </LinearLayout>
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_margin="5dp"
-            android:background="@color/colorShadowEnd"
-            android:gravity="bottom"
-            android:clickable="true"
-            android:focusable="true"
-            android:orientation="vertical">
-
+            android:layout_height="match_parent">
             <TextView
-                android:id="@+id/tv_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@android:color/black"
-                android:layout_centerHorizontal="true"
-                android:layout_margin="5dp"
-                tools:text="NAME"/>
-            <!--android:text="@{resource.operation.operationType}-->
-            <com.github.chuross.library.ExpandableLayout
-                android:id="@+id/expand_layout"
-                android:layout_below="@id/tv_name"
+                android:layout_marginLeft="40dp"
+                android:id="@+id/tv_header"
+                android:layout_marginTop="8dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:exl_collapseHeight="10dp">
-                <!-- any child views -->
+                tools:text="Make yourself strong!"
+                android:textSize="22sp"
+                android:textColor="#ffffff"
+                />
+
+            <LinearLayout
+                android:id="@+id/parent_info"
+                android:tag="Bottom2"
+                android:background="#B0E0E6"
+                android:layout_width="60dp"
+                android:layout_alignParentEnd="true"
+                android:gravity="center"
+                android:layout_height="60dp"
+                android:layout_alignParentRight="true">
+
+                <!--android:layout_width="22dp"-->
+                <!--android:layout_height="22dp"-->
                 <ImageView
-                    android:layout_below="@id/tv_name"
-                    android:id="@+id/iv_photo"
-                    android:layout_marginBottom="10dp"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:adjustViewBounds="true"
-                    android:scaleType="fitXY" />
-            </com.github.chuross.library.ExpandableLayout>
+                    android:padding="1dp"
+                    android:id="@+id/iv_info"
+                    app:srcCompat="@drawable/ic_info_black_24dp"/>
+            </LinearLayout>
+            <TextView
+                android:layout_marginLeft="40dp"
+                android:id="@+id/tv_description"
+                android:layout_below="@+id/tv_header"
+                android:layout_marginTop="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="I am the best!"
+                android:textSize="12sp"
+                android:textColor="#ffffff"
+                />
 
-            <!--android:text="@{@string/author(article.author)}"-->
+            <TextView
+                android:id="@+id/tv_additional"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@+id/tv_description"
+                android:layout_toLeftOf="@id/parent_info"
+                android:layout_marginRight="12dp"
+                android:textSize="8sp"
+                tools:text="5 min ago"
+                android:textColor="#ffffff"
+                android:layout_marginEnd="12dp" />
         </RelativeLayout>
+    </LinearLayout>
+    <com.github.chuross.library.ExpandableLayout
+        android:id="@+id/expand_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:exl_collapseHeight="0dp">
+        <!-- any child views -->
+        <ImageView
+
+            android:id="@+id/iv_photo"
+            android:layout_marginBottom="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:scaleType="fitXY" />
+    </com.github.chuross.library.ExpandableLayout>
+    </LinearLayout>
 </layout>

@@ -111,7 +111,7 @@ public class MatrixCustomDialog extends BottomSheetDialogFragment {
         for (int i = 0; i <= width; ++i) {
             TextView tv0 = new TextView(getActivity());
             tv0.setText(String.format(Locale.getDefault(), "%4d", i));
-            tv0.setTextColor(Color.WHITE);
+            tv0.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
             if (i == 0) {
                 tv0.setText(String.format(Locale.getDefault(), "%5d", i));
                 tv0.setVisibility(View.INVISIBLE);
@@ -133,13 +133,13 @@ public class MatrixCustomDialog extends BottomSheetDialogFragment {
                 if (j == 0) {
                     TextView t1v = new TextView(getActivity());
                     t1v.setText(String.format(Locale.getDefault(), "%3d", i));
-                    t1v.setTextColor(Color.WHITE);
+                    t1v.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
                     t1v.setGravity(Gravity.CENTER);
                     tbrow.addView(t1v);
                 }
                 EditText t1v = new EditText(getActivity());
+                t1v.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
                 t1v.setText(String.format(Locale.getDefault(), "%3d", i * (j + 1)));
-                t1v.setTextColor(Color.WHITE);
                 t1v.setGravity(Gravity.CENTER);
                 tbrow.addView(t1v);
             }

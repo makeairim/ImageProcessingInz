@@ -3,6 +3,8 @@ package pl.edu.agh.imageprocessing.features.detail.home;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.text.format.DateFormat;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -81,8 +83,8 @@ public class OperationFragmentListAdapter extends BaseAdapter<OperationFragmentL
 
         public void onBind(OperationWithChainAndResource operationWithChainAndResource) {
 //            binding.setResource(operationWithChainAndResource);
-            binding.tvName.setText(operationWithChainAndResource.getOperation().getOperationType());
-            binding.tvName.setOnClickListener(view -> {
+            binding.tvHeader.setText(operationWithChainAndResource.getOperation().getOperationType());
+            binding.wrapper.setOnClickListener(view -> {
                 if (binding.expandLayout.isCollapsed()) {
                     EventBus.getDefault().post(new ExpandedOperationId(operationWithChainAndResource.getOperation().getId()));
                     binding.expandLayout.expand();
@@ -92,10 +94,19 @@ public class OperationFragmentListAdapter extends BaseAdapter<OperationFragmentL
                     binding.expandLayout.collapse();
                 }
             });
+            binding.tvDescription.setText(DateUtils.formatDateTime(binding.getRoot().getContext(), operationWithChainAndResource.getOperation().getCreationDate().getTime(), DateUtils.FORMAT_SHOW_DATE| DateUtils.FORMAT_SHOW_TIME));
             if(operationWithChainAndResource.getImageFile()!=null && !operationWithChainAndResource.getImageFile().isEmpty()) {
+                binding.ivPreview.setVisibility(View.VISIBLE);
+                binding.progressBar.setVisibility(View.GONE);
+                Glide.with(binding.ivPreview.getContext())
+                        .load(Uri.parse(operationWithChainAndResource.getImageFile())).apply(RequestOptions.placeholderOf(R.drawable.placeholder)).apply(RequestOptions.centerCropTransform())
+                        .into(binding.ivPreview);
                 Glide.with(binding.ivPhoto.getContext())
                         .load(Uri.parse(operationWithChainAndResource.getImageFile())).apply(RequestOptions.placeholderOf(R.drawable.placeholder))
                         .into(binding.ivPhoto);
+            }else{
+                binding.ivPreview.setVisibility(View.GONE);
+                binding.progressBar.setVisibility(View.VISIBLE);
             }
 //            binding.executePendingBindings();
         }

@@ -109,7 +109,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     //    }e->{e.onNext(operationWithChainAndResourceDao.getChainOperationsSortedAsc(rootId));e.onComplete();}
     @Subscribe
     public void refreshData(RefreshDataEvent event) {
-//        loadOperationChain(state.getRootOperationId());
+        loadOperationChain(state.getRootOperationId());
     }
     private void loadOperationChain(long rootId) {
         Observable.create((ObservableOnSubscribe<List<OperationWithChainAndResource>>) e -> {

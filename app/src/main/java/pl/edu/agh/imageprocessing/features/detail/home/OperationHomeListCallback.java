@@ -10,5 +10,5 @@ import pl.edu.agh.imageprocessing.data.ImageOperationType;
  */
 
 public interface OperationHomeListCallback {
-    void onImageOperationClicked(ImageOperationType imageOperationType, View sharedView);
+    void onImageOperationClicked(ImageOperationType imageOperationType);
 }

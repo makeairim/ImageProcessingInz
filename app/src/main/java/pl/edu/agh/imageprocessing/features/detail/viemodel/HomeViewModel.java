@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
-import android.view.View;
 
 import com.vansuita.pickimage.dialog.PickImageDialog;
 
@@ -12,6 +11,9 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
@@ -20,6 +22,7 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.BaseFragment;
+import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
@@ -35,6 +38,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarization
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
+import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.GroupOperationModel;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
 import pl.edu.agh.imageprocessing.features.detail.home.ListOperationsFragment;
@@ -131,7 +135,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
 
     @Override
-    public void onImageOperationClicked(ImageOperationType imageOperationType, View sharedView) {
+    public void onImageOperationClicked(ImageOperationType imageOperationType) {
         Log.i(TAG, "onImageOperationClicked: " + imageOperationType.name());
         EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.HIDEN));
 
@@ -156,12 +160,13 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     }
 
 
-    public void provideOperationTypes() {
-        operationResourceAPIRepository.getImageOperationTypes()
-                .subscribe(resources -> {
-                    EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.VISIBLE));
-                    provideActivity().binding.setResource(resources);
-                });
+    public Map<String,List<GroupOperationModel>> provideOperationTypes() {
+        HashMap<String,List<GroupOperationModel>> result=new HashMap<>();
+        result.put(AppConstants.MOPHOLOGY_HEADER,operationResourceAPIRepository.getMorphologyImageOperationTypes());
+        result.put(AppConstants.FILTER_HEADER,operationResourceAPIRepository.getFilterImageOperationTypes());
+        result.put(AppConstants.OTHER_HEADER,operationResourceAPIRepository.getBasicImageOperationTypes());
+        EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.VISIBLE));
+        return result;
     }
 
 

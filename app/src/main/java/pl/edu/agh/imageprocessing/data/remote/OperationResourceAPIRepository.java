@@ -19,6 +19,7 @@ import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
+import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.GroupOperationModel;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 
 /**
@@ -55,10 +56,22 @@ public class OperationResourceAPIRepository {
         return Observable.just(res);
     }
 
-    public Observable<pl.edu.agh.imageprocessing.data.remote.Resource> getImageOperationTypes() {
-        pl.edu.agh.imageprocessing.data.remote.Resource res1 = new pl.edu.agh.imageprocessing.data.remote.Resource(Arrays.asList(ImageOperationType.values()));
-        return Observable.just(res1);
+    public List<GroupOperationModel> getMorphologyImageOperationTypes() {
+        String groupName="Morphology";
+        List<GroupOperationModel> standard = Arrays.asList(new GroupOperationModel(ImageOperationType.DILATION), new GroupOperationModel(ImageOperationType.EROSION));
+        return standard;
     }
+    public List<GroupOperationModel> getBasicImageOperationTypes() {
+        String groupName="Other";
+        List<GroupOperationModel> standard = Arrays.asList( new GroupOperationModel(ImageOperationType.BINARIZATION));
+       return standard;
+    }
+    public List<GroupOperationModel> getFilterImageOperationTypes() {
+        String groupName="Filter";
+        List<GroupOperationModel> standard = Arrays.asList(new GroupOperationModel(ImageOperationType.FILTER));
+        return standard;
+    }
+
 
     public boolean chainOperations(Operation parent, Operation child) {
         parent.setNextOperationId(child.getId());

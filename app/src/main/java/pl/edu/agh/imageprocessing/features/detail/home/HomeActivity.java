@@ -10,10 +10,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
-
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -26,7 +29,7 @@ import dagger.android.support.HasSupportFragmentInjector;
 import pl.edu.agh.imageprocessing.BaseActivity;
 import pl.edu.agh.imageprocessing.BaseFragment;
 import pl.edu.agh.imageprocessing.R;
-import pl.edu.agh.imageprocessing.app.ImageProcessingApplication;
+import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.databinding.ActivityHomeBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.ViewUtils;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
@@ -34,7 +37,13 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewCo
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
+import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.GroupOperationModel;
+import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.ItemHeader;
+import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.ItemHeaderViewBinder;
+import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.ItemTypeViewBinder;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.HomeViewModel;
+import tellh.com.stickyheaderview_rv.adapter.DataBean;
+import tellh.com.stickyheaderview_rv.adapter.StickyHeaderViewAdapter;
 
 import static pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView.ViewState.HIDEN;
 
@@ -73,27 +82,40 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
         viewModel = ViewModelProviders.of(this, viewModelFactory).get(HomeViewModel.class);
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-//        viewModel.setBinding(this);//todo lifecycle event
         binding = DataBindingUtil.setContentView(this, R.layout.activity_home);
         binding.setViewModel(getViewModel());
         setSupportActionBar(binding.toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-        ButterKnife.bind(this);//todo po co to ?
-        //when get operation list so on click method in viewmodel
-        //
-        binding.recyclerView.setOnNoChildClickListener(getViewModel().onOutsideListClick);
+        ButterKnife.bind(this);
+
+//        binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
+//        binding.recyclerView.setAdapter(new OperationHomeListAdapter(getViewModel()));
+
+
+
+
+//        binding.recyclerView.addItemDecoration(adapter.getItemDecorationManager());
+//        binding.recyclerView.setLayoutManager(llm);
+//        binding.recyclerView.setAdapter(adapter);
+//        binding.recyclerView.setOnNoChildClickListener(getViewModel().onOutsideListClick);
+//       Map<String, List<GroupOperationModel>> types = getViewModel().provideOperationTypes();
+//        adapter.addMorphology(types.get(AppConstants.MOPHOLOGY_HEADER));
+//        adapter.addFilter(types.get(AppConstants.FILTER_HEADER));
+//        adapter.addOther(types.get(AppConstants.OTHER_HEADER));
+
+//        adapter.setExpandableMode(RecyclerAdapter.EXPANDABLE_MODE_MULTIPLE);
+//        adapter.setGroupExpandableMode(RecyclerAdapter.EXPANDABLE_MODE_MULTIPLE);
+
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        binding.recyclerView.setAdapter(new OperationHomeListAdapter(getViewModel()));
-        // find the retained fragment on activity restarts
-        // create the fragment and data the first time
-//        if (mRetainedFragment == null) {
-//            // add the fragment
-//            mRetainedFragment = new RetainedFragment();
-//            fm.beginTransaction().add(mRetainedFragment, TAG_RETAINED_FRAGMENT).commit();
-//            // load data from a data source or perform any calculation
-//            mRetainedFragment.setData(loadMyData());
-//        }
+        Map<String, List<GroupOperationModel>> types = getViewModel().provideOperationTypes();
+        List<DataBean> operHeaders=new LinkedList<>();
+        operHeaders.add(new ItemHeader(AppConstants.MOPHOLOGY_HEADER));
+        operHeaders.addAll(types.get(AppConstants.MOPHOLOGY_HEADER));
+        StickyHeaderViewAdapter adapter = new StickyHeaderViewAdapter(operHeaders)
+                .RegisterItemType(new ItemTypeViewBinder())
+                .RegisterItemType(new ItemHeaderViewBinder());
+        binding.recyclerView.setAdapter(adapter);
+        binding.recyclerView.setOnNoChildClickListener(getViewModel().onOutsideListClick);
 
     }
 

@@ -37,10 +37,10 @@ import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDa
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
-import pl.edu.agh.imageprocessing.features.detail.android.BinarizationCustomDialog;
-import pl.edu.agh.imageprocessing.features.detail.android.DilationErosionCustomDialog;
-import pl.edu.agh.imageprocessing.features.detail.android.MatrixCustomDialog;
-import pl.edu.agh.imageprocessing.features.detail.android.SizeCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.dialog.BinarizationCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.dialog.DilationErosionCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.dialog.MatrixCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.dialog.SizeCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ChainOperationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.DataChangedEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;

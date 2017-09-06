@@ -1,4 +1,4 @@
-package pl.edu.agh.imageprocessing.features.detail.android;
+package pl.edu.agh.imageprocessing.features.detail.android.dialog;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;

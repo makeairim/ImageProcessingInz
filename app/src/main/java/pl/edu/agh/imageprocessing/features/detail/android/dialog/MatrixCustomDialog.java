@@ -1,6 +1,5 @@
-package pl.edu.agh.imageprocessing.features.detail.android;
+package pl.edu.agh.imageprocessing.features.detail.android.dialog;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialogFragment;

@@ -37,6 +37,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
+import pl.edu.agh.imageprocessing.features.detail.android.event.LiveVideoEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.GroupOperationModel;
 import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.ItemHeader;
@@ -137,7 +138,10 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
         }
         return super.onOptionsItemSelected(item);
     }
-
+    @OnClick(R.id.videoButton)
+    public void setVideoListener(){
+        EventBus.getDefault().post(new LiveVideoEvent());
+    }
     @OnClick(R.id.imageButton)
     public void setPhotoListener() {
         getViewModel().photoPicker();

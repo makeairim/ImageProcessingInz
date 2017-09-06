@@ -1,4 +1,4 @@
-package pl.edu.agh.imageprocessing.features.detail.android;
+package pl.edu.agh.imageprocessing.features.detail.android.dialog;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -10,16 +10,11 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 
 import android.widget.Toast;
 
-import com.projects.alshell.android.SeekBarValueChangedListener;
 import com.projects.alshell.android.TerminalSeekBar;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import ir.hamsaa.RtlMaterialSpinner;
 import pl.edu.agh.imageprocessing.R;

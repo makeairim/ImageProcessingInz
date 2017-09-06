@@ -18,7 +18,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.CoreException;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 
 public class FilterOperation extends BasicOperation {
-    private static ImageOperationType type = ImageOperationType.DILATION;
+    private static ImageOperationType type = ImageOperationType.FILTER;
     public static final String TAG = FilterOperation.class.getSimpleName();
 
     public FilterOperation(ImageOperationParameter parameter, Bitmap imageBitmap) {

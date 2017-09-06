@@ -3,6 +3,8 @@ package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.view.MotionEvent;
+import android.view.View;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -57,4 +59,5 @@ public class BinarizationOperation  extends BasicOperation{
             this.threshold = threshold;
         }
     }
+
 }

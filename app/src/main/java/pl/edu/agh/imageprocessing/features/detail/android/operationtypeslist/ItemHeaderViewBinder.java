@@ -1,4 +1,4 @@
-package pl.edu.agh.imageprocessing.features.detail.android.recyclerview;
+package pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist;
 
 import android.view.View;
 import android.widget.TextView;

@@ -1,4 +1,4 @@
-package pl.edu.agh.imageprocessing.features.detail.android.recyclerview;
+package pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist;
 
 import pl.edu.agh.imageprocessing.R;
 import tellh.com.stickyheaderview_rv.adapter.DataBean;

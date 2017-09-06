@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -37,10 +38,10 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewCo
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
-import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.GroupOperationModel;
-import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.ItemHeader;
-import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.ItemHeaderViewBinder;
-import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.ItemTypeViewBinder;
+import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.GroupOperationModel;
+import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.ItemHeader;
+import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.ItemHeaderViewBinder;
+import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.ItemTypeViewBinder;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.HomeViewModel;
 import tellh.com.stickyheaderview_rv.adapter.DataBean;
 import tellh.com.stickyheaderview_rv.adapter.StickyHeaderViewAdapter;
@@ -91,9 +92,6 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
 //        binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
 //        binding.recyclerView.setAdapter(new OperationHomeListAdapter(getViewModel()));
 
-
-
-
 //        binding.recyclerView.addItemDecoration(adapter.getItemDecorationManager());
 //        binding.recyclerView.setLayoutManager(llm);
 //        binding.recyclerView.setAdapter(adapter);
@@ -108,15 +106,18 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
 
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
         Map<String, List<GroupOperationModel>> types = getViewModel().provideOperationTypes();
-        List<DataBean> operHeaders=new LinkedList<>();
+        List<DataBean> operHeaders = new LinkedList<>();
         operHeaders.add(new ItemHeader(AppConstants.MOPHOLOGY_HEADER));
         operHeaders.addAll(types.get(AppConstants.MOPHOLOGY_HEADER));
+        operHeaders.add(new ItemHeader(AppConstants.FILTER_HEADER));
+        operHeaders.addAll(types.get(AppConstants.FILTER_HEADER));
+        operHeaders.add(new ItemHeader(AppConstants.OTHER_HEADER));
+        operHeaders.addAll(types.get(AppConstants.OTHER_HEADER));
         StickyHeaderViewAdapter adapter = new StickyHeaderViewAdapter(operHeaders)
-                .RegisterItemType(new ItemTypeViewBinder())
+                .RegisterItemType(new ItemTypeViewBinder(getViewModel()))
                 .RegisterItemType(new ItemHeaderViewBinder());
         binding.recyclerView.setAdapter(adapter);
         binding.recyclerView.setOnNoChildClickListener(getViewModel().onOutsideListClick);
-
     }
 
 

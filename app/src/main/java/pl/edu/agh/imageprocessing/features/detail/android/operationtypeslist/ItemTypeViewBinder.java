@@ -1,9 +1,10 @@
-package pl.edu.agh.imageprocessing.features.detail.android.recyclerview;
+package pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist;
 
 import android.view.View;
 import android.widget.TextView;
 
 import pl.edu.agh.imageprocessing.R;
+import pl.edu.agh.imageprocessing.features.detail.home.OperationHomeListCallback;
 import tellh.com.stickyheaderview_rv.adapter.StickyHeaderViewAdapter;
 import tellh.com.stickyheaderview_rv.adapter.ViewBinder;
 
@@ -12,6 +13,13 @@ import tellh.com.stickyheaderview_rv.adapter.ViewBinder;
  */
 
 public class ItemTypeViewBinder extends ViewBinder<GroupOperationModel, ItemTypeViewBinder.ViewHolder> {
+    private final OperationHomeListCallback callback;
+
+    public ItemTypeViewBinder(OperationHomeListCallback callback) {
+        super();
+        this.callback=callback;
+    }
+
     @Override
     public ViewHolder provideViewHolder(View itemView) {
         return new ViewHolder(itemView);
@@ -19,6 +27,7 @@ public class ItemTypeViewBinder extends ViewBinder<GroupOperationModel, ItemType
     @Override
     public void bindView(StickyHeaderViewAdapter adapter, ViewHolder holder, int position, GroupOperationModel entity) {
         holder.tv_desc.setText(entity.getType().getTitle());
+        holder.tv_desc.setOnClickListener(view -> callback.onImageOperationClicked(entity.getType()));
     }
     @Override
     public int getItemLayoutId(StickyHeaderViewAdapter adapter) {

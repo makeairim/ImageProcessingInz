@@ -22,6 +22,7 @@ import pl.edu.agh.imageprocessing.features.detail.images.operation.BinarizationO
 import pl.edu.agh.imageprocessing.features.detail.images.operation.DilationOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.ErosionOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.FilterOperation;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.MeanFilterOperation;
 
 /**
  * Created by bwolcerz on 03.08.2017.
@@ -62,6 +63,8 @@ public class ImageOperationResolver {
                 return new ErosionOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
             case FILTER:
                 return new FilterOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
+            case MEAN_FILTER:
+                return new MeanFilterOperation(params,fileTools.getImageBitmap(context, params.getImageUri()));
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
@@ -82,16 +85,21 @@ public class ImageOperationResolver {
             case FILTER:
                 result = mapFilterParameter(parameters);
                 break;
+            case MEAN_FILTER:
+                result= mapMeanFilter(parameters);
+                break;
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
-//        List<Resource> resources = resourceDao.getByOperationAndType(parameters.getOperationId(), ResourceType.IMAGE_FILE.name());
-//        if (resources.size() != 1) { //todo to delete
-//            Log.e(TAG, "imageOperationParameterResolver: " + "Could not be more than 1 or less than 0: " + resources.size());
-//            throw new AssertionError("Could not be more than 1 or less than 0: " + resources.size());
-//        }
+
         result.setImageUri(parameters.getImageUri());
         //result.setImageUri(Uri.parse(parameters.getBaseResource().getContent()));
+        return result;
+    }
+
+    private ImageOperationParameter mapMeanFilter(ImageOperationResolverParameters parameters) {
+        MeanFilterOperation.Parameters result=new MeanFilterOperation.Parameters();
+        result.setSize(parameters.getMatrixWidth()); //todo set size from user ?
         return result;
     }
 
@@ -130,29 +138,12 @@ public class ImageOperationResolver {
 
     public Resource processResult(BasicOperation execute) {
         Uri fileUri = fileTools.saveFile(execute.getBitmap());
-//        Maybe<Resource> resSingle=resourceDao.getByOperationAndType(execute.getParameter().getOperationId(), ResourceType.IMAGE_FILE.name());
-
-//        Resource result=resSingle.filter(resource -> resource!=null).map(resource -> {
-//            resource.setContent(fileUri.toString());
-//            resourceDao.update(resource);
-//            return resource;
-//        }).blockingGet();
-
-//      if(result==null){
         Resource result = operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
                 fileUri.toString(), execute
                         .getParameter()
                         .getOperationId()).blockingSingle();
-//        }
         operationDao.updateStatus(execute.getParameter().getOperationId(), OperationStatus.FINISHED);
         return result;
-//        resourceDao.save(new Resource.Builder()
-//                .operationId(execute
-//                        .getParameter()
-//                        .getOperationId())
-//                .type(ResourceType.IMAGE_FILE_RESULT.name())
-//                .creationDate(new Date(System.currentTimeMillis()))
-//                .content(fileUri.toString()).build());
     }
 
 }

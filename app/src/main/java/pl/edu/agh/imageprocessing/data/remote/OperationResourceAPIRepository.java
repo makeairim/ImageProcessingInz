@@ -19,7 +19,7 @@ import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
-import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.GroupOperationModel;
+import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.GroupOperationModel;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 
 /**
@@ -32,6 +32,7 @@ public class OperationResourceAPIRepository {
     private final ResourceDao resourceDao;
     private final OperationWithChainAndResourceDao operationWithChainAndResourceDao;
     private final FileTools fileTools;
+
     @Inject
     public OperationResourceAPIRepository(ImageProcessingAPIDatabase imageProcessingAPIDatabase, OperationDao operationDao, ResourceDao resourceDao, OperationWithChainAndResourceDao operationWithChainAndResourceDao, FileTools fileTools) {
         this.imageProcessingAPIDatabase = imageProcessingAPIDatabase;
@@ -57,19 +58,17 @@ public class OperationResourceAPIRepository {
     }
 
     public List<GroupOperationModel> getMorphologyImageOperationTypes() {
-        String groupName="Morphology";
-        List<GroupOperationModel> standard = Arrays.asList(new GroupOperationModel(ImageOperationType.DILATION), new GroupOperationModel(ImageOperationType.EROSION));
-        return standard;
+        return Arrays.asList(new GroupOperationModel(ImageOperationType.DILATION), new GroupOperationModel(ImageOperationType.EROSION));
     }
+
     public List<GroupOperationModel> getBasicImageOperationTypes() {
-        String groupName="Other";
-        List<GroupOperationModel> standard = Arrays.asList( new GroupOperationModel(ImageOperationType.BINARIZATION));
-       return standard;
+        return Arrays.asList(new GroupOperationModel(ImageOperationType.BINARIZATION));
     }
+
     public List<GroupOperationModel> getFilterImageOperationTypes() {
-        String groupName="Filter";
-        List<GroupOperationModel> standard = Arrays.asList(new GroupOperationModel(ImageOperationType.FILTER));
-        return standard;
+        return Arrays.asList(
+                new GroupOperationModel(ImageOperationType.FILTER),
+                new GroupOperationModel(ImageOperationType.MEAN_FILTER));
     }
 
 
@@ -81,21 +80,21 @@ public class OperationResourceAPIRepository {
         return true;
     }
 
-    public Operation createOperation(){
+    public Operation createOperation() {
         return new Operation.Builder().creationDate(new Date(System.currentTimeMillis())).build();
     }
 
-    public Disposable deleteUnchainedOperations(){
+    public Disposable deleteUnchainedOperations() {
         return operationWithChainAndResourceDao.getUnchainedOperationsByType(ImageOperationType.BINARIZATION.name())
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(Schedulers.newThread()).subscribe(operationWithChainAndResources -> {
-            for (OperationWithChainAndResource operationWithChainAndResource : operationWithChainAndResources) {
-                for (pl.edu.agh.imageprocessing.data.local.entity.Resource resource : operationWithChainAndResource.getResource()) {
-                    fileTools.deleteFile(Uri.parse(resource.getContent()));
-                    resourceDao.delete(resource);
-                }
-                operationDao.delete(operationWithChainAndResource.getOperation());
-            }
-        });
+                    for (OperationWithChainAndResource operationWithChainAndResource : operationWithChainAndResources) {
+                        for (pl.edu.agh.imageprocessing.data.local.entity.Resource resource : operationWithChainAndResource.getResource()) {
+                            fileTools.deleteFile(Uri.parse(resource.getContent()));
+                            resourceDao.delete(resource);
+                        }
+                        operationDao.delete(operationWithChainAndResource.getOperation());
+                    }
+                });
     }
 }

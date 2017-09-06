@@ -40,6 +40,7 @@ import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.BinarizationCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.DilationErosionCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.MatrixCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.SizeCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ChainOperationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.DataChangedEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
@@ -50,6 +51,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.RefreshDataEvent
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarizationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSizeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.TriggerServiceWorkEvent;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
@@ -164,7 +166,17 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         });
 
     }
+    public void showSizeDialog(String title,ImageOperationType imageOperationType) {
+        FragmentManager fm = provideActivity().getSupportFragmentManager();
+        SizeCustomDialog dialog = SizeCustomDialog.newInstance(title);
+        dialog.show(fm, "matrix_values");
+        dialog.setListener((sizeXY) -> {
+           state.setMatrixHeight(sizeXY);
+           state.setMatrixWidth(sizeXY);
+            saveOperation(createOperation(imageOperationType, mapStateToParameter(state)));
+        });
 
+    }
     private void showErosionDilationDialog(String title, ImageOperationType imageOperationType) {
         FragmentManager fm = provideActivity().getSupportFragmentManager();
         DilationErosionCustomDialog dialog = DilationErosionCustomDialog.newInstance(title, openCvTypes.getStructuringElementTypes());
@@ -236,6 +248,10 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     @Subscribe
     public void showFilter(ShowFilterEvent event) {
         showMatrixDialog(provideFragment().getString(R.string.title_matrix_value_dialog), 3, 3, ImageOperationType.FILTER);
+    }
+    @Subscribe
+    public void showSetSizeDialog(ShowSizeDialogEvent event){
+        showSizeDialog(provideFragment().getString(R.string.title_size_dialog),ImageOperationType.MEAN_FILTER);
     }
 
     private List<Resource> getResourceByTypeFromOperationWithResourceEntity(OperationWithChainAndResource operationWithChainAndResource, ResourceType resourceType, int limit) {

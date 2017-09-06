@@ -1,4 +1,4 @@
-package pl.edu.agh.imageprocessing.features.detail.android.recyclerview;
+package pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist;
 
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
@@ -36,4 +36,5 @@ public class GroupOperationModel extends DataBean{
     public boolean shouldSticky() {
         return shouldSticky;
     }
+
 }

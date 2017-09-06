@@ -38,7 +38,8 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarization
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
-import pl.edu.agh.imageprocessing.features.detail.android.recyclerview.GroupOperationModel;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSizeDialogEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.GroupOperationModel;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
 import pl.edu.agh.imageprocessing.features.detail.home.ListOperationsFragment;
@@ -152,6 +153,9 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                 break;
             case FILTER:
                 EventBus.getDefault().post(new ShowFilterEvent());
+                break;
+            case MEAN_FILTER:
+                EventBus.getDefault().post(new ShowSizeDialogEvent());
                 break;
             default:
                 throw new AssertionError("Could not resolve operation type");

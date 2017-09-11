@@ -23,8 +23,8 @@ public class MeanFilterOperation extends BasicOperation {
     private static ImageOperationType type = ImageOperationType.MEAN_FILTER;
     public static final String TAG = MeanFilterOperation.class.getSimpleName();
 
-    public MeanFilterOperation(ImageOperationParameter parameter, Bitmap imageBitmap) {
-        super(parameter,imageBitmap);
+    public MeanFilterOperation(ImageOperationParameter parameter, Mat mat) {
+        super(parameter,mat);
     }
 
     @Override
@@ -36,10 +36,7 @@ public class MeanFilterOperation extends BasicOperation {
         } catch (Exception e) {
             //todo handle on invalid params
         }
-        Mat src = new Mat(getBitmap().getHeight(), getBitmap().getWidth(), CvType.CV_8UC4);
-        Utils.bitmapToMat(getBitmap(), src);
-        Imgproc.blur(src,src,new Size(((Parameters)parameter).getSize(),((Parameters)parameter).getSize()));
-         Utils.matToBitmap(src, getBitmap());
+        Imgproc.blur(getMat(),getMat(),new Size(((Parameters)parameter).getSize(),((Parameters)parameter).getSize()));
         return this;
     }
 

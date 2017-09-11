@@ -48,11 +48,12 @@ public class ImageOperationFragment  extends BaseFragment  implements CameraBrid
     @Inject
     ViewModelProvider.Factory viewModelFactory;
     Long rootOperationId;
-    List<Mat> ring = new ArrayList<>();
-    int delay = 100;                       // delay == length of buffer
-    boolean delayed = false;               // state
+//    List<Mat> ring = new ArrayList<>();
+//    int delay = 100;                       // delay == length of buffer
+//    boolean delayed = false;               // state
 
     public OperationFragmentListAdapter adapter;
+    private boolean isLiveVideoOn=false;
 
     public static ImageOperationFragment newInstance(Long rootOperationId) {
         ImageOperationFragment f = new ImageOperationFragment();
@@ -115,8 +116,20 @@ public class ImageOperationFragment  extends BaseFragment  implements CameraBrid
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void setLiveVideo(LiveVideoEvent event){
-        viewUtils.triggerViewVisiblity(binding.recyclerView, EventBasicView.ViewState.HIDEN);
-        initVideo();
+        if(!isLiveVideoOn) {
+            viewUtils.triggerViewVisiblity(binding.recyclerView, EventBasicView.ViewState.HIDEN);
+            initVideo();
+        }else{
+            viewUtils.triggerViewVisiblity(binding.recyclerView, EventBasicView.ViewState.VISIBLE);
+            disableLiveVideo();
+        }
+        isLiveVideoOn=!isLiveVideoOn;
+    }
+
+    private void disableLiveVideo() {
+        binding.HelloOpenCvView.setVisibility(SurfaceView.GONE);
+        binding.HelloOpenCvView.setCvCameraViewListener((CameraBridgeViewBase.CvCameraViewListener2)null);
+        binding.HelloOpenCvView.disableView();
     }
 
     private void initVideo() {
@@ -129,7 +142,6 @@ public class ImageOperationFragment  extends BaseFragment  implements CameraBrid
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void setPhotoView(EventBasicViewMainPhoto event) {
         viewUtils.triggerViewVisiblity(binding.recyclerView, event.getStateToChange());
-        initVideo();
     }
 
     @Override
@@ -148,23 +160,24 @@ public class ImageOperationFragment  extends BaseFragment  implements CameraBrid
         Mat mrgbaT = mRgba.t();
         Core.flip(mRgba.t(),mrgbaT,1);
         Imgproc.resize(mrgbaT,mRgba, mRgba.size());
+        return getViewModel().obtainImageOperations(mRgba);
 
-        ring.add(mRgba.clone());            // add one at the end
-        if ( ring.size() >= delay ) {       // pop one from the front
-            ring.get(0).release();
-            ring.remove(0);
-        }
+//        ring.add(mRgba.clone());            // add one at the end
+//        if ( ring.size() >= delay ) {       // pop one from the front
+//            ring.get(0).release();
+//            ring.remove(0);
+//        }
+//
+//        Mat ret;
+//        String txt;
+//        if ( delayed && ring.size()>0 ) {   // depending on 'delayed' return either playback
+//            ret = ring.get(0);              // return the 'oldest'
+//            txt = "playback";
+//        } else {
+//            ret = mRgba;                    // or realtime frame
+//            txt = "realtime";
+//        }
 
-        Mat ret;
-        String txt;
-        if ( delayed && ring.size()>0 ) {   // depending on 'delayed' return either playback
-            ret = ring.get(0);              // return the 'oldest'
-            txt = "playback";
-        } else {
-            ret = mRgba;                    // or realtime frame
-            txt = "realtime";
-        }
-
-        return ret;
+//        return ret;
     }
 }

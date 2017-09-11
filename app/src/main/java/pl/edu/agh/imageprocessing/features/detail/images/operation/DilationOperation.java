@@ -19,8 +19,8 @@ import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter
 public class DilationOperation extends BasicOperation {
     static  ImageOperationType type = ImageOperationType.DILATION;
 
-    public DilationOperation(ImageOperationParameter parameter, Bitmap imageBitmap) {
-        super(parameter,imageBitmap);
+    public DilationOperation(ImageOperationParameter parameter, Mat mat) {
+        super(parameter,mat);
     }
 
     @Override
@@ -32,11 +32,8 @@ public class DilationOperation extends BasicOperation {
         } catch (Exception e) {
             //todo handle on invalid params
         }
-        Mat src = new Mat(getBitmap().getHeight(), getBitmap().getWidth(), CvType.CV_8UC4);
-        Utils.bitmapToMat(getBitmap(), src);
         Mat kernelDilate = Imgproc.getStructuringElement(((Parameters) parameter).getStructElement, new Size(((Parameters) parameter).getStructElementWidth(), ((Parameters) parameter).getStructElementHeight()));
-        Imgproc.dilate(src, src, kernelDilate);
-        Utils.matToBitmap(src, getBitmap());
+        Imgproc.dilate(getMat(), getMat(), kernelDilate);
         return this;
 
     }

@@ -3,6 +3,8 @@ package pl.edu.agh.imageprocessing.features.detail.images.operation;
 import android.graphics.Bitmap;
 import android.net.Uri;
 
+import org.opencv.core.Mat;
+
 import java.sql.CallableStatement;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -20,7 +22,7 @@ import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter
 
 abstract  public class BasicOperation{
 
-    private final Bitmap bitmap;
+    private final Mat mat;
     protected ImageOperationParameter parameter;
 
     /**
@@ -35,13 +37,13 @@ abstract  public class BasicOperation{
      */
     abstract protected Map<String,String> validateParameters() throws Exception;
 
-    public BasicOperation(ImageOperationParameter parameter,Bitmap bitmap) {
+    public BasicOperation(ImageOperationParameter parameter,Mat mat) {
         this.parameter = parameter;
-        this.bitmap=bitmap;
+        this.mat=mat;
     }
 
-    public Bitmap getBitmap() {
-        return bitmap;
+    public Mat getMat() {
+        return mat;
     }
 
     public ImageOperationParameter getParameter() {

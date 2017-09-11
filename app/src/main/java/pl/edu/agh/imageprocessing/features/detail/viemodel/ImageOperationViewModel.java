@@ -9,12 +9,15 @@ import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import android.view.View;
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.opencv.core.Mat;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -30,6 +33,7 @@ import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
+import pl.edu.agh.imageprocessing.data.local.converter.UriDeserializer;
 import pl.edu.agh.imageprocessing.data.local.converter.UriSerializer;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
@@ -57,6 +61,7 @@ import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
 import pl.edu.agh.imageprocessing.features.detail.home.OperationFragmentListCallback;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
+import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolver;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationResolverParameters;
 import pl.edu.agh.imageprocessing.features.detail.images.OpenCvTypes;
@@ -349,6 +354,32 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         loadOperationChain(rootOperationId);
     }
 
+    public Mat obtainImageOperations(Mat src){
+        Gson gson = new GsonBuilder().registerTypeAdapter(Uri.class, new UriDeserializer()).create();
+        for (OperationWithChainAndResource operationWithChainAndResource : state.getOperationChainAndResource()) {
+            for (int i = operationWithChainAndResource.getResource().size()-1; i >=0; --i) {
+                if(operationWithChainAndResource.getOperation().getParentOperationId()!=null){
+                    try {
+                        ImageOperationParameter params = imageOperationResolver
+                                .imageOperationParameterResolver(ImageOperationType
+                                                .valueOf(operationWithChainAndResource
+                                                        .getOperation()
+                                                        .getOperationType()),
+                                gson.fromJson(operationWithChainAndResource
+                                        .getOperation()
+                                        .getObject(), ImageOperationResolverParameters.class));
+                        src=imageOperationResolver.resolveOperation(
+                                ImageOperationType.valueOf(operationWithChainAndResource.getOperation().getOperationType())
+                                , params, src)
+                                .execute().getMat();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return src;
+    }
 
     static public class ImageOperationViewModelState implements Parcelable{
         private ImageOperationType operationType;

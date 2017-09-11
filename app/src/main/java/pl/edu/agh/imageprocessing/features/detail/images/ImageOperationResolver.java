@@ -1,8 +1,13 @@
 package pl.edu.agh.imageprocessing.features.detail.images;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.util.Log;
+
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
 
 import java.io.IOException;
 
@@ -49,28 +54,35 @@ public class ImageOperationResolver {
         this.operationResourceAPIRepository = operationResourceAPIRepository;
         this.operationDao = operationDao;
     }
-
     public BasicOperation resolveOperation(ImageOperationType type, ImageOperationResolverParameters parameters, long processingOperationId) throws IOException {
         Log.i(TAG, "resolveOperation: " + type.name());
         ImageOperationParameter params = imageOperationParameterResolver(type, parameters);
         params.setOperationId(processingOperationId);
+        Bitmap bitmap = fileTools.getImageBitmap(context, params.getImageUri());
+        Mat src = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC4);
+        Utils.bitmapToMat(bitmap, src);
+        return resolveOperation(type,params,src);
+    }
+
+    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationParameter params, Mat mat) throws IOException {
+        Log.i(TAG, "resolveOperation: " + type.name());
         switch (type) {
             case BINARIZATION:
-                return new BinarizationOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
+                return new BinarizationOperation(params, mat);
             case DILATION:
-                return new DilationOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
+                return new DilationOperation(params, mat);
             case EROSION:
-                return new ErosionOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
+                return new ErosionOperation(params, mat);
             case FILTER:
-                return new FilterOperation(params, fileTools.getImageBitmap(context, params.getImageUri()));
+                return new FilterOperation(params, mat);
             case MEAN_FILTER:
-                return new MeanFilterOperation(params,fileTools.getImageBitmap(context, params.getImageUri()));
+                return new MeanFilterOperation(params,mat);
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
     }
 
-    private ImageOperationParameter imageOperationParameterResolver(ImageOperationType type, ImageOperationResolverParameters parameters) throws IOException {
+    public ImageOperationParameter imageOperationParameterResolver(ImageOperationType type, ImageOperationResolverParameters parameters) throws IOException {
         ImageOperationParameter result = null;
         switch (type) {
             case BINARIZATION:
@@ -137,7 +149,9 @@ public class ImageOperationResolver {
     }
 
     public Resource processResult(BasicOperation execute) {
-        Uri fileUri = fileTools.saveFile(execute.getBitmap());
+        Bitmap resultBitmap = Bitmap.createBitmap(execute.getMat().width(), execute.getMat().height(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(execute.getMat(),resultBitmap);
+        Uri fileUri = fileTools.saveFile(resultBitmap);
         Resource result = operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
                 fileUri.toString(), execute
                         .getParameter()

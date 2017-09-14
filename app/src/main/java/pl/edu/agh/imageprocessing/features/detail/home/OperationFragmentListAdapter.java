@@ -1,5 +1,6 @@
 package pl.edu.agh.imageprocessing.features.detail.home;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -11,6 +12,7 @@ import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.github.fabtransitionactivity.SheetLayout;
 
 import org.greenrobot.eventbus.EventBus;
 

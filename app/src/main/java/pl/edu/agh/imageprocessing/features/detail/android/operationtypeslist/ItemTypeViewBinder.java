@@ -5,6 +5,7 @@ import android.widget.TextView;
 
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.features.detail.home.OperationHomeListCallback;
+import pl.edu.agh.imageprocessing.features.detail.home.OperationInfoCallback;
 import tellh.com.stickyheaderview_rv.adapter.StickyHeaderViewAdapter;
 import tellh.com.stickyheaderview_rv.adapter.ViewBinder;
 
@@ -15,7 +16,7 @@ import tellh.com.stickyheaderview_rv.adapter.ViewBinder;
 public class ItemTypeViewBinder extends ViewBinder<GroupOperationModel, ItemTypeViewBinder.ViewHolder> {
     private final OperationHomeListCallback callback;
 
-    public ItemTypeViewBinder(OperationHomeListCallback callback) {
+    public ItemTypeViewBinder(OperationHomeListCallback callback,OperationInfoCallback operationInfoCallback) {
         super();
         this.callback=callback;
     }

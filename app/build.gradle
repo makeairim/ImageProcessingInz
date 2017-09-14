@@ -135,7 +135,7 @@ dependencies {
     compile 'com.robertlevonyan.view:CustomFloatingActionButton:1.0.3'
     compile 'com.github.chuross:expandable-layout:1.0.5'
     compile 'com.github.TellH:RecyclerStickyHeaderView:1.1.0'
-
+    compile 'com.github.coyarzun89:fabtransitionactivity:0.2.0'
 
     //android test
     androidTestCompile "org.mockito:mockito-core:$test.mockito"

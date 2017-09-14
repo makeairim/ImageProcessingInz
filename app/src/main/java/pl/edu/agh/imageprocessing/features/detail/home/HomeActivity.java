@@ -2,6 +2,7 @@ package pl.edu.agh.imageprocessing.features.detail.home;
 
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -31,6 +32,7 @@ import pl.edu.agh.imageprocessing.BaseActivity;
 import pl.edu.agh.imageprocessing.BaseFragment;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
+import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.databinding.ActivityHomeBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.ViewUtils;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
@@ -49,7 +51,7 @@ import tellh.com.stickyheaderview_rv.adapter.StickyHeaderViewAdapter;
 
 import static pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView.ViewState.HIDEN;
 
-public class HomeActivity extends BaseActivity implements HasSupportFragmentInjector {
+public class HomeActivity extends BaseActivity implements HasSupportFragmentInjector, OperationInfoCallback {
 
     public static final String RETAINED_FRAGMENT_TAG = "RETAINED_FRAGMENT_TAG";
     private final String TAG = HomeActivity.class.getSimpleName();
@@ -115,7 +117,7 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
         operHeaders.add(new ItemHeader(AppConstants.OTHER_HEADER));
         operHeaders.addAll(types.get(AppConstants.OTHER_HEADER));
         StickyHeaderViewAdapter adapter = new StickyHeaderViewAdapter(operHeaders)
-                .RegisterItemType(new ItemTypeViewBinder(getViewModel()))
+                .RegisterItemType(new ItemTypeViewBinder(getViewModel(),this))
                 .RegisterItemType(new ItemHeaderViewBinder());
         binding.recyclerView.setAdapter(adapter);
         binding.recyclerView.setOnNoChildClickListener(getViewModel().onOutsideListClick);
@@ -185,5 +187,11 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
     @Override
     public AndroidInjector<Fragment> supportFragmentInjector() {
         return fragmentDispatchingAndroidInjector;
+    }
+
+    @Override
+    public void operationInfoClicked(ImageOperationType type) {
+        Intent intent= InformationalActivity.newInstane(this,type);
+        startActivity(intent);
     }
 }

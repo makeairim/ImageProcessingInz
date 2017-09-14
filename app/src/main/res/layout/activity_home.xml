@@ -161,22 +161,18 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@android:color/transparent"
                     android:id="@+id/parent_recycler_view"
                     android:layout_marginTop="@dimen/fab_margin"
                     android:orientation="vertical"
                     android:visibility="gone">
-                    <tellh.com.stickyheaderview_rv.StickyHeaderView
-                        android:id="@+id/stickyHeaderView"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
+
 
                     <pl.edu.agh.imageprocessing.features.detail.android.TouchyRecyclerView
                         android:id="@+id/recyclerView"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         app:resource="@{resource}" />
-                    </tellh.com.stickyheaderview_rv.StickyHeaderView>
+
                 </LinearLayout>
             </RelativeLayout>
 

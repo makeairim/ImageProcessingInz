@@ -2,9 +2,12 @@ package pl.edu.agh.imageprocessing.features.detail.viemodel;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 
+import com.github.dmstocking.optional.java.util.Optional;
 import com.vansuita.pickimage.dialog.PickImageDialog;
 
 import org.greenrobot.eventbus.EventBus;
@@ -19,22 +22,27 @@ import java.util.concurrent.Callable;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.BaseFragment;
+import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
+import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
+import pl.edu.agh.imageprocessing.features.detail.android.event.LiveVideoEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.OperationsViewEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarizationEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowCannyEdgeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
@@ -85,7 +93,6 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     @Override
     public void restoreState(Bundle bundle){
     }
-
 
     HomeViewModelState state = new HomeViewModelState();
     public Callable<Void> onOutsideListClick = () -> {
@@ -157,18 +164,46 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
             case MEAN_FILTER:
                 EventBus.getDefault().post(new ShowSizeDialogEvent());
                 break;
+            case CANNY_EDGE:
+                EventBus.getDefault().post(new ShowCannyEdgeDialogEvent());
+                break;
             default:
                 throw new AssertionError("Could not resolve operation type");
         }
 
     }
-
-
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLiveVideoTriggered(LiveVideoEvent event){
+        Optional<Fragment> visibleFragmentOpt = getVisibleFragment();
+        if(visibleFragmentOpt.isPresent() && visibleFragmentOpt.get() instanceof ImageOperationFragment){
+            return;
+        }
+        Operation operation = operationResourceAPIRepository.createOperation();
+        operation.setOperationType(ImageOperationType.UNASSIGNED_TO_RESOURCE_ROOT_CHAIN.name());
+        operation.setStatus(OperationStatus.FINISHED);
+        Observable.create((ObservableOnSubscribe<Long>) e ->
+        {e.onNext(operationDao.save(operation));e.onComplete();})
+         .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(rootId -> EventBus.getDefault().post(new OperationsViewEvent(rootId)));
+    }
+    private Optional<Fragment> getVisibleFragment(){
+        FragmentManager fragmentManager = provideActivity().getSupportFragmentManager();
+        List<Fragment> fragments = fragmentManager.getFragments();
+        if(fragments != null){
+            for(Fragment fragment : fragments){
+                if(fragment != null && fragment.isVisible())
+                    return Optional.of(fragment);
+            }
+        }
+        return Optional.empty();
+    }
     public Map<String,List<GroupOperationModel>> provideOperationTypes() {
         HashMap<String,List<GroupOperationModel>> result=new HashMap<>();
         result.put(AppConstants.MOPHOLOGY_HEADER,operationResourceAPIRepository.getMorphologyImageOperationTypes());
         result.put(AppConstants.FILTER_HEADER,operationResourceAPIRepository.getFilterImageOperationTypes());
         result.put(AppConstants.OTHER_HEADER,operationResourceAPIRepository.getBasicImageOperationTypes());
+        result.put(AppConstants.IMAGE_FEATURE,operationResourceAPIRepository.getImageFeaturesOperationTypes());
         EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.VISIBLE));
         return result;
     }

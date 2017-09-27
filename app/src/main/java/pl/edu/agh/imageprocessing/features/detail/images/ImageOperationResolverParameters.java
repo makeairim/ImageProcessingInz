@@ -16,7 +16,6 @@ import pl.edu.agh.imageprocessing.data.ImageOperationType;
  */
 
 public class ImageOperationResolverParameters{
-    private Uri imageUri;
     private ImageOperationType operationType;
     private int morphologyWidth;
     private int morphologyHeight;
@@ -24,26 +23,9 @@ public class ImageOperationResolverParameters{
     private int threshold;
     private int matrixHeight;
     private int matrixWidth;
+    private int supressedPointsThreshold;
+    private int strongPointsThreshold;
     private int[] matrix;
-
-    private ImageOperationResolverParameters(Builder builder) {
-        imageUri = builder.imageUri;
-        operationType = builder.operationType;
-        morphologyWidth = builder.morphologyWidth;
-        morphologyHeight = builder.morphologyHeight;
-        morphologyElementType = builder.morphologyElementType;
-        threshold = builder.threshold;
-        matrixHeight = builder.matrixHeight;
-        matrixWidth = builder.matrixWidth;
-        matrix = builder.matrix;
-    }
-
-    public ImageOperationResolverParameters() {
-    }
-
-    public Uri getImageUri() {
-        return imageUri;
-    }
 
     public ImageOperationType getOperationType() {
         return operationType;
@@ -73,13 +55,33 @@ public class ImageOperationResolverParameters{
         return matrixWidth;
     }
 
+    public int getSupressedPointsThreshold() {
+        return supressedPointsThreshold;
+    }
+
+    public int getStrongPointsThreshold() {
+        return strongPointsThreshold;
+    }
+
     public int[] getMatrix() {
         return matrix;
     }
 
+    private ImageOperationResolverParameters(Builder builder) {
+        operationType = builder.operationType;
+        morphologyWidth = builder.morphologyWidth;
+        morphologyHeight = builder.morphologyHeight;
+        morphologyElementType = builder.morphologyElementType;
+        threshold = builder.threshold;
+        matrixHeight = builder.matrixHeight;
+        matrixWidth = builder.matrixWidth;
+        supressedPointsThreshold = builder.supressedPointsThreshold;
+        strongPointsThreshold = builder.strongPointsThreshold;
+        matrix = builder.matrix;
+    }
+
 
     public static final class Builder {
-        private Uri imageUri;
         private ImageOperationType operationType;
         private int morphologyWidth;
         private int morphologyHeight;
@@ -87,14 +89,11 @@ public class ImageOperationResolverParameters{
         private int threshold;
         private int matrixHeight;
         private int matrixWidth;
+        private int supressedPointsThreshold;
+        private int strongPointsThreshold;
         private int[] matrix;
 
         public Builder() {
-        }
-
-        public Builder imageUri(Uri val) {
-            imageUri = val;
-            return this;
         }
 
         public Builder operationType(ImageOperationType val) {
@@ -132,6 +131,16 @@ public class ImageOperationResolverParameters{
             return this;
         }
 
+        public Builder supressedPointsThreshold(int val) {
+            supressedPointsThreshold = val;
+            return this;
+        }
+
+        public Builder strongPointsThreshold(int val) {
+            strongPointsThreshold = val;
+            return this;
+        }
+
         public Builder matrix(int[] val) {
             matrix = val;
             return this;
@@ -141,6 +150,5 @@ public class ImageOperationResolverParameters{
             return new ImageOperationResolverParameters(this);
         }
     }
-
 }
 

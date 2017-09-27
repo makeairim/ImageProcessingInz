@@ -127,6 +127,7 @@ public class BinarizationCustomDialog extends BottomSheetDialogFragment {
                 listener.call(threshold);
                 dismiss();
             }catch(NumberFormatException e){
+                Log.i(TAG, "onViewCreated: "+e.getMessage(),e);
                 Toast.makeText(getActivity().getBaseContext(),"Incorrect format of threshold",Toast.LENGTH_LONG).show();
             }
         });

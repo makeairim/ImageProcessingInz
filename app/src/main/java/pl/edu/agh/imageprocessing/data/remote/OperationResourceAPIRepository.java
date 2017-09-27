@@ -70,7 +70,14 @@ public class OperationResourceAPIRepository {
                 new GroupOperationModel(ImageOperationType.FILTER),
                 new GroupOperationModel(ImageOperationType.MEAN_FILTER));
     }
+    public List<GroupOperationModel> getImageFeaturesOperationTypes(){
+        return Arrays.asList(
+                new GroupOperationModel(ImageOperationType.CANNY_EDGE),
+                new GroupOperationModel(ImageOperationType.SOBEL_OPERATOR),
+                new GroupOperationModel(ImageOperationType.HARRIS_CORNER)
 
+        );
+    }
 
     public boolean chainOperations(Operation parent, Operation child) {
         parent.setNextOperationId(child.getId());

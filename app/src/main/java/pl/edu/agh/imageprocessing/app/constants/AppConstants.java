@@ -14,4 +14,5 @@ public class AppConstants {
     public static final String MOPHOLOGY_HEADER = "Morphology";
     public static final String FILTER_HEADER = "Filter";
     public static final String OTHER_HEADER = "Other";
+    public static final String IMAGE_FEATURE = "Feature";
 }

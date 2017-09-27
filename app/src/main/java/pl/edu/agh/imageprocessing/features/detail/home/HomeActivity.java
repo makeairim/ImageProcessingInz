@@ -4,12 +4,15 @@ import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
 
 import org.greenrobot.eventbus.EventBus;
@@ -24,6 +27,7 @@ import javax.inject.Inject;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import cn.carbs.android.library.MDDialog;
 import dagger.android.AndroidInjection;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
@@ -33,8 +37,10 @@ import pl.edu.agh.imageprocessing.BaseFragment;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
+import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.databinding.ActivityHomeBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.ViewUtils;
+import pl.edu.agh.imageprocessing.features.detail.android.dialog.InformationCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
@@ -48,12 +54,14 @@ import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.Ite
 import pl.edu.agh.imageprocessing.features.detail.viemodel.HomeViewModel;
 import tellh.com.stickyheaderview_rv.adapter.DataBean;
 import tellh.com.stickyheaderview_rv.adapter.StickyHeaderViewAdapter;
+import ui.android.dialogalchemy.DialogAlchemy;
 
 import static pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView.ViewState.HIDEN;
 
 public class HomeActivity extends BaseActivity implements HasSupportFragmentInjector, OperationInfoCallback {
 
     public static final String RETAINED_FRAGMENT_TAG = "RETAINED_FRAGMENT_TAG";
+    private static final String DIALOG_INFO_TAG = "DIALOG_INFO_KEY";
     private final String TAG = HomeActivity.class.getSimpleName();
     public static final String KEY_HOME_ACTIVITY_ID = "key__home_activity_id";
 
@@ -116,6 +124,8 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
         operHeaders.addAll(types.get(AppConstants.FILTER_HEADER));
         operHeaders.add(new ItemHeader(AppConstants.OTHER_HEADER));
         operHeaders.addAll(types.get(AppConstants.OTHER_HEADER));
+        operHeaders.add(new ItemHeader(AppConstants.IMAGE_FEATURE));
+        operHeaders.addAll(types.get(AppConstants.IMAGE_FEATURE));
         StickyHeaderViewAdapter adapter = new StickyHeaderViewAdapter(operHeaders)
                 .RegisterItemType(new ItemTypeViewBinder(getViewModel(),this))
                 .RegisterItemType(new ItemHeaderViewBinder());
@@ -191,7 +201,9 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
 
     @Override
     public void operationInfoClicked(ImageOperationType type) {
-        Intent intent= InformationalActivity.newInstane(this,type);
-        startActivity(intent);
+        InformationCustomDialog dialog = InformationCustomDialog.newInstance(type.getTitle());
+        dialog.show(getSupportFragmentManager(),DIALOG_INFO_TAG);
+//        Intent intent = InformationalActivity.newInstane(this, type);
+//        startActivity(intent);
     }
 }

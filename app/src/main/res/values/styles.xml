@@ -13,7 +13,7 @@
         <item name="android:itemTextAppearance">@android:color/black</item>
         <item name="android:buttonStyle">@style/MyButton</item>
     </style>
-
+    <style name="custom" parent="@style/Theme.AppCompat.Light.Dialog"></style>
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
@@ -52,7 +52,14 @@
     <style name="SpinnerDropDownItem" parent="@android:style/Widget.DropDownItem.Spinner">
         <item name="android:textColor">@color/colorPrimaryDark</item>
     </style>
-    <style name="DialogCustomTheme" parent="@style/NoActionBar">
+    <style name="DialogCustomTheme" parent="@android:style/Theme.Holo.Light.Dialog">
         <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:windowTitleStyle">@style/dialog_title_style</item>
     </style>
+    <style name="dialog_title_style" parent="android:Widget.TextView">
+        <item name="android:background">@android:color/black</item>
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <item name="android:padding">10dp</item>
+    </style>
+
 </resources>

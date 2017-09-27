@@ -24,6 +24,7 @@ import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BinarizationOperation;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.CannyEdgeOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.DilationOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.ErosionOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.FilterOperation;
@@ -54,11 +55,11 @@ public class ImageOperationResolver {
         this.operationResourceAPIRepository = operationResourceAPIRepository;
         this.operationDao = operationDao;
     }
-    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationResolverParameters parameters, long processingOperationId) throws IOException {
+    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationResolverParameters parameters,Uri imageUri, long processingOperationId) throws IOException {
         Log.i(TAG, "resolveOperation: " + type.name());
         ImageOperationParameter params = imageOperationParameterResolver(type, parameters);
         params.setOperationId(processingOperationId);
-        Bitmap bitmap = fileTools.getImageBitmap(context, params.getImageUri());
+        Bitmap bitmap = fileTools.getImageBitmap(context, imageUri);
         Mat src = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC4);
         Utils.bitmapToMat(bitmap, src);
         return resolveOperation(type,params,src);
@@ -77,6 +78,8 @@ public class ImageOperationResolver {
                 return new FilterOperation(params, mat);
             case MEAN_FILTER:
                 return new MeanFilterOperation(params,mat);
+            case CANNY_EDGE:
+                return new CannyEdgeOperation(params,mat);
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
@@ -100,12 +103,12 @@ public class ImageOperationResolver {
             case MEAN_FILTER:
                 result= mapMeanFilter(parameters);
                 break;
+            case CANNY_EDGE:
+                result= mapCannyEdgeDetectorParameter(parameters);
+                break;
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
-
-        result.setImageUri(parameters.getImageUri());
-        //result.setImageUri(Uri.parse(parameters.getBaseResource().getContent()));
         return result;
     }
 
@@ -148,6 +151,13 @@ public class ImageOperationResolver {
         return result;
     }
 
+    private CannyEdgeOperation.Parameters mapCannyEdgeDetectorParameter(ImageOperationResolverParameters parameters) {
+        CannyEdgeOperation.Parameters result;
+        result = new CannyEdgeOperation.Parameters();
+        result.setSupressedPointsThreshold(parameters.getSupressedPointsThreshold());
+        result.setStrongPointsThreshold(parameters.getStrongPointsThreshold());
+        return result;
+    }
     public Resource processResult(BasicOperation execute) {
         Bitmap resultBitmap = Bitmap.createBitmap(execute.getMat().width(), execute.getMat().height(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(execute.getMat(),resultBitmap);

@@ -17,6 +17,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
 
 import javax.inject.Inject;
 
@@ -117,5 +118,8 @@ public class ImageProcessingApplication extends Application implements HasActivi
             e.printStackTrace();
         }
     }
-
+    // Used to load the 'native-lib' library on application startup.
+    static {
+        System.loadLibrary("native-lib");
+    }
 }

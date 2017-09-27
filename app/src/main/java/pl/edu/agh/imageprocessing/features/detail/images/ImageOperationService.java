@@ -19,14 +19,17 @@ import org.greenrobot.eventbus.EventBus;
 
 import java.io.IOException;
 
+import io.reactivex.Maybe;
 import pl.edu.agh.imageprocessing.app.ImageProcessingApplication;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
+import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.converter.UriDeserializer;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
+import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.event.RefreshDataEvent;
 
@@ -67,12 +70,21 @@ public class ImageOperationService extends Service {
 
             while(hasSomeWork){
                 try {
-                    ImageOperationResolverParameters params = new GsonBuilder().registerTypeAdapter(Uri.class,new UriDeserializer()).create().fromJson(oldestOperation.getObject(), ImageOperationResolverParameters.class);
+                    Operation previousOperation = operationDao.getOperationByNextOperationId(oldestOperation.getId());
+                    if( previousOperation == null ){
+                        Log.e(TAG, "handleMessage: cannot find previous operation for operationId= " + oldestOperation.getId());
+                    }
+                    Maybe<Resource> previousOperationResource = resourceDao.getByOperationAndType(previousOperation.getId(), ResourceType.IMAGE_FILE.name());
+                    if( previousOperationResource.blockingGet() == null ){
+                        Log.e(TAG, "handleMessage: cannot find previous operation resource for operationId= " + previousOperation.getId());
+                    }
+                    ImageOperationResolverParameters params = new GsonBuilder().create().fromJson(oldestOperation.getObject(), ImageOperationResolverParameters.class);
                     oldestOperation.setStatus(OperationStatus.IN_PROGRESS);
                     operationDao.update(oldestOperation);
                     resolver.processResult(resolver
                             .resolveOperation(ImageOperationType.valueOf(oldestOperation.getOperationType())
-                                    ,params
+                                    ,params,
+                                    Uri.parse(previousOperationResource.blockingGet().getContent())
                                     ,oldestOperation.getId()).execute());
                     oldestOperation.setStatus(OperationStatus.FINISHED);
                 } catch (IOException e) {

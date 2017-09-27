@@ -3,6 +3,7 @@ package pl.edu.agh.imageprocessing.features.detail.android.dialog;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialogFragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +17,7 @@ import pl.edu.agh.imageprocessing.R;
  */
 
 public class SizeCustomDialog extends BottomSheetDialogFragment {
-
+    public static final String TAG=SizeCustomDialog.class.getSimpleName();
     private EditText mSizeEditText;
     private DialogListener listener;
 
@@ -65,6 +66,7 @@ public class SizeCustomDialog extends BottomSheetDialogFragment {
                 listener.call(size);
                 dismiss();
             }catch(NumberFormatException e){
+                Log.i(TAG, "onViewCreated: "+e.getMessage(),e);
                 Toast.makeText(getActivity().getBaseContext(),"Incorrect format of size",Toast.LENGTH_LONG).show();
             }
         });

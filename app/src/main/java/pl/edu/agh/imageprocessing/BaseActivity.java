@@ -89,4 +89,5 @@ public class BaseActivity extends AppCompatActivity implements LifecycleRegistry
         super.onSaveInstanceState(outState);
         outState.putBundle(BaseViewModel.STATE_KEY, viewModel.saveState() );
     }
+
 }

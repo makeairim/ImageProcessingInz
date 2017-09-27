@@ -3,6 +3,7 @@ package pl.edu.agh.imageprocessing.features.detail.android.dialog;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialogFragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,17 +22,18 @@ import pl.edu.agh.imageprocessing.R;
  */
 
 public class DilationErosionCustomDialog extends BottomSheetDialogFragment {
-
+    public static final String TAG = DilationErosionCustomDialog.class.getSimpleName();
     private EditText mEditText;
     private RtlMaterialSpinner spinner;
     private EditText mWidthEditText;
     private EditText mHeightEditText;
     private DialogListener listener;
 
-    public interface DialogListener{
-        public void call(int width,int height,String elementType);
+    public interface DialogListener {
+        public void call(int width, int height, String elementType);
 
     }
+
     public DilationErosionCustomDialog() {
         // Empty constructor is required for DialogFragment
         // Make sure not to add arguments to the constructor
@@ -69,7 +71,7 @@ public class DilationErosionCustomDialog extends BottomSheetDialogFragment {
         // Show soft keyboard automatically and request focus to field
 
         ArrayList<String> ITEMS = getArguments().getStringArrayList("items");
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity().getBaseContext(),R.layout.spinner_dropdown_item, ITEMS);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity().getBaseContext(), R.layout.spinner_dropdown_item, ITEMS);
         adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         spinner = view.findViewById(R.id.spinner);
         spinner.setAdapter(adapter);
@@ -78,11 +80,12 @@ public class DilationErosionCustomDialog extends BottomSheetDialogFragment {
             try {
                 int width = Integer.parseInt(mWidthEditText.getText().toString());
                 int height = Integer.parseInt(mHeightEditText.getText().toString());
-                String operation=spinner.getItemAtPosition(spinner.getSelectedItemPosition()-1).toString();
-                listener.call(width,height,operation);
+                String operation = spinner.getItemAtPosition(spinner.getSelectedItemPosition() - 1).toString();
+                listener.call(width, height, operation);
                 dismiss();
-            }catch(NumberFormatException e){
-                Toast.makeText(getActivity().getBaseContext(),"Incorrect format of width or height",Toast.LENGTH_LONG).show();
+            } catch (NumberFormatException e) {
+                Log.i(TAG, "onViewCreated: " + e.getMessage(), e);
+                Toast.makeText(getActivity().getBaseContext(), "Incorrect format of width or height", Toast.LENGTH_LONG).show();
             }
         });
 

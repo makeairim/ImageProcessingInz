@@ -136,7 +136,8 @@ dependencies {
     compile 'com.github.chuross:expandable-layout:1.0.5'
     compile 'com.github.TellH:RecyclerStickyHeaderView:1.1.0'
     compile 'com.github.coyarzun89:fabtransitionactivity:0.2.0'
-
+    compile 'cn.carbs.android:MDDialog:1.0.0'
+    compile 'com.github.NeoLSN:DialogAlchemy:1.1.3'
     //android test
     androidTestCompile "org.mockito:mockito-core:$test.mockito"
     androidTestCompile "com.google.dagger:dagger:$libs.dagger"

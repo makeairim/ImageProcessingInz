@@ -5,7 +5,7 @@ extern "C"
 JNIEXPORT jstring
 
 JNICALL
-Java_agh_edu_pl_imageprocessing_HomeActivity_stringFromJNI(
+Java_agh_edu_pl_imageprocessing_ImageProcessingApplication_stringFromJNI(
         JNIEnv *env,
         jobject /* this */) {
     std::string hello = "Hello from C++";

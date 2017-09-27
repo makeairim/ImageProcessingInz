@@ -11,6 +11,7 @@ import com.vansuita.pickimage.enums.EPickType;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.core.Core;
 
 import javax.inject.Singleton;
 
@@ -86,7 +87,7 @@ public class AppModule {
             public void onManagerConnected(int status) {
                 switch (status) {
                     case LoaderCallbackInterface.SUCCESS:
-                        //DO YOUR WORK/STUFF HERE
+                        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
                         break;
                     default:
                         super.onManagerConnected(status);

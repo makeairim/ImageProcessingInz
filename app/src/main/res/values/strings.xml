@@ -12,4 +12,7 @@
     <string name="toast_invalid_boundary">Threshold should be between %1$d and %2$d</string>
     <string name="title_size_dialog">Choose kernel size</string>
     <string name="dialog_size_desc">Kernel size</string>
+    <string name="positivie_btn_title">Ok</string>
+    <string name="dialog_threshold_supressed_point_desc">Supressed points threshold</string>
+    <string name="dialog_threshold_strong_point_desc">Strong points threshold</string>
 </resources>

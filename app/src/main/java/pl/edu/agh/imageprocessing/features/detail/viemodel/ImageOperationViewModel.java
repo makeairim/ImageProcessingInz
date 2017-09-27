@@ -1,7 +1,6 @@
 package pl.edu.agh.imageprocessing.features.detail.viemodel;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -20,6 +19,7 @@ import org.opencv.core.Mat;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,8 +33,6 @@ import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
-import pl.edu.agh.imageprocessing.data.local.converter.UriDeserializer;
-import pl.edu.agh.imageprocessing.data.local.converter.UriSerializer;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
@@ -42,6 +40,7 @@ import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.BinarizationCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.dialog.CannyEdgeCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.DilationErosionCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.MatrixCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.SizeCustomDialog;
@@ -53,6 +52,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHi
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
 import pl.edu.agh.imageprocessing.features.detail.android.event.RefreshDataEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarizationEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowCannyEdgeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSizeDialogEvent;
@@ -118,6 +118,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     public void refreshData(RefreshDataEvent event) {
         loadOperationChain(state.getRootOperationId());
     }
+
     private void loadOperationChain(long rootId) {
         Observable.create((ObservableOnSubscribe<List<OperationWithChainAndResource>>) e -> {
             e.onNext(operationWithChainAndResourceDao.getChainOperationsSortedAsc(rootId));
@@ -134,13 +135,14 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     }
 
 
-    private Operation createOperation(ImageOperationType type, ImageOperationResolverParameters parameters){
+    private Operation createOperation(ImageOperationType type, ImageOperationResolverParameters parameters) {
         return new Operation.Builder()
                 .creationDate(new Date(System.currentTimeMillis()))
                 .operationType(type.name())
-                .object(new GsonBuilder().registerTypeAdapter(Uri.class,new UriSerializer()).create().toJson(parameters)).build();
+                .object(new GsonBuilder().create().toJson(parameters)).build();
     }
-    private void saveOperation(Operation oper){
+
+    private void saveOperation(Operation oper) {
         Observable<Long> prcessingOperationObservable = Observable.create(e -> {
             try {
                 oper.setStatus(OperationStatus.CREATED);
@@ -148,6 +150,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                 e.onNext(id);
                 e.onComplete();
             } catch (Exception error) {
+                Log.e(TAG, "saveOperation: " + error.getMessage(), error);
                 e.onError(error);
             }
         });
@@ -155,10 +158,11 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         prcessingOperationObservable.subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).subscribe(o -> {
             oper.setId(o);
             state.getOperationChainAndResource().add(new OperationWithChainAndResource.Builder().operation(oper).resource(Collections.emptyList()).build());
+            EventBus.getDefault().post(new ChainOperationEvent(previous.getOperation().getId(), o));
             EventBus.getDefault().post(new DataChangedEvent());
-            EventBus.getDefault().post(new ChainOperationEvent(previous.getOperation().getId(),o));
         });//todo handle dispisable
     }
+
     public void showMatrixDialog(String title, int height, int width, ImageOperationType imageOperationType) {
         FragmentManager fm = provideActivity().getSupportFragmentManager();
         MatrixCustomDialog dialog = MatrixCustomDialog.newInstance(title, width, height);
@@ -171,17 +175,19 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         });
 
     }
-    public void showSizeDialog(String title,ImageOperationType imageOperationType) {
+
+    public void showSizeDialog(String title, ImageOperationType imageOperationType) {
         FragmentManager fm = provideActivity().getSupportFragmentManager();
         SizeCustomDialog dialog = SizeCustomDialog.newInstance(title);
         dialog.show(fm, "matrix_values");
         dialog.setListener((sizeXY) -> {
-           state.setMatrixHeight(sizeXY);
-           state.setMatrixWidth(sizeXY);
+            state.setMatrixHeight(sizeXY);
+            state.setMatrixWidth(sizeXY);
             saveOperation(createOperation(imageOperationType, mapStateToParameter(state)));
         });
 
     }
+
     private void showErosionDilationDialog(String title, ImageOperationType imageOperationType) {
         FragmentManager fm = provideActivity().getSupportFragmentManager();
         DilationErosionCustomDialog dialog = DilationErosionCustomDialog.newInstance(title, openCvTypes.getStructuringElementTypes());
@@ -196,15 +202,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
 
 
     private ImageOperationResolverParameters mapStateToParameter(ImageOperationViewModelState state) {
-        OperationWithChainAndResource lastOperationResource = getLastFinishedOperation(state.getOperationChainAndResource());
-        Resource lastFinishedOperationResource=null;
-        for (Resource resource : lastOperationResource.getResource()) {
-            if( ResourceType.IMAGE_FILE.equals(ResourceType.valueOf(resource.getType())) ){
-                lastFinishedOperationResource=resource;
-            }
-        }
         return new ImageOperationResolverParameters.Builder()
-                .imageUri(Uri.parse(lastFinishedOperationResource.getContent()))
                 .matrix(state.getMatrix())
                 .matrixHeight(state.getMatrixHeight())
                 .matrixWidth(state.getMatrixWidth())
@@ -212,6 +210,8 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                 .morphologyHeight(state.getMorphologyHeight())
                 .morphologyWidth(state.getMorphologyWidth())
                 .threshold(state.getThreshold())
+                .strongPointsThreshold(state.getStrongPointThreshold())
+                .supressedPointsThreshold(state.getSupressedPointThreshold())
                 .build();
     }
 
@@ -228,6 +228,18 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         });
     }
 
+    @Subscribe
+    public void showCannyEdgeDialog(ShowCannyEdgeDialogEvent event) {
+        FragmentManager fm = provideActivity().getSupportFragmentManager();
+        CannyEdgeCustomDialog dialog = CannyEdgeCustomDialog.newInstance("Canny edge detector",10,100);
+        dialog.show(fm, "operation_parameters");
+        dialog.setListener((supressedPointThreshold, strongPointThreshold) -> {
+            state.setSupressedPointThreshold(supressedPointThreshold);
+            state.setStrongPointThreshold(strongPointThreshold);
+            saveOperation(createOperation(ImageOperationType.CANNY_EDGE, mapStateToParameter(state)));
+            EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
+        });
+    }
     @Subscribe
     public void showErosionAndDilation(ShowErosionAndDilationEvent event) {
         if (event.getData() instanceof String) {
@@ -254,9 +266,10 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     public void showFilter(ShowFilterEvent event) {
         showMatrixDialog(provideFragment().getString(R.string.title_matrix_value_dialog), 3, 3, ImageOperationType.FILTER);
     }
+
     @Subscribe
-    public void showSetSizeDialog(ShowSizeDialogEvent event){
-        showSizeDialog(provideFragment().getString(R.string.title_size_dialog),ImageOperationType.MEAN_FILTER);
+    public void showSetSizeDialog(ShowSizeDialogEvent event) {
+        showSizeDialog(provideFragment().getString(R.string.title_size_dialog), ImageOperationType.MEAN_FILTER);
     }
 
     private List<Resource> getResourceByTypeFromOperationWithResourceEntity(OperationWithChainAndResource operationWithChainAndResource, ResourceType resourceType, int limit) {
@@ -275,18 +288,6 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
 
         return result;
     }
-    private OperationWithChainAndResource getLastFinishedOperation(List<OperationWithChainAndResource> operationWithChainAndResources){
-        if( operationWithChainAndResources.size() == 0){
-            Log.e(TAG, "getLastFinishedOperation: ",new AssertionError("Passed zero length list") );
-        }
-        for (int i = operationWithChainAndResources.size()-1; i >=0; i--) {
-            if ( operationWithChainAndResources.get(i).getOperation().getStatus() == OperationStatus.FINISHED ){
-                return operationWithChainAndResources.get(i);
-            }
-        }
-        Log.e(TAG, "getLastFinishedOperation: ", new AssertionError("operation chain with no saved resource file"));
-        throw new RuntimeException();
-    }
 
     @Subscribe
     public void chainOperation(ChainOperationEvent event) {
@@ -301,24 +302,26 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         )
                 .subscribeOn(Schedulers.newThread())
                 .subscribe(
-                aBoolean -> {
-                    Log.i(TAG, "chainOperation: operationParent=" + event.getBaseOperationId() + " child=" + event.getProcessingOperationId()+
-                    " status:"+aBoolean);
-                    //showImage(state.getBaseResource());
-                    if(aBoolean){
-                        EventBus.getDefault().post(new TriggerServiceWorkEvent());
-                    }
+                        aBoolean -> {
+                            Log.i(TAG, "chainOperation: operationParent=" + event.getBaseOperationId() + " child=" + event.getProcessingOperationId() +
+                                    " status:" + aBoolean);
+                            //showImage(state.getBaseResource());
+                            if (aBoolean) {
+                                EventBus.getDefault().post(new TriggerServiceWorkEvent());
+                            }
 
-                    //todo update item list view status
-                    //todo handle failure ?
-                });
+                            //todo update item list view status
+                            //todo handle failure ?
+                        });
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void notifyDataChanged(DataChangedEvent event) {
         provideFragment().adapter.setData(state.getOperationChainAndResource());
         provideFragment().adapter.notifyDataSetChanged();
+        //todo refresh data event
     }
+
     public void setUp() {
         provideActivity().binding.doOper.setOnFabClickListener(view -> {
             EventBus.getDefault().post(new EventBasicViewHideBottomActionParameters(EventBasicView.ViewState.HIDEN));
@@ -336,14 +339,14 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
 
     @Override
     public Bundle saveState() {
-        Bundle bundle=new Bundle();
+        Bundle bundle = new Bundle();
 //        bundle.putParcelable(this.STATE_KEY,state);
         return bundle;
     }
 
     @Override
     public void restoreState(Bundle bundle) {
-        if( bundle != null){
+        if (bundle != null) {
 //            state=bundle.getParcelable(this.STATE_KEY);
         }
 
@@ -354,34 +357,35 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         loadOperationChain(rootOperationId);
     }
 
-    public Mat obtainImageOperations(Mat src){
-        Gson gson = new GsonBuilder().registerTypeAdapter(Uri.class, new UriDeserializer()).create();
+    public Mat obtainImageOperations(Mat src) {
+        Gson gson = new GsonBuilder().create();
         for (OperationWithChainAndResource operationWithChainAndResource : state.getOperationChainAndResource()) {
-            for (int i = operationWithChainAndResource.getResource().size()-1; i >=0; --i) {
-                if(operationWithChainAndResource.getOperation().getParentOperationId()!=null){
-                    try {
-                        ImageOperationParameter params = imageOperationResolver
-                                .imageOperationParameterResolver(ImageOperationType
-                                                .valueOf(operationWithChainAndResource
-                                                        .getOperation()
-                                                        .getOperationType()),
-                                gson.fromJson(operationWithChainAndResource
-                                        .getOperation()
-                                        .getObject(), ImageOperationResolverParameters.class));
-                        src=imageOperationResolver.resolveOperation(
-                                ImageOperationType.valueOf(operationWithChainAndResource.getOperation().getOperationType())
-                                , params, src)
-                                .execute().getMat();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+            if (operationWithChainAndResource.getOperation() != null
+                    && operationWithChainAndResource.getOperation().getOperationType() != null
+                    && !EnumSet.of(ImageOperationType.BASIC_PHOTO, ImageOperationType.UNASSIGNED_TO_RESOURCE_ROOT_CHAIN)
+                    .contains(ImageOperationType.valueOf(operationWithChainAndResource.getOperation().getOperationType()))) {
+                try {
+                    ImageOperationParameter params = imageOperationResolver
+                            .imageOperationParameterResolver(ImageOperationType
+                                            .valueOf(operationWithChainAndResource
+                                                    .getOperation()
+                                                    .getOperationType()),
+                                    gson.fromJson(operationWithChainAndResource
+                                            .getOperation()
+                                            .getObject(), ImageOperationResolverParameters.class));
+                    src = imageOperationResolver.resolveOperation(
+                            ImageOperationType.valueOf(operationWithChainAndResource.getOperation().getOperationType())
+                            , params, src)
+                            .execute().getMat();
+                } catch (IOException e) {
+                    Log.e(TAG, "obtainImageOperations: " + e.getMessage(), e);
                 }
             }
         }
         return src;
     }
 
-    static public class ImageOperationViewModelState implements Parcelable{
+    static public class ImageOperationViewModelState implements Parcelable {
         private ImageOperationType operationType;
         private int morphologyWidth;
         private int morphologyHeight;
@@ -392,11 +396,12 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         private int[] matrix;
         private List<OperationWithChainAndResource> operationChainAndResource;
         private Long rootOperationId;
+        private int supressedPointThreshold;
+        private int strongPointThreshold;
 
         public List<OperationWithChainAndResource> getOperationChainAndResource() {
             return operationChainAndResource;
         }
-
 
 
         public Long getRootOperationId() {
@@ -522,5 +527,21 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                 return new ImageOperationViewModelState[size];
             }
         };
+
+        public void setSupressedPointThreshold(int supressedPointThreshold) {
+            this.supressedPointThreshold = supressedPointThreshold;
+        }
+
+        public int getSupressedPointThreshold() {
+            return supressedPointThreshold;
+        }
+
+        public void setStrongPointThreshold(int strongPointThreshold) {
+            this.strongPointThreshold = strongPointThreshold;
+        }
+
+        public int getStrongPointThreshold() {
+            return strongPointThreshold;
+        }
     }
 }

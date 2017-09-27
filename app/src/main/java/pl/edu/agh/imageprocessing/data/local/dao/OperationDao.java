@@ -31,8 +31,14 @@ public interface OperationDao {
     @Query("SELECT * FROM Operation WHERE id = :id")
     public Flowable<Operation> get(long id);
 
-    @Query("SELECT * FROM Operation WHERE status = 'CREATED' OR status = 'IN_PROGRESS' ORDER BY status DESC ,creationDate ASC LIMIT 1")
+    @Query("SELECT op.* FROM Operation op WHERE " +
+            "NOT EXISTS (SELECT * FROM Operation op2 WHERE op2.id = op.parentOperationId AND op2.operationType = 'UNASSIGNED_TO_RESOURCE_ROOT_CHAIN') " +
+            "AND op.status = 'CREATED' OR op.status = 'IN_PROGRESS' " +
+            "ORDER BY op.status DESC ,op.creationDate ASC LIMIT 1")
     public Operation getOldestUnresolved();
+
+    @Query("SELECT op.* FROM Operation op WHERE op.nextOperationId = :nextOperationId")
+    public Operation getOperationByNextOperationId(long nextOperationId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long save(Operation operation);
@@ -42,6 +48,7 @@ public interface OperationDao {
 
     @Update
     int update(Operation operation);
+
     @Query("UPDATE Operation set status = :status WHERE id= :id")
     int updateStatus(long id, OperationStatus status);
 //    @Query("DELETE FROM Operation WHERE operationType =:type " +

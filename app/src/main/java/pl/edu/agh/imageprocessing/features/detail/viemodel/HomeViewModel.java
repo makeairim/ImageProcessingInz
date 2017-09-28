@@ -45,6 +45,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarization
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowCannyEdgeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowHarrisEdgeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSizeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.GroupOperationModel;
@@ -166,6 +167,9 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                 break;
             case CANNY_EDGE:
                 EventBus.getDefault().post(new ShowCannyEdgeDialogEvent());
+                break;
+            case HARRIS_CORNER:
+                EventBus.getDefault().post(new ShowHarrisEdgeDialogEvent());
                 break;
             default:
                 throw new AssertionError("Could not resolve operation type");

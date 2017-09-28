@@ -13,8 +13,6 @@ import java.io.IOException;
 
 import javax.inject.Inject;
 
-import io.reactivex.Maybe;
-import io.reactivex.Single;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
@@ -28,6 +26,7 @@ import pl.edu.agh.imageprocessing.features.detail.images.operation.CannyEdgeOper
 import pl.edu.agh.imageprocessing.features.detail.images.operation.DilationOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.ErosionOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.FilterOperation;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.HarrisCornerEdgeOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.MeanFilterOperation;
 
 /**
@@ -55,14 +54,15 @@ public class ImageOperationResolver {
         this.operationResourceAPIRepository = operationResourceAPIRepository;
         this.operationDao = operationDao;
     }
-    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationResolverParameters parameters,Uri imageUri, long processingOperationId) throws IOException {
+
+    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationResolverParameters parameters, Uri imageUri, long processingOperationId) throws IOException {
         Log.i(TAG, "resolveOperation: " + type.name());
         ImageOperationParameter params = imageOperationParameterResolver(type, parameters);
         params.setOperationId(processingOperationId);
         Bitmap bitmap = fileTools.getImageBitmap(context, imageUri);
         Mat src = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC4);
         Utils.bitmapToMat(bitmap, src);
-        return resolveOperation(type,params,src);
+        return resolveOperation(type, params, src);
     }
 
     public BasicOperation resolveOperation(ImageOperationType type, ImageOperationParameter params, Mat mat) throws IOException {
@@ -77,9 +77,11 @@ public class ImageOperationResolver {
             case FILTER:
                 return new FilterOperation(params, mat);
             case MEAN_FILTER:
-                return new MeanFilterOperation(params,mat);
+                return new MeanFilterOperation(params, mat);
             case CANNY_EDGE:
-                return new CannyEdgeOperation(params,mat);
+                return new CannyEdgeOperation(params, mat);
+            case HARRIS_CORNER:
+                return new HarrisCornerEdgeOperation(params, mat);
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
@@ -101,10 +103,13 @@ public class ImageOperationResolver {
                 result = mapFilterParameter(parameters);
                 break;
             case MEAN_FILTER:
-                result= mapMeanFilter(parameters);
+                result = mapMeanFilter(parameters);
                 break;
             case CANNY_EDGE:
-                result= mapCannyEdgeDetectorParameter(parameters);
+                result = mapCannyEdgeDetectorParameter(parameters);
+                break;
+            case HARRIS_CORNER:
+                result = new CannyEdgeOperation.Parameters();
                 break;
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
@@ -113,7 +118,7 @@ public class ImageOperationResolver {
     }
 
     private ImageOperationParameter mapMeanFilter(ImageOperationResolverParameters parameters) {
-        MeanFilterOperation.Parameters result=new MeanFilterOperation.Parameters();
+        MeanFilterOperation.Parameters result = new MeanFilterOperation.Parameters();
         result.setSize(parameters.getMatrixWidth()); //todo set size from user ?
         return result;
     }
@@ -158,9 +163,10 @@ public class ImageOperationResolver {
         result.setStrongPointsThreshold(parameters.getStrongPointsThreshold());
         return result;
     }
+
     public Resource processResult(BasicOperation execute) {
         Bitmap resultBitmap = Bitmap.createBitmap(execute.getMat().width(), execute.getMat().height(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(execute.getMat(),resultBitmap);
+        Utils.matToBitmap(execute.getMat(), resultBitmap);
         Uri fileUri = fileTools.saveFile(resultBitmap);
         Resource result = operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
                 fileUri.toString(), execute

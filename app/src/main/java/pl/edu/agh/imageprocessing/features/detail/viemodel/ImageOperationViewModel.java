@@ -55,6 +55,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarization
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowCannyEdgeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowHarrisEdgeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSizeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.TriggerServiceWorkEvent;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
@@ -229,9 +230,15 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     }
 
     @Subscribe
+    public void showHarrisEdgeDialog(ShowHarrisEdgeDialogEvent event) {
+        saveOperation(createOperation(ImageOperationType.HARRIS_CORNER, mapStateToParameter(state)));
+        EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
+    }
+
+    @Subscribe
     public void showCannyEdgeDialog(ShowCannyEdgeDialogEvent event) {
         FragmentManager fm = provideActivity().getSupportFragmentManager();
-        CannyEdgeCustomDialog dialog = CannyEdgeCustomDialog.newInstance("Canny edge detector",10,100);
+        CannyEdgeCustomDialog dialog = CannyEdgeCustomDialog.newInstance("Canny edge detector", 10, 100);
         dialog.show(fm, "operation_parameters");
         dialog.setListener((supressedPointThreshold, strongPointThreshold) -> {
             state.setSupressedPointThreshold(supressedPointThreshold);
@@ -240,6 +247,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
         });
     }
+
     @Subscribe
     public void showErosionAndDilation(ShowErosionAndDilationEvent event) {
         if (event.getData() instanceof String) {

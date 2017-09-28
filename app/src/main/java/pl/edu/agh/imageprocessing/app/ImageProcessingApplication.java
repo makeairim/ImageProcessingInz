@@ -16,6 +16,7 @@ import android.view.View;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 
@@ -41,6 +42,10 @@ public class ImageProcessingApplication extends Application implements HasActivi
     BaseLoaderCallback baseLoaderCallback;
     @Inject
     ImageProcessingAPIDatabase imageProcessingAPIDatabase;
+    static {                                 // <--
+        System.loadLibrary("opencv_java3");  // <-- この３行を追加
+    }                                        // <--
+
     /** Messenger for communicating with the service. */
     Messenger mService = null;
     /** Flag indicating whether we have called bind on the service. */
@@ -75,8 +80,12 @@ public class ImageProcessingApplication extends Application implements HasActivi
     public void onCreate() {
         super.onCreate();
         initializeComponent();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0,this ,
-                baseLoaderCallback);
+        if(!OpenCVLoader.initDebug()) {
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this,
+                    baseLoaderCallback);
+        }else{
+            baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
         Intent intent = new Intent(this, ImageOperationService.class);
         startService(intent);
         EventBus.getDefault().register(this);
@@ -117,9 +126,5 @@ public class ImageProcessingApplication extends Application implements HasActivi
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-    }
-    // Used to load the 'native-lib' library on application startup.
-    static {
-        System.loadLibrary("native-lib");
     }
 }

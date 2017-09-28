@@ -4,6 +4,7 @@ import android.app.Application;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.persistence.room.Room;
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 
 import com.vansuita.pickimage.bundle.PickSetup;
@@ -87,7 +88,7 @@ public class AppModule {
             public void onManagerConnected(int status) {
                 switch (status) {
                     case LoaderCallbackInterface.SUCCESS:
-                        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+                        Log.i(AppModule.class.getSimpleName(), "onManagerConnected: "+ "openCv loaded");
                         break;
                     default:
                         super.onManagerConnected(status);

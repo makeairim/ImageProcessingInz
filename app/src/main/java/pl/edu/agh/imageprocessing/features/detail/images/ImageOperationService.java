@@ -16,11 +16,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.greenrobot.eventbus.EventBus;
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
+
 import io.reactivex.Maybe;
 import pl.edu.agh.imageprocessing.app.ImageProcessingApplication;
+import pl.edu.agh.imageprocessing.dagger.AppModule;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
@@ -49,7 +55,6 @@ public class ImageOperationService extends Service {
     private OperationWithChainAndResourceDao operationWithChainResourceDao;
     private ResourceDao resourceDao;
     private ImageOperationResolver resolver;
-
     //    @Inject
 //    OperationDao operationDao;
     // Handler that receives messages from the thread
@@ -108,7 +113,6 @@ public class ImageOperationService extends Service {
 
     @Override
     public void onCreate() {
-
         fileTools = new FileTools(getBaseContext());
         operationDao = ((ImageProcessingApplication) getApplication()).getImageProcessingAPIDatabase().operationDao();
         resourceDao = ((ImageProcessingApplication) getApplication()).getImageProcessingAPIDatabase().resourceDao();

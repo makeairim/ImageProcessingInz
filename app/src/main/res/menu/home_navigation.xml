@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/export"
-        android:title="@string/navi_export_as"
+        android:title="@string/navi_operations_as"
         app:showAsAction="ifRoom|collapseActionView"
         app:srcCompat="@drawable/ic_save_24dp"/>
 

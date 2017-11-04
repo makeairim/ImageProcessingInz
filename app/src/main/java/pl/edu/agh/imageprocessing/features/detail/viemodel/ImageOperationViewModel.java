@@ -55,8 +55,9 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarization
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowCannyEdgeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
-import pl.edu.agh.imageprocessing.features.detail.android.event.ShowHarrisEdgeDialogEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowHarrisEdgeEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSizeDialogEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSobelOperatorEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.TriggerServiceWorkEvent;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
@@ -144,23 +145,31 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     }
 
     private void saveOperation(Operation oper) {
-        Observable<Long> prcessingOperationObservable = Observable.create(e -> {
+        OperationWithChainAndResource previous = state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1);
+        Observable<Operation> prcessingOperationObservable = Observable.create(e -> {
             try {
                 oper.setStatus(OperationStatus.CREATED);
+                oper.setParentOperationId(previous.getOperation().getParentOperationId() != null ? previous.getOperation().getParentOperationId() : previous.getOperation().getId());
                 Long id = operationDao.save(oper);
-                e.onNext(id);
+                oper.setId(id);
+//                operationResourceAPIRepository
+//                        .chainOperations(operationDao.get(previous.getOperation().getId()).blockingFirst(), oper);
+                Operation parent = operationDao.get(previous.getOperation().getId()).blockingFirst();
+                parent.setNextOperationId(id);
+                operationDao.update(parent);
+                e.onNext(oper);
                 e.onComplete();
             } catch (Exception error) {
                 Log.e(TAG, "saveOperation: " + error.getMessage(), error);
                 e.onError(error);
             }
         });
-        OperationWithChainAndResource previous = state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1);
-        prcessingOperationObservable.subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).subscribe(o -> {
-            oper.setId(o);
-            state.getOperationChainAndResource().add(new OperationWithChainAndResource.Builder().operation(oper).resource(Collections.emptyList()).build());
-            EventBus.getDefault().post(new ChainOperationEvent(previous.getOperation().getId(), o));
+        prcessingOperationObservable.subscribeOn(Schedulers.io()).observeOn(Schedulers.io()).subscribe(operation -> {
+            state.getOperationChainAndResource().add(new OperationWithChainAndResource.Builder().operation(operation).resource(Collections.emptyList()).build());
+//            EventBus.getDefault().post(new ChainOperationEvent(previous.getOperation().getId(), o));
+            EventBus.getDefault().post(new TriggerServiceWorkEvent());
             EventBus.getDefault().post(new DataChangedEvent());
+//            EventBus.getDefault().post(new RefreshDataEvent());
         });//todo handle dispisable
     }
 
@@ -230,8 +239,14 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     }
 
     @Subscribe
-    public void showHarrisEdgeDialog(ShowHarrisEdgeDialogEvent event) {
+    public void showHarrisEdge(ShowHarrisEdgeEvent event) {
         saveOperation(createOperation(ImageOperationType.HARRIS_CORNER, mapStateToParameter(state)));
+        EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
+    }
+
+    @Subscribe
+    public void showSobelOperator(ShowSobelOperatorEvent event) {
+        saveOperation(createOperation(ImageOperationType.SOBEL_OPERATOR, mapStateToParameter(state)));
         EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
     }
 
@@ -297,31 +312,32 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         return result;
     }
 
-    @Subscribe
-    public void chainOperation(ChainOperationEvent event) {
-        Observable.create((ObservableOnSubscribe<Boolean>) e -> {
-                    e.onNext(operationResourceAPIRepository
-                            .chainOperations(operationDao
-                                            .get(event.getBaseOperationId()).blockingFirst(),
-                                    operationDao
-                                            .get(event.getProcessingOperationId()).blockingFirst()));
-                    e.onComplete();
-                }
-        )
-                .subscribeOn(Schedulers.newThread())
-                .subscribe(
-                        aBoolean -> {
-                            Log.i(TAG, "chainOperation: operationParent=" + event.getBaseOperationId() + " child=" + event.getProcessingOperationId() +
-                                    " status:" + aBoolean);
-                            //showImage(state.getBaseResource());
-                            if (aBoolean) {
-                                EventBus.getDefault().post(new TriggerServiceWorkEvent());
-                            }
-
-                            //todo update item list view status
-                            //todo handle failure ?
-                        });
-    }
+//    @Subscribe
+//    public void chainOperation(ChainOperationEvent event) {
+//        Observable.create((ObservableOnSubscribe<Boolean>) e -> {
+//                    e.onNext(operationResourceAPIRepository
+//                            .chainOperations(operationDao
+//                                            .get(event.getBaseOperationId()).blockingFirst(),
+//                                    operationDao
+//                                            .get(event.getProcessingOperationId()).blockingFirst()));
+//                    e.onComplete();
+//                }
+//        )
+//                .subscribeOn(Schedulers.io())
+//                .observeOn(Schedulers.io())
+//                .subscribe(
+//                        aBoolean -> {
+//                            Log.i(TAG, "chainOperation: operationParent=" + event.getBaseOperationId() + " child=" + event.getProcessingOperationId() +
+//                                    " status:" + aBoolean);
+//                            //showImage(state.getBaseResource());
+//                            if (aBoolean) {
+//                                EventBus.getDefault().post(new TriggerServiceWorkEvent());
+//                            }
+//
+//                            //todo update item list view status
+//                            //todo handle failure ?
+//                        });
+//    }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void notifyDataChanged(DataChangedEvent event) {

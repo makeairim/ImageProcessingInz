@@ -28,6 +28,7 @@ import pl.edu.agh.imageprocessing.features.detail.images.operation.ErosionOperat
 import pl.edu.agh.imageprocessing.features.detail.images.operation.FilterOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.HarrisCornerEdgeOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.MeanFilterOperation;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.SobelOperatorOperation;
 
 /**
  * Created by bwolcerz on 03.08.2017.
@@ -82,6 +83,8 @@ public class ImageOperationResolver {
                 return new CannyEdgeOperation(params, mat);
             case HARRIS_CORNER:
                 return new HarrisCornerEdgeOperation(params, mat);
+            case SOBEL_OPERATOR:
+                return new SobelOperatorOperation(params, mat);
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
@@ -110,6 +113,9 @@ public class ImageOperationResolver {
                 break;
             case HARRIS_CORNER:
                 result = new CannyEdgeOperation.Parameters();
+                break;
+            case SOBEL_OPERATOR:
+                result = new SobelOperatorOperation.Parameters();
                 break;
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());

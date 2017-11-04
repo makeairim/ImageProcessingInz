@@ -5,7 +5,16 @@ package pl.edu.agh.imageprocessing.data;
  */
 
 public enum ImageOperationType {
-    BINARIZATION("Binarization"), DILATION("Dilation"), EROSION("Erosion"), FILTER("Filter"),BASIC_PHOTO("Base photo"), MEAN_FILTER("Mean filter"),UNASSIGNED_TO_RESOURCE_ROOT_CHAIN("Chain root"), CANNY_EDGE("Canny edge detector"), SOBEL_OPERATOR("Sobel operator"), HARRIS_CORNER("Harris corner detection");
+    BINARIZATION("Binarization"),
+    DILATION("Dilation"),
+    EROSION("Erosion"),
+    FILTER("Filter"),
+    BASIC_PHOTO("Base photo"),
+    MEAN_FILTER("Mean filter"),
+    UNASSIGNED_TO_RESOURCE_ROOT_CHAIN("Chain root"),
+    CANNY_EDGE("Canny edge detector"),
+    SOBEL_OPERATOR("Sobel operator"),
+    HARRIS_CORNER("Harris corner detection");
     private String title;
 
     ImageOperationType(String title) {

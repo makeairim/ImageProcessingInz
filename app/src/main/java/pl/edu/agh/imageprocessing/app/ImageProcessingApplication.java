@@ -43,7 +43,7 @@ public class ImageProcessingApplication extends Application implements HasActivi
     @Inject
     ImageProcessingAPIDatabase imageProcessingAPIDatabase;
     static {                                 // <--
-        System.loadLibrary("opencv_java3");  // <-- この３行を追加
+        System.loadLibrary("opencv_java3");  //
     }                                        // <--
 
     /** Messenger for communicating with the service. */

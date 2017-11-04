@@ -1,8 +1,9 @@
 package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.Collections;
@@ -12,12 +13,12 @@ import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.features.detail.android.CoreException;
 import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter;
 
-public class CannyEdgeOperation extends BasicOperation {
-    private static ImageOperationType type = ImageOperationType.CANNY_EDGE;
-    public static final String TAG = CannyEdgeOperation.class.getSimpleName();
+public class SobelOperatorOperation extends BasicOperation {
+    private static ImageOperationType type = ImageOperationType.SOBEL_OPERATOR;
+    public static final String TAG = SobelOperatorOperation.class.getSimpleName();
 
-    public CannyEdgeOperation(ImageOperationParameter parameter, Mat mat) {
-        super(parameter,mat);
+    public SobelOperatorOperation(ImageOperationParameter parameter, Mat mat) {
+        super(parameter, mat);
     }
 
     @Override
@@ -32,7 +33,14 @@ public class CannyEdgeOperation extends BasicOperation {
         if(getMat().channels()>=3) {
             Imgproc.cvtColor(getMat(), getMat(), Imgproc.COLOR_BGR2GRAY);
         }
-        Imgproc.Canny(getMat(),getMat(),((Parameters)parameter).getSupressedPointsThreshold(),((Parameters)parameter).getStrongPointsThreshold());
+        Mat gradX = new Mat();
+        Mat gradY = new Mat();
+        Imgproc.Sobel(getMat(), gradX, CvType.CV_16S, 1, 0, 3, 1, 0);
+        Imgproc.Sobel(getMat(), gradY, CvType.CV_16S, 0, 1, 3, 1, 0);
+        Core.convertScaleAbs(gradX, gradX);
+        Core.convertScaleAbs(gradY, gradY);
+        Core.addWeighted(gradX, 0.5, gradY, 0.5, 1, getMat());
+
         return this;
     }
 
@@ -48,23 +56,5 @@ public class CannyEdgeOperation extends BasicOperation {
     }
 
     public static class Parameters extends ImageOperationParameter {
-        private double supressedPointsThreshold;
-        private double strongPointsThreshold;
-
-        public double getSupressedPointsThreshold() {
-            return supressedPointsThreshold;
-        }
-
-        public void setSupressedPointsThreshold(double supressedPointsThreshold) {
-            this.supressedPointsThreshold = supressedPointsThreshold;
-        }
-
-        public double getStrongPointsThreshold() {
-            return strongPointsThreshold;
-        }
-
-        public void setStrongPointsThreshold(double strongPointsThreshold) {
-            this.strongPointsThreshold = strongPointsThreshold;
-        }
     }
 }

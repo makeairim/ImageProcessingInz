@@ -32,7 +32,9 @@ public class HarrisCornerEdgeOperation extends BasicOperation {
         } catch (Exception e) {
             //todo handle on invalid params
         }
-        Imgproc.cvtColor(getMat(), getMat(), Imgproc.COLOR_BGR2GRAY);
+        if(getMat().channels()>=3) {
+            Imgproc.cvtColor(getMat(), getMat(), Imgproc.COLOR_BGR2GRAY);
+        }
         Imgproc.cornerHarris(getMat(), getMat(), 2, 3, 0.04);
         Mat tempDstNorm = new Mat();
         Core.normalize(getMat(), tempDstNorm, 0, 255, Core.NORM_MINMAX);

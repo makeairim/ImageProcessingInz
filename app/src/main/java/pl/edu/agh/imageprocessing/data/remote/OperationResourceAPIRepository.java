@@ -1,6 +1,7 @@
 package pl.edu.agh.imageprocessing.data.remote;
 
 import android.net.Uri;
+import android.util.Log;
 
 import java.sql.Date;
 import java.util.Arrays;
@@ -32,7 +33,7 @@ public class OperationResourceAPIRepository {
     private final ResourceDao resourceDao;
     private final OperationWithChainAndResourceDao operationWithChainAndResourceDao;
     private final FileTools fileTools;
-
+    public static final String TAG=OperationResourceAPIRepository.class.getSimpleName();
     @Inject
     public OperationResourceAPIRepository(ImageProcessingAPIDatabase imageProcessingAPIDatabase, OperationDao operationDao, ResourceDao resourceDao, OperationWithChainAndResourceDao operationWithChainAndResourceDao, FileTools fileTools) {
         this.imageProcessingAPIDatabase = imageProcessingAPIDatabase;
@@ -79,13 +80,17 @@ public class OperationResourceAPIRepository {
         );
     }
 
-    public boolean chainOperations(Operation parent, Operation child) {
-        parent.setNextOperationId(child.getId());
-        child.setParentOperationId(parent.getParentOperationId() != null ? parent.getParentOperationId() : parent.getId());
-        operationDao.update(parent);
-        operationDao.update(child);
-        return true;
-    }
+//    public boolean chainOperations(Operation parent, Operation child) {
+//        parent.setNextOperationId(child.getId());
+//        child.setParentOperationId(parent.getParentOperationId() != null ? parent.getParentOperationId() : parent.getId());
+//        if( operationDao.update(parent) <=0){
+//            Log.e(TAG, "chainOperations: "+ "not updated parent");
+//        }
+//        if( operationDao.update(child)<=0){
+//            Log.e(TAG, "chainOperations: "+ "not updated child");
+//        }
+//        return true;
+//    }
 
     public Operation createOperation() {
         return new Operation.Builder().creationDate(new Date(System.currentTimeMillis())).build();

@@ -26,13 +26,11 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.BaseFragment;
-import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
-import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
@@ -45,9 +43,10 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarization
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowCannyEdgeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowFilterEvent;
-import pl.edu.agh.imageprocessing.features.detail.android.event.ShowHarrisEdgeDialogEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowHarrisEdgeEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSizeDialogEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSobelOperatorEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.GroupOperationModel;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
@@ -169,7 +168,10 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                 EventBus.getDefault().post(new ShowCannyEdgeDialogEvent());
                 break;
             case HARRIS_CORNER:
-                EventBus.getDefault().post(new ShowHarrisEdgeDialogEvent());
+                EventBus.getDefault().post(new ShowHarrisEdgeEvent());
+                break;
+            case SOBEL_OPERATOR:
+                EventBus.getDefault().post(new ShowSobelOperatorEvent());
                 break;
             default:
                 throw new AssertionError("Could not resolve operation type");

@@ -78,25 +78,31 @@ public class ImageOperationService extends Service {
                     Operation previousOperation = operationDao.getOperationByNextOperationId(oldestOperation.getId());
                     if( previousOperation == null ){
                         Log.e(TAG, "handleMessage: cannot find previous operation for operationId= " + oldestOperation.getId());
+                        continue;
                     }
-                    Maybe<Resource> previousOperationResource = resourceDao.getByOperationAndType(previousOperation.getId(), ResourceType.IMAGE_FILE.name());
-                    if( previousOperationResource.blockingGet() == null ){
+                    Maybe<Resource> previousOperationResourceMaybe = resourceDao.getByOperationAndType(previousOperation.getId(), ResourceType.IMAGE_FILE.name());
+
+                    if( Boolean.TRUE.equals(previousOperationResourceMaybe.isEmpty().blockingGet())){
                         Log.e(TAG, "handleMessage: cannot find previous operation resource for operationId= " + previousOperation.getId());
                     }
+                    Resource previousOperationResource = previousOperationResourceMaybe.blockingGet();
                     ImageOperationResolverParameters params = new GsonBuilder().create().fromJson(oldestOperation.getObject(), ImageOperationResolverParameters.class);
-                    oldestOperation.setStatus(OperationStatus.IN_PROGRESS);
-                    operationDao.update(oldestOperation);
+//                    oldestOperation.setStatus(OperationStatus.IN_PROGRESS);
+                    operationDao.updateStatus(oldestOperation.getId(),OperationStatus.IN_PROGRESS);
+//                    operationDao.update(oldestOperation);
                     resolver.processResult(resolver
                             .resolveOperation(ImageOperationType.valueOf(oldestOperation.getOperationType())
                                     ,params,
-                                    Uri.parse(previousOperationResource.blockingGet().getContent())
+                                    Uri.parse(previousOperationResource.getContent())
                                     ,oldestOperation.getId()).execute());
-                    oldestOperation.setStatus(OperationStatus.FINISHED);
+//                    oldestOperation.setStatus(OperationStatus.FINISHED);
+                    operationDao.updateStatus(oldestOperation.getId(),OperationStatus.FINISHED);
                 } catch (IOException e) {
-                    oldestOperation.setStatus(OperationStatus.CANCELLED);
+//                    oldestOperation.setStatus(OperationStatus.CANCELLED);
+                    operationDao.updateStatus(oldestOperation.getId(),OperationStatus.FINISHED);
                     Log.e(TAG, "handleMessage: ",e);
                 }
-                operationDao.update(oldestOperation);
+//                operationDao.update(oldestOperation);
                 EventBus.getDefault().post(new RefreshDataEvent());
                 //todo notiy about change
                 oldestOperation = operationDao.getOldestUnresolved();
@@ -137,7 +143,7 @@ public class ImageOperationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -156,6 +162,6 @@ public class ImageOperationService extends Service {
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
     }
 }

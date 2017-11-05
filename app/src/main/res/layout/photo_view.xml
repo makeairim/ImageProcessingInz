@@ -16,16 +16,16 @@
             type="pl.edu.agh.imageprocessing.features.detail.viemodel.ImageOperationViewModel" />
     </data>
 
-    <LinearLayout xmlns:tools="http://schemas.android.com/tools"
+    <android.support.design.widget.CoordinatorLayout
         android:id="@+id/parent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
         <RelativeLayout
+            android:id="@+id/parent_list"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.9">
+            android:layout_height="match_parent">
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/recyclerView"
@@ -40,8 +40,6 @@
                 opencv:show_fps="true"
                 opencv:camera_id="any" />
         </RelativeLayout>
-
-
-    </LinearLayout>
+    </android.support.design.widget.CoordinatorLayout>
 
 </layout>

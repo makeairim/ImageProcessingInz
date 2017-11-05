@@ -4,15 +4,7 @@
     <item
         android:id="@+id/export"
         android:title="@string/navi_operations_as"
-        app:showAsAction="ifRoom|collapseActionView"
-        app:srcCompat="@drawable/ic_save_24dp"/>
-
-    <item
-        android:id="@+id/navigation_home"
-        android:title="@string/title_home" />
-
-    <item
-        android:id="@+id/navigation_results"
-        android:title="@string/title_results" />
+        app:showAsAction="collapseActionView"
+        android:icon="@drawable/ic_save_24dp"/>
 
 </menu>

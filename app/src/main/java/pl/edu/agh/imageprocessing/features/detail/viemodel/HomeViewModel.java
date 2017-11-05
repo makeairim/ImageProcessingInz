@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
+import android.view.View;
 
 import com.github.dmstocking.optional.java.util.Optional;
 import com.vansuita.pickimage.dialog.PickImageDialog;
@@ -80,7 +81,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     @Override
     public void setUp() {
         BaseFragment mRetainedFragment = provideActivity().getActiveFragment();
-        if ( mRetainedFragment == null){
+        if (mRetainedFragment == null) {
             showOperationRoots();
         }
     }
@@ -91,7 +92,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     }
 
     @Override
-    public void restoreState(Bundle bundle){
+    public void restoreState(Bundle bundle) {
     }
 
     HomeViewModelState state = new HomeViewModelState();
@@ -125,8 +126,11 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void showImageOperation(OperationsViewEvent event) {
         //todo
+        provideActivity().binding.videoButton.setVisibility(View.VISIBLE);
+        provideActivity().binding.operationButton.setVisibility(View.VISIBLE);
+        provideActivity().binding.exportButton.setVisibility(View.VISIBLE);
         FragmentTransaction ft = provideActivity().getSupportFragmentManager().beginTransaction();
-        ft.replace(provideActivity().binding.container.getId(), ImageOperationFragment.newInstance(event.getId()),HomeActivity.RETAINED_FRAGMENT_TAG);
+        ft.replace(provideActivity().binding.container.getId(), ImageOperationFragment.newInstance(event.getId()), HomeActivity.RETAINED_FRAGMENT_TAG);
         ft.setTransition(FragmentTransaction.TRANSIT_ENTER_MASK);
         ft.addToBackStack(HomeActivity.RETAINED_FRAGMENT_TAG);
         ft.commit();
@@ -134,8 +138,11 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
     public void showOperationRoots() {
         //todo
+        provideActivity().binding.videoButton.setVisibility(View.GONE);
+        provideActivity().binding.operationButton.setVisibility(View.GONE);
+        provideActivity().binding.exportButton.setVisibility(View.GONE);
         FragmentTransaction ft = provideActivity().getSupportFragmentManager().beginTransaction();
-        ft.replace(provideActivity().binding.container.getId(), ListOperationsFragment.newInstance(),HomeActivity.RETAINED_FRAGMENT_TAG);
+        ft.replace(provideActivity().binding.container.getId(), ListOperationsFragment.newInstance(), HomeActivity.RETAINED_FRAGMENT_TAG);
         ft.setTransition(FragmentTransaction.TRANSIT_ENTER_MASK);
         ft.addToBackStack(HomeActivity.RETAINED_FRAGMENT_TAG);
         ft.commit();
@@ -178,38 +185,44 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
         }
 
     }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onLiveVideoTriggered(LiveVideoEvent event){
+    public void onLiveVideoTriggered(LiveVideoEvent event) {
         Optional<Fragment> visibleFragmentOpt = getVisibleFragment();
-        if(visibleFragmentOpt.isPresent() && visibleFragmentOpt.get() instanceof ImageOperationFragment){
+        if (visibleFragmentOpt.isPresent() && visibleFragmentOpt.get() instanceof ImageOperationFragment) {
             return;
         }
         Operation operation = operationResourceAPIRepository.createOperation();
         operation.setOperationType(ImageOperationType.UNASSIGNED_TO_RESOURCE_ROOT_CHAIN.name());
         operation.setStatus(OperationStatus.FINISHED);
         Observable.create((ObservableOnSubscribe<Long>) e ->
-        {e.onNext(operationDao.save(operation));e.onComplete();})
-         .subscribeOn(Schedulers.newThread())
+        {
+            e.onNext(operationDao.save(operation));
+            e.onComplete();
+        })
+                .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(rootId -> EventBus.getDefault().post(new OperationsViewEvent(rootId)));
     }
-    private Optional<Fragment> getVisibleFragment(){
+
+    private Optional<Fragment> getVisibleFragment() {
         FragmentManager fragmentManager = provideActivity().getSupportFragmentManager();
         List<Fragment> fragments = fragmentManager.getFragments();
-        if(fragments != null){
-            for(Fragment fragment : fragments){
-                if(fragment != null && fragment.isVisible())
+        if (fragments != null) {
+            for (Fragment fragment : fragments) {
+                if (fragment != null && fragment.isVisible())
                     return Optional.of(fragment);
             }
         }
         return Optional.empty();
     }
-    public Map<String,List<GroupOperationModel>> provideOperationTypes() {
-        HashMap<String,List<GroupOperationModel>> result=new HashMap<>();
-        result.put(AppConstants.MOPHOLOGY_HEADER,operationResourceAPIRepository.getMorphologyImageOperationTypes());
-        result.put(AppConstants.FILTER_HEADER,operationResourceAPIRepository.getFilterImageOperationTypes());
-        result.put(AppConstants.OTHER_HEADER,operationResourceAPIRepository.getBasicImageOperationTypes());
-        result.put(AppConstants.IMAGE_FEATURE,operationResourceAPIRepository.getImageFeaturesOperationTypes());
+
+    public Map<String, List<GroupOperationModel>> provideOperationTypes() {
+        HashMap<String, List<GroupOperationModel>> result = new HashMap<>();
+        result.put(AppConstants.MOPHOLOGY_HEADER, operationResourceAPIRepository.getMorphologyImageOperationTypes());
+        result.put(AppConstants.FILTER_HEADER, operationResourceAPIRepository.getFilterImageOperationTypes());
+        result.put(AppConstants.OTHER_HEADER, operationResourceAPIRepository.getBasicImageOperationTypes());
+        result.put(AppConstants.IMAGE_FEATURE, operationResourceAPIRepository.getImageFeaturesOperationTypes());
         EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.VISIBLE));
         return result;
     }

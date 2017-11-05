@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.github.fabtransitionactivity.SheetLayout;
 
 import org.greenrobot.eventbus.EventBus;
 

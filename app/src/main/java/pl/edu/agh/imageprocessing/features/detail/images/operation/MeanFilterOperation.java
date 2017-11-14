@@ -1,18 +1,12 @@
 package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
-import android.graphics.Bitmap;
-import android.util.Log;
-
-import org.opencv.android.Utils;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import java.lang.reflect.Parameter;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
@@ -23,7 +17,7 @@ public class MeanFilterOperation extends BasicOperation {
     private static ImageOperationType type = ImageOperationType.MEAN_FILTER;
     public static final String TAG = MeanFilterOperation.class.getSimpleName();
 
-    public MeanFilterOperation(ImageOperationParameter parameter, Mat mat) {
+    public MeanFilterOperation(ImageOperationParameter parameter, List<Mat> mat) {
         super(parameter,mat);
     }
 
@@ -36,7 +30,7 @@ public class MeanFilterOperation extends BasicOperation {
         } catch (Exception e) {
             //todo handle on invalid params
         }
-        Imgproc.blur(getMat(),getMat(),new Size(((Parameters)parameter).getSize(),((Parameters)parameter).getSize()));
+        Imgproc.blur(getArguments().get(0), createResultMat(),new Size(((Parameters)parameter).getSize(),((Parameters)parameter).getSize()));
         return this;
     }
 

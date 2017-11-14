@@ -2,6 +2,7 @@ package pl.edu.agh.imageprocessing.data.local.entity;
 
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -10,6 +11,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.Date;
 
+import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 
 /**
@@ -31,7 +33,7 @@ public class Operation implements Parcelable{
     private Date creationDate;
 
     @SerializedName("operation_type")
-    private String operationType;
+    private ImageOperationType operationType;
 
     @SerializedName("status")
     private OperationStatus status;
@@ -49,14 +51,6 @@ public class Operation implements Parcelable{
         setOperationType(builder.operationType);
         setStatus(builder.status);
         setObject(builder.object);
-    }
-
-    public String getObject() {
-        return object;
-    }
-
-    public void setObject(String object) {
-        this.object = object;
     }
 
     public long getId() {
@@ -91,11 +85,11 @@ public class Operation implements Parcelable{
         this.creationDate = creationDate;
     }
 
-    public String getOperationType() {
+    public ImageOperationType getOperationType() {
         return operationType;
     }
 
-    public void setOperationType(String operationType) {
+    public void setOperationType(ImageOperationType operationType) {
         this.operationType = operationType;
     }
 
@@ -107,12 +101,20 @@ public class Operation implements Parcelable{
         this.status = status;
     }
 
+    public String getObject() {
+        return object;
+    }
+
+    public void setObject(String object) {
+        this.object = object;
+    }
+
     public static final class Builder {
         private long id;
         private Long parentOperationId;
         private Long nextOperationId;
         private Date creationDate;
-        private String operationType;
+        private ImageOperationType operationType;
         private OperationStatus status;
         private String object;
 
@@ -139,7 +141,7 @@ public class Operation implements Parcelable{
             return this;
         }
 
-        public Builder operationType(String val) {
+        public Builder operationType(ImageOperationType val) {
             operationType = val;
             return this;
         }
@@ -170,7 +172,7 @@ public class Operation implements Parcelable{
         dest.writeValue(this.parentOperationId);
         dest.writeValue(this.nextOperationId);
         dest.writeLong(this.creationDate != null ? this.creationDate.getTime() : -1);
-        dest.writeString(this.operationType);
+        dest.writeInt(this.operationType == null ? -1 : this.operationType.ordinal());
         dest.writeInt(this.status == null ? -1 : this.status.ordinal());
         dest.writeString(this.object);
     }
@@ -181,7 +183,8 @@ public class Operation implements Parcelable{
         this.nextOperationId = (Long) in.readValue(Long.class.getClassLoader());
         long tmpCreationDate = in.readLong();
         this.creationDate = tmpCreationDate == -1 ? null : new Date(tmpCreationDate);
-        this.operationType = in.readString();
+        int tmpOperationType = in.readInt();
+        this.operationType = tmpOperationType == -1 ? null : ImageOperationType.values()[tmpOperationType];
         int tmpStatus = in.readInt();
         this.status = tmpStatus == -1 ? null : OperationStatus.values()[tmpStatus];
         this.object = in.readString();

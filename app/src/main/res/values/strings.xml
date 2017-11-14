@@ -15,4 +15,7 @@
     <string name="positivie_btn_title">Ok</string>
     <string name="dialog_threshold_supressed_point_desc">Supressed points threshold</string>
     <string name="dialog_threshold_strong_point_desc">Strong points threshold</string>
+    <string name="argument_1_desc">Argument 1</string>
+    <string name="argument_2_desc">Argument 2</string>
+    <string name="input_from_user_desc">Choosed</string>
 </resources>

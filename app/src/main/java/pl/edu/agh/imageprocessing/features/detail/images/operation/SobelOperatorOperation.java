@@ -7,6 +7,7 @@ import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
@@ -17,7 +18,7 @@ public class SobelOperatorOperation extends BasicOperation {
     private static ImageOperationType type = ImageOperationType.SOBEL_OPERATOR;
     public static final String TAG = SobelOperatorOperation.class.getSimpleName();
 
-    public SobelOperatorOperation(ImageOperationParameter parameter, Mat mat) {
+    public SobelOperatorOperation(ImageOperationParameter parameter, List<Mat> mat) {
         super(parameter, mat);
     }
 
@@ -30,16 +31,16 @@ public class SobelOperatorOperation extends BasicOperation {
         } catch (Exception e) {
             //todo handle on invalid params
         }
-        if(getMat().channels()>=3) {
-            Imgproc.cvtColor(getMat(), getMat(), Imgproc.COLOR_BGR2GRAY);
+        if(getArguments().get(0).channels()>=3) {
+            Imgproc.cvtColor(getArguments().get(0), getArguments().get(0), Imgproc.COLOR_BGR2GRAY);
         }
         Mat gradX = new Mat();
         Mat gradY = new Mat();
-        Imgproc.Sobel(getMat(), gradX, CvType.CV_16S, 1, 0, 3, 1, 0);
-        Imgproc.Sobel(getMat(), gradY, CvType.CV_16S, 0, 1, 3, 1, 0);
+        Imgproc.Sobel(getArguments().get(0), gradX, CvType.CV_16S, 1, 0, 3, 1, 0);
+        Imgproc.Sobel(getArguments().get(0), gradY, CvType.CV_16S, 0, 1, 3, 1, 0);
         Core.convertScaleAbs(gradX, gradX);
         Core.convertScaleAbs(gradY, gradY);
-        Core.addWeighted(gradX, 0.5, gradY, 0.5, 1, getMat());
+        Core.addWeighted(gradX, 0.5, gradY, 0.5, 1, createResultMat());
 
         return this;
     }

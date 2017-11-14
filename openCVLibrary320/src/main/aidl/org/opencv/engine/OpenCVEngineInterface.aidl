@@ -25,7 +25,7 @@ interface OpenCVEngineInterface
     boolean installVersion(String version);
 
     /**
-    * Returns list of libraries in loading order, separated by semicolon.
+    * Returns list of libraries in loading argumentOrder, separated by semicolon.
     * @param OpenCV version.
     * @return Returns names of OpenCV libraries, separated by semicolon.
     */

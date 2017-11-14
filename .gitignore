@@ -133,7 +133,7 @@ $RECYCLE.BIN/
 # Kernel Module Compile Results
 *.mod*
 *.cmd
-modules.order
+modules.argumentOrder
 Module.symvers
 Mkfile.old
 dkms.conf

@@ -7,11 +7,9 @@ import android.os.Parcelable;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Date;
+
+import pl.edu.agh.imageprocessing.data.local.ResourceType;
 
 /**
  * Created by bwolcerz on 25.07.2017.
@@ -32,7 +30,10 @@ public class Resource implements Parcelable{
     private String content;
 
     @SerializedName("type")
-    private String type;
+    private ResourceType type;
+
+    @SerializedName("argument_order")
+    private Long argumentOrder;
 
     public Resource() {
     }
@@ -43,6 +44,7 @@ public class Resource implements Parcelable{
         setCreationDate(builder.creationDate);
         setContent(builder.content);
         setType(builder.type);
+        setArgumentOrder(builder.order);
     }
 
     public long getId() {
@@ -77,21 +79,29 @@ public class Resource implements Parcelable{
         this.content = content;
     }
 
-    public String getType() {
+    public ResourceType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(ResourceType type) {
         this.type = type;
     }
 
+    public Long getArgumentOrder() {
+        return argumentOrder;
+    }
+
+    public void setArgumentOrder(Long argumentOrder) {
+        this.argumentOrder = argumentOrder;
+    }
 
     public static final class Builder {
         private long id;
         private Long operationId;
         private Date creationDate;
         private String content;
-        private String type;
+        private ResourceType type;
+        private Long order;
 
         public Builder() {
         }
@@ -116,25 +126,19 @@ public class Resource implements Parcelable{
             return this;
         }
 
-        public Builder type(String val) {
+        public Builder type(ResourceType val) {
             type = val;
+            return this;
+        }
+
+        public Builder order(Long val) {
+            order = val;
             return this;
         }
 
         public Resource build() {
             return new Resource(this);
         }
-    }
-
-    @Override
-    public String toString() {
-        return "Resource{" +
-                "id=" + id +
-                ", operationId=" + operationId +
-                ", creationDate=" + creationDate +
-                ", content='" + content + '\'' +
-                ", type='" + type + '\'' +
-                '}';
     }
 
     @Override
@@ -148,7 +152,8 @@ public class Resource implements Parcelable{
         dest.writeValue(this.operationId);
         dest.writeLong(this.creationDate != null ? this.creationDate.getTime() : -1);
         dest.writeString(this.content);
-        dest.writeString(this.type);
+        dest.writeInt(this.type == null ? -1 : this.type.ordinal());
+        dest.writeValue(this.argumentOrder);
     }
 
     protected Resource(Parcel in) {
@@ -157,7 +162,9 @@ public class Resource implements Parcelable{
         long tmpCreationDate = in.readLong();
         this.creationDate = tmpCreationDate == -1 ? null : new Date(tmpCreationDate);
         this.content = in.readString();
-        this.type = in.readString();
+        int tmpType = in.readInt();
+        this.type = tmpType == -1 ? null : ResourceType.values()[tmpType];
+        this.argumentOrder = (Long) in.readValue(Long.class.getClassLoader());
     }
 
     public static final Creator<Resource> CREATOR = new Creator<Resource>() {

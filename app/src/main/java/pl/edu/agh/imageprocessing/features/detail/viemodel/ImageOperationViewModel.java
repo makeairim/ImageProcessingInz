@@ -1,6 +1,8 @@
 package pl.edu.agh.imageprocessing.features.detail.viemodel;
 
+import android.arch.persistence.room.Transaction;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -10,6 +12,7 @@ import android.view.View;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.vansuita.pickimage.dialog.PickImageDialog;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -28,6 +31,7 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
@@ -36,21 +40,23 @@ import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
+import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.BinarizationCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.CannyEdgeCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.DilationErosionCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.dialog.ImageArgumentChooseCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.MatrixCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.SizeCustomDialog;
-import pl.edu.agh.imageprocessing.features.detail.android.event.ChainOperationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.DataChangedEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
 import pl.edu.agh.imageprocessing.features.detail.android.event.RefreshDataEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowArithmeticOperationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarizationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowCannyEdgeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
@@ -86,6 +92,9 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     @Inject
     OperationDao operationDao;
     @Inject
+    ResourceDao resourceDao;
+
+    @Inject
     FileTools fileTools;
     @Inject
     Context context;
@@ -93,9 +102,20 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     ImageOperationResolver imageOperationResolver;
     @Inject
     OpenCvTypes openCvTypes;
+    @Inject
+    PickImageDialog pickImageDialog;
 
     ImageOperationViewModelState state = new ImageOperationViewModelState();
 
+    public void pickPhoto(Consumer<Uri> callback) {
+        pickImageDialog.setOnPickResult(result -> {
+            try {
+                callback.accept(result.getUri());
+            } catch (Exception e) {
+                Log.e(TAG, "pickPhoto: " + e.getMessage(), e);
+            }
+        }).show(provideActivity().getSupportFragmentManager());
+    }
 
     @Inject
     public ImageOperationViewModel() {
@@ -140,8 +160,40 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     private Operation createOperation(ImageOperationType type, ImageOperationResolverParameters parameters) {
         return new Operation.Builder()
                 .creationDate(new Date(System.currentTimeMillis()))
-                .operationType(type.name())
+                .operationType(type)
                 .object(new GsonBuilder().create().toJson(parameters)).build();
+    }
+
+    @Transaction
+    private void saveOperationWithResources(OperationWithChainAndResource operationWithChainAndResource) {
+        OperationWithChainAndResource previous = state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1);
+        Observable<OperationWithChainAndResource> prcessingOperationObservable = Observable.create(e -> {
+            Operation oper = operationWithChainAndResource.getOperation();
+            oper.setStatus(OperationStatus.CREATED);
+            oper.setParentOperationId(previous.getOperation().getParentOperationId() != null ? previous.getOperation().getParentOperationId() : previous.getOperation().getId());
+            Long id = operationDao.save(oper);
+            oper.setId(id);
+            Operation parent = operationDao.get(previous.getOperation().getId()).blockingFirst();
+            parent.setNextOperationId(id);
+            operationDao.update(parent);
+            long order = 10;
+            for (Resource resource : operationWithChainAndResource.getResource()) {
+                resource.setOperationId(oper.getId());
+                resource.setCreationDate(new Date(System.currentTimeMillis()));
+                resource.setArgumentOrder(order);
+                resource.setId(resourceDao.save(resource));
+                order += 10;
+            }
+            e.onNext(operationWithChainAndResource);
+            e.onComplete();
+        });
+        prcessingOperationObservable.subscribeOn(Schedulers.io()).observeOn(Schedulers.io()).subscribe(operationWithResource -> {
+            state.getOperationChainAndResource().add(operationWithChainAndResource);
+//            EventBus.getDefault().post(new ChainOperationEvent(previous.getOperation().getId(), o));
+            EventBus.getDefault().post(new TriggerServiceWorkEvent());
+            EventBus.getDefault().post(new DataChangedEvent());
+//            EventBus.getDefault().post(new RefreshDataEvent());
+        });//todo handle dispisable
     }
 
     private void saveOperation(Operation oper) {
@@ -222,6 +274,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                 .threshold(state.getThreshold())
                 .strongPointsThreshold(state.getStrongPointThreshold())
                 .supressedPointsThreshold(state.getSupressedPointThreshold())
+                .operationType(state.getOperationType())
                 .build();
     }
 
@@ -242,6 +295,38 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     public void showHarrisEdge(ShowHarrisEdgeEvent event) {
         saveOperation(createOperation(ImageOperationType.HARRIS_CORNER, mapStateToParameter(state)));
         EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
+    }
+
+    @Subscribe
+    public void showArithmeticOperation(ShowArithmeticOperationEvent event) {
+        FragmentManager fm = provideActivity().getSupportFragmentManager();
+        Resource argument = null;
+        for (Resource resource : state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1).getResource()) {
+            if (resource != null && ResourceType.IMAGE_FILE.equals(resource.getType())) {
+                argument = resource;
+                break;
+            }
+        }
+        ImageOperationType operationType = state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1).getOperation().getOperationType();
+        if (argument == null) {
+            argument = new Resource.Builder().operationId(state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1).getOperation().getId()).build();
+        } else {
+            argument = new Resource.Builder().operationId(argument.getOperationId()).content(argument.getContent()).type(argument.getType()).build();
+        }
+        ImageArgumentChooseCustomDialog dialog = ImageArgumentChooseCustomDialog.newInstance("Choose image arguments", operationType, argument);
+        dialog.show(fm, "operation_parameters");
+        dialog.setListener((arguments) -> {
+            state.setOperationType(event.getType());
+            saveOperationWithResources(new OperationWithChainAndResource.Builder().operation(createOperation(event.getType(), mapStateToParameter(state))).resource(arguments).build());
+            EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
+        });
+
+        dialog.setPickPhoto(uriConsumer -> {
+            pickPhoto(uriConsumer);
+            return true;
+        });
+//        saveOperation(createOperation(ImageOperationType.HARRIS_CORNER, mapStateToParameter(state)));
+//        EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
     }
 
     @Subscribe
@@ -301,7 +386,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         }
         List<Resource> result = new LinkedList<>();
         for (int i = 0; i < operationWithChainAndResource.getResource().size(); i++) {
-            if (ResourceType.valueOf(operationWithChainAndResource.getResource().get(i).getType()) == resourceType) {
+            if (operationWithChainAndResource.getResource().get(i).getType().equals(resourceType)) {
                 result.add(operationWithChainAndResource.getResource().get(i));
                 if (limit <= result.size()) {
                     return result;
@@ -387,20 +472,19 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
             if (operationWithChainAndResource.getOperation() != null
                     && operationWithChainAndResource.getOperation().getOperationType() != null
                     && !EnumSet.of(ImageOperationType.BASIC_PHOTO, ImageOperationType.UNASSIGNED_TO_RESOURCE_ROOT_CHAIN)
-                    .contains(ImageOperationType.valueOf(operationWithChainAndResource.getOperation().getOperationType()))) {
+                    .contains(operationWithChainAndResource.getOperation().getOperationType())) {
                 try {
                     ImageOperationParameter params = imageOperationResolver
-                            .imageOperationParameterResolver(ImageOperationType
-                                            .valueOf(operationWithChainAndResource
-                                                    .getOperation()
-                                                    .getOperationType()),
+                            .imageOperationParameterResolver((operationWithChainAndResource
+                                            .getOperation()
+                                            .getOperationType()),
                                     gson.fromJson(operationWithChainAndResource
                                             .getOperation()
                                             .getObject(), ImageOperationResolverParameters.class));
                     src = imageOperationResolver.resolveOperation(
-                            ImageOperationType.valueOf(operationWithChainAndResource.getOperation().getOperationType())
-                            , params, src)
-                            .execute().getMat();
+                            operationWithChainAndResource.getOperation().getOperationType()
+                            , params, Collections.singletonList(src))
+                            .execute().getResult();
                 } catch (IOException e) {
                     Log.e(TAG, "obtainImageOperations: " + e.getMessage(), e);
                 }

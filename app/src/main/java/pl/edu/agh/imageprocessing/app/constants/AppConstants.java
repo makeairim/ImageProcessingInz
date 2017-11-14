@@ -15,4 +15,5 @@ public class AppConstants {
     public static final String FILTER_HEADER = "Filter";
     public static final String OTHER_HEADER = "Other";
     public static final String IMAGE_FEATURE = "Feature";
+    public static final String ARITHMETIC_OPERATIONS_HEADER = "Arithmetic";
 }

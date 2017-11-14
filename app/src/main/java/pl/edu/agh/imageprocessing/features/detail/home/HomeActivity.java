@@ -119,6 +119,8 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
         operHeaders.addAll(types.get(AppConstants.OTHER_HEADER));
         operHeaders.add(new ItemHeader(AppConstants.IMAGE_FEATURE));
         operHeaders.addAll(types.get(AppConstants.IMAGE_FEATURE));
+        operHeaders.add(new ItemHeader(AppConstants.ARITHMETIC_OPERATIONS_HEADER));
+        operHeaders.addAll(types.get(AppConstants.ARITHMETIC_OPERATIONS_HEADER));
         StickyHeaderViewAdapter adapter = new StickyHeaderViewAdapter(operHeaders)
                 .RegisterItemType(new ItemTypeViewBinder(getViewModel(), this))
                 .RegisterItemType(new ItemHeaderViewBinder());

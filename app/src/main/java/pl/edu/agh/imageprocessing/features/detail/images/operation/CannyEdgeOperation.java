@@ -2,10 +2,10 @@ package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
 import org.opencv.core.Mat;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
@@ -16,7 +16,7 @@ public class CannyEdgeOperation extends BasicOperation {
     private static ImageOperationType type = ImageOperationType.CANNY_EDGE;
     public static final String TAG = CannyEdgeOperation.class.getSimpleName();
 
-    public CannyEdgeOperation(ImageOperationParameter parameter, Mat mat) {
+    public CannyEdgeOperation(ImageOperationParameter parameter, List<Mat> mat) {
         super(parameter,mat);
     }
 
@@ -29,10 +29,10 @@ public class CannyEdgeOperation extends BasicOperation {
         } catch (Exception e) {
             //todo handle on invalid params
         }
-        if(getMat().channels()>=3) {
-            Imgproc.cvtColor(getMat(), getMat(), Imgproc.COLOR_BGR2GRAY);
+        if(getArguments().get(0).channels()>=3) {
+            Imgproc.cvtColor(getArguments().get(0), getArguments().get(0), Imgproc.COLOR_BGR2GRAY);
         }
-        Imgproc.Canny(getMat(),getMat(),((Parameters)parameter).getSupressedPointsThreshold(),((Parameters)parameter).getStrongPointsThreshold());
+        Imgproc.Canny(getArguments().get(0), createResultMat(),((Parameters)parameter).getSupressedPointsThreshold(),((Parameters)parameter).getStrongPointsThreshold());
         return this;
     }
 

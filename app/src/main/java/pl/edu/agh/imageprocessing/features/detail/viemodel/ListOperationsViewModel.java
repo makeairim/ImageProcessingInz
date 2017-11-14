@@ -105,7 +105,7 @@ public class ListOperationsViewModel extends BaseViewModel implements ListOperat
 
     @Override
     public Observable<Resource> obtainOperationResourceImageFile(long operationId) {
-        return resourceDao.getByOperationAndType(operationId, ResourceType.IMAGE_FILE.name()).toObservable();
+        return resourceDao.getByOperationAndType(operationId, ResourceType.IMAGE_FILE).toObservable();
     }
 
 

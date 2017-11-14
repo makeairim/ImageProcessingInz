@@ -10,27 +10,21 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.greenrobot.eventbus.EventBus;
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
 
 import java.io.IOException;
-
-import javax.inject.Inject;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 import io.reactivex.Maybe;
 import pl.edu.agh.imageprocessing.app.ImageProcessingApplication;
-import pl.edu.agh.imageprocessing.dagger.AppModule;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
-import pl.edu.agh.imageprocessing.data.local.converter.UriDeserializer;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
@@ -44,7 +38,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.RefreshDataEvent
  */
 
 public class ImageOperationService extends Service {
-    public static final String TAG=ImageOperationService.class.getSimpleName();
+    public static final String TAG = ImageOperationService.class.getSimpleName();
     public static final int MSG_CHECK_NEW_OPERATION = 1;
     private Looper mServiceLooper;
     private Messenger mMessenger;
@@ -55,6 +49,7 @@ public class ImageOperationService extends Service {
     private OperationWithChainAndResourceDao operationWithChainResourceDao;
     private ResourceDao resourceDao;
     private ImageOperationResolver resolver;
+
     //    @Inject
 //    OperationDao operationDao;
     // Handler that receives messages from the thread
@@ -67,46 +62,50 @@ public class ImageOperationService extends Service {
         public void handleMessage(Message msg) {
             // Normally we would do some work here, like download a file.
             // For our sample, we just sleep for 5 seconds.
-            boolean hasSomeWork=true;
+            boolean hasSomeWork = true;
             Operation oldestOperation = operationDao.getOldestUnresolved();
-            if( oldestOperation==null) {
+            if (oldestOperation == null) {
                 hasSomeWork = false;
             }
 
-            while(hasSomeWork){
+            while (hasSomeWork) {
                 try {
                     Operation previousOperation = operationDao.getOperationByNextOperationId(oldestOperation.getId());
-                    if( previousOperation == null ){
+                    if (previousOperation == null) {
                         Log.e(TAG, "handleMessage: cannot find previous operation for operationId= " + oldestOperation.getId());
                         continue;
                     }
-                    Maybe<Resource> previousOperationResourceMaybe = resourceDao.getByOperationAndType(previousOperation.getId(), ResourceType.IMAGE_FILE.name());
-
-                    if( Boolean.TRUE.equals(previousOperationResourceMaybe.isEmpty().blockingGet())){
-                        Log.e(TAG, "handleMessage: cannot find previous operation resource for operationId= " + previousOperation.getId());
+                    List<Uri> arguments = new LinkedList<>();
+                    if (ImageOperationType.getNonSingleArgumentoperations().contains(oldestOperation.getOperationType())) {
+                        try {
+                            arguments.addAll(getResourceForMultiArgumentOperation(oldestOperation.getId()));
+                        } catch (Exception e) {
+                            Log.i(TAG, "handleMessage: cannot find previous operation for operationId= " + oldestOperation.getId());
+                            continue;
+                        }
+                    } else {
+                        arguments.addAll(getResourceFromPreviousOperation(previousOperation.getId()));
                     }
-                    Resource previousOperationResource = previousOperationResourceMaybe.blockingGet();
                     ImageOperationResolverParameters params = new GsonBuilder().create().fromJson(oldestOperation.getObject(), ImageOperationResolverParameters.class);
 //                    oldestOperation.setStatus(OperationStatus.IN_PROGRESS);
-                    operationDao.updateStatus(oldestOperation.getId(),OperationStatus.IN_PROGRESS);
+                    operationDao.updateStatus(oldestOperation.getId(), OperationStatus.IN_PROGRESS);
 //                    operationDao.update(oldestOperation);
                     resolver.processResult(resolver
-                            .resolveOperation(ImageOperationType.valueOf(oldestOperation.getOperationType())
-                                    ,params,
-                                    Uri.parse(previousOperationResource.getContent())
-                                    ,oldestOperation.getId()).execute());
+                            .resolveOperation(oldestOperation.getOperationType()
+                                    , params, arguments
+                                    , oldestOperation.getId()).execute());
 //                    oldestOperation.setStatus(OperationStatus.FINISHED);
-                    operationDao.updateStatus(oldestOperation.getId(),OperationStatus.FINISHED);
+                    operationDao.updateStatus(oldestOperation.getId(), OperationStatus.FINISHED);
                 } catch (IOException e) {
 //                    oldestOperation.setStatus(OperationStatus.CANCELLED);
-                    operationDao.updateStatus(oldestOperation.getId(),OperationStatus.FINISHED);
-                    Log.e(TAG, "handleMessage: ",e);
+                    operationDao.updateStatus(oldestOperation.getId(), OperationStatus.FINISHED);
+                    Log.e(TAG, "handleMessage: ", e);
                 }
 //                operationDao.update(oldestOperation);
                 EventBus.getDefault().post(new RefreshDataEvent());
                 //todo notiy about change
                 oldestOperation = operationDao.getOldestUnresolved();
-                if( oldestOperation==null) {
+                if (oldestOperation == null) {
                     hasSomeWork = false;
                 }
             }
@@ -117,17 +116,49 @@ public class ImageOperationService extends Service {
         }
     }
 
+    private List<Uri> getResourceForMultiArgumentOperation(long id) throws Exception {
+        List<Uri> result = new LinkedList<>();
+        List<Resource> arguments =  resourceDao.getByOperationidAndTypes(id, ResourceType.getMultiArgumentResourceTypes().toArray(new ResourceType[0]));
+        Collections.sort(arguments, (o1, o2) -> Long.compare(o1.getArgumentOrder(), o2.getArgumentOrder()));
+        for (Resource argument : arguments) {
+            switch (argument.getType()) {
+                case ARGUMENT_IMAGE_FILE:
+                    result.add(Uri.parse(argument.getContent()));
+                    break;
+                case ARGUMENT_OPERATION_RESOURCE:
+                    Maybe<Resource> previousImageResource = resourceDao.getByOperationAndType(Long.valueOf(argument.getContent()), ResourceType.IMAGE_FILE);
+                    if (previousImageResource.isEmpty().blockingGet()) {
+                        throw new Exception("Not ready yet");
+                    }
+                    result.add(Uri.parse(previousImageResource.blockingGet().getContent()));
+                    break;
+            }
+        }
+        return result;
+    }
+
+    private List<Uri> getResourceFromPreviousOperation(long previousOperationId) {
+        Maybe<Resource> previousOperationResourceMaybe = resourceDao.getByOperationAndType(previousOperationId, ResourceType.IMAGE_FILE);
+
+        if (Boolean.TRUE.equals(previousOperationResourceMaybe.isEmpty().blockingGet())) {
+            Log.e(TAG, "handleMessage: cannot find previous operation resource for operationId= " + previousOperationId);
+        }
+        Resource previousOperationResource = previousOperationResourceMaybe.blockingGet();
+        return Collections.singletonList(Uri.parse(previousOperationResource.getContent()));
+
+    }
+
     @Override
     public void onCreate() {
         fileTools = new FileTools(getBaseContext());
         operationDao = ((ImageProcessingApplication) getApplication()).getImageProcessingAPIDatabase().operationDao();
         resourceDao = ((ImageProcessingApplication) getApplication()).getImageProcessingAPIDatabase().resourceDao();
         operationWithChainResourceDao = ((ImageProcessingApplication) getApplication()).getImageProcessingAPIDatabase().operationWithChainAndResourceDao();
-        apiRepository=new OperationResourceAPIRepository(((ImageProcessingApplication)getApplication()).getImageProcessingAPIDatabase(),operationDao,
+        apiRepository = new OperationResourceAPIRepository(((ImageProcessingApplication) getApplication()).getImageProcessingAPIDatabase(), operationDao,
                 resourceDao,
                 operationWithChainResourceDao,
                 fileTools);
-        resolver=new ImageOperationResolver(getBaseContext(),fileTools,resourceDao,apiRepository,operationDao);
+        resolver = new ImageOperationResolver(getBaseContext(), fileTools, resourceDao, apiRepository, operationDao);
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
@@ -138,7 +169,7 @@ public class ImageOperationService extends Service {
         // Get the HandlerThread's Looper and use it for our Handler
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper);
-        mMessenger=new Messenger(mServiceHandler);
+        mMessenger = new Messenger(mServiceHandler);
     }
 
     @Override
@@ -157,7 +188,7 @@ public class ImageOperationService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-       return mMessenger.getBinder();
+        return mMessenger.getBinder();
     }
 
     @Override

@@ -40,6 +40,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHi
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.LiveVideoEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.OperationsViewEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowArithmeticOperationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarizationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowCannyEdgeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowErosionAndDilationEvent;
@@ -112,7 +113,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                     .observeOn(Schedulers.newThread())
                     .subscribe(o -> {
                         Operation operation = operationResourceAPIRepository.createOperation();
-                        operation.setOperationType(ImageOperationType.BASIC_PHOTO.name());
+                        operation.setOperationType(ImageOperationType.BASIC_PHOTO);
                         operation.setStatus(OperationStatus.FINISHED);
                         operation.setId(operationDao.save(operation));
                         operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(), operation.getId())
@@ -122,6 +123,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
                     });
         }).show(provideActivity());
     }
+
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void showImageOperation(OperationsViewEvent event) {
@@ -180,6 +182,13 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
             case SOBEL_OPERATOR:
                 EventBus.getDefault().post(new ShowSobelOperatorEvent());
                 break;
+            case ADD_IMAGES:
+            case DIFF_IMAGES:
+            case BITWISE_AND:
+            case BITWISE_OR:
+            case BITWISE_XOR:
+                EventBus.getDefault().post(new ShowArithmeticOperationEvent(imageOperationType));
+                break;
             default:
                 throw new AssertionError("Could not resolve operation type");
         }
@@ -193,7 +202,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
             return;
         }
         Operation operation = operationResourceAPIRepository.createOperation();
-        operation.setOperationType(ImageOperationType.UNASSIGNED_TO_RESOURCE_ROOT_CHAIN.name());
+        operation.setOperationType(ImageOperationType.UNASSIGNED_TO_RESOURCE_ROOT_CHAIN);
         operation.setStatus(OperationStatus.FINISHED);
         Observable.create((ObservableOnSubscribe<Long>) e ->
         {
@@ -223,6 +232,7 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
         result.put(AppConstants.FILTER_HEADER, operationResourceAPIRepository.getFilterImageOperationTypes());
         result.put(AppConstants.OTHER_HEADER, operationResourceAPIRepository.getBasicImageOperationTypes());
         result.put(AppConstants.IMAGE_FEATURE, operationResourceAPIRepository.getImageFeaturesOperationTypes());
+        result.put(AppConstants.ARITHMETIC_OPERATIONS_HEADER, operationResourceAPIRepository.getArithmeticOperationTypes());
         EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.VISIBLE));
         return result;
     }

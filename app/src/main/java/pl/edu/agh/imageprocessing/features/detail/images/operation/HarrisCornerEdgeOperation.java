@@ -8,6 +8,7 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -19,7 +20,7 @@ public class HarrisCornerEdgeOperation extends BasicOperation {
     private static ImageOperationType type = ImageOperationType.HARRIS_CORNER;
     public static final String TAG = HarrisCornerEdgeOperation.class.getSimpleName();
 
-    public HarrisCornerEdgeOperation(ImageOperationParameter parameter, Mat mat) {
+    public HarrisCornerEdgeOperation(ImageOperationParameter parameter, List<Mat> mat) {
         super(parameter,mat);
     }
 
@@ -32,13 +33,13 @@ public class HarrisCornerEdgeOperation extends BasicOperation {
         } catch (Exception e) {
             //todo handle on invalid params
         }
-        if(getMat().channels()>=3) {
-            Imgproc.cvtColor(getMat(), getMat(), Imgproc.COLOR_BGR2GRAY);
+        if(getArguments().get(0).channels()>=3) {
+            Imgproc.cvtColor(getArguments().get(0), getArguments().get(0), Imgproc.COLOR_BGR2GRAY);
         }
-        Imgproc.cornerHarris(getMat(), getMat(), 2, 3, 0.04);
+        Imgproc.cornerHarris(getArguments().get(0), getArguments().get(0), 2, 3, 0.04);
         Mat tempDstNorm = new Mat();
-        Core.normalize(getMat(), tempDstNorm, 0, 255, Core.NORM_MINMAX);
-        Core.convertScaleAbs(tempDstNorm, getMat());
+        Core.normalize(getArguments().get(0), tempDstNorm, 0, 255, Core.NORM_MINMAX);
+        Core.convertScaleAbs(tempDstNorm, createResultMat());
 
         //Drawing corners on a new image
         Random r = new Random();
@@ -46,7 +47,7 @@ public class HarrisCornerEdgeOperation extends BasicOperation {
             for (int j = 0; j < tempDstNorm.rows(); j++) {
                 double[] value = tempDstNorm.get(j, i);
                 if (value[0] > 150) {
-                    Imgproc.circle(getMat(), new Point(i, j), 5, new Scalar(r.nextInt(255)), 2);
+                    Imgproc.circle(getResult(), new Point(i, j), 5, new Scalar(r.nextInt(255)), 2);
                 }
             }
         }

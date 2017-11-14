@@ -84,11 +84,12 @@ public class OperationFragmentListAdapter extends BaseAdapter<OperationFragmentL
 
         public void onBind(OperationWithChainAndResource operationWithChainAndResource) {
 //            binding.setResource(operationWithChainAndResource);
-            binding.tvHeader.setText(operationWithChainAndResource.getOperation().getOperationType());
+            binding.tvHeader.setText(operationWithChainAndResource.getOperation().getOperationType().getTitle());
             binding.wrapper.setOnClickListener(view -> {
                 if (binding.expandLayout.isCollapsed()) {
                     EventBus.getDefault().post(new ExpandedOperationId(operationWithChainAndResource.getOperation().getId()));
                     binding.expandLayout.expand();
+                    
                 }
                 else{
                     EventBus.getDefault().post(new ExpandedOperationId(null));

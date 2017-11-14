@@ -6,6 +6,7 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
@@ -15,7 +16,7 @@ import pl.edu.agh.imageprocessing.features.detail.images.ImageOperationParameter
 public class ErosionOperation extends BasicOperation {
     static ImageOperationType type = ImageOperationType.EROSION;
 
-    public ErosionOperation(ImageOperationParameter parameter, Mat mat) {
+    public ErosionOperation(ImageOperationParameter parameter, List<Mat> mat) {
         super(parameter, mat);
     }
 
@@ -29,7 +30,7 @@ public class ErosionOperation extends BasicOperation {
             //todo handle on invalid params
         }
         Mat kernelDilate = Imgproc.getStructuringElement(((Parameters) parameter).getStructElement, new Size(((Parameters) parameter).getStructElementWidth(), ((Parameters) parameter).getStructElementHeight()));
-        Imgproc.erode(getMat(), getMat(), kernelDilate);
+        Imgproc.erode(getArguments().get(0),createResultMat(), kernelDilate);
         return this;
 
     }

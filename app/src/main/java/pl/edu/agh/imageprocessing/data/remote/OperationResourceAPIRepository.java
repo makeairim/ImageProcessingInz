@@ -1,7 +1,6 @@
 package pl.edu.agh.imageprocessing.data.remote;
 
 import android.net.Uri;
-import android.util.Log;
 
 import java.sql.Date;
 import java.util.Arrays;
@@ -33,7 +32,8 @@ public class OperationResourceAPIRepository {
     private final ResourceDao resourceDao;
     private final OperationWithChainAndResourceDao operationWithChainAndResourceDao;
     private final FileTools fileTools;
-    public static final String TAG=OperationResourceAPIRepository.class.getSimpleName();
+    public static final String TAG = OperationResourceAPIRepository.class.getSimpleName();
+
     @Inject
     public OperationResourceAPIRepository(ImageProcessingAPIDatabase imageProcessingAPIDatabase, OperationDao operationDao, ResourceDao resourceDao, OperationWithChainAndResourceDao operationWithChainAndResourceDao, FileTools fileTools) {
         this.imageProcessingAPIDatabase = imageProcessingAPIDatabase;
@@ -50,7 +50,7 @@ public class OperationResourceAPIRepository {
     public Observable<pl.edu.agh.imageprocessing.data.local.entity.Resource> saveResource(ResourceType type, String content, Long operationId) {
         pl.edu.agh.imageprocessing.data.local.entity.Resource res = new pl.edu.agh.imageprocessing.data.local.entity.Resource.Builder()
                 .content(content)
-                .type(type.name())
+                .type(type)
                 .creationDate(new Date(System.currentTimeMillis()))
                 .operationId(operationId)
                 .build();
@@ -66,17 +66,25 @@ public class OperationResourceAPIRepository {
         return Arrays.asList(new GroupOperationModel(ImageOperationType.BINARIZATION));
     }
 
+    public List<GroupOperationModel> getArithmeticOperationTypes() {
+        return Arrays.asList(new GroupOperationModel(ImageOperationType.ADD_IMAGES),
+                new GroupOperationModel(ImageOperationType.DIFF_IMAGES),
+                new GroupOperationModel(ImageOperationType.BITWISE_AND),
+                new GroupOperationModel(ImageOperationType.BITWISE_OR),
+                new GroupOperationModel(ImageOperationType.BITWISE_XOR));
+    }
+
     public List<GroupOperationModel> getFilterImageOperationTypes() {
         return Arrays.asList(
                 new GroupOperationModel(ImageOperationType.FILTER),
                 new GroupOperationModel(ImageOperationType.MEAN_FILTER));
     }
-    public List<GroupOperationModel> getImageFeaturesOperationTypes(){
+
+    public List<GroupOperationModel> getImageFeaturesOperationTypes() {
         return Arrays.asList(
                 new GroupOperationModel(ImageOperationType.CANNY_EDGE),
                 new GroupOperationModel(ImageOperationType.SOBEL_OPERATOR),
                 new GroupOperationModel(ImageOperationType.HARRIS_CORNER)
-
         );
     }
 
@@ -97,7 +105,7 @@ public class OperationResourceAPIRepository {
     }
 
     public Disposable deleteUnchainedOperations() {
-        return operationWithChainAndResourceDao.getUnchainedOperationsByType(ImageOperationType.BINARIZATION.name())
+        return operationWithChainAndResourceDao.getUnchainedOperationsByType(ImageOperationType.BINARIZATION)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(Schedulers.newThread()).subscribe(operationWithChainAndResources -> {
                     for (OperationWithChainAndResource operationWithChainAndResource : operationWithChainAndResources) {

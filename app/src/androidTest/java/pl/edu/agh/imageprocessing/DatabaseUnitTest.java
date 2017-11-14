@@ -151,7 +151,7 @@ public class DatabaseUnitTest {
     }
 
     private Operation createOperation() {
-        return new Operation.Builder().creationDate(new Date(System.currentTimeMillis())).operationType(ImageOperationType.BINARIZATION.name())
+        return new Operation.Builder().creationDate(new Date(System.currentTimeMillis())).operationType(ImageOperationType.BINARIZATION)
                 .status(OperationStatus.CREATED).build();
     }
 

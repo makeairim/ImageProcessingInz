@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- fragment_edit_name.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/edit_name"
+    android:theme="@style/AppDialogTheme"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:layout_gravity="center" android:orientation="vertical"  >
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="239dp"
+        android:layout_margin="16dp"
+        android:orientation="horizontal">
+
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="15dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:minLines="2"
+            android:text="@string/argument_1_desc"
+            app:layout_constraintEnd_toStartOf="@+id/textView2"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/iv_swap_arguments" />
+
+        <TextView
+            android:id="@+id/tv_argument1_desc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/iv_preview_arg_1"
+            app:layout_constraintStart_toEndOf="@+id/iv_preview_arg_1"
+            app:layout_constraintTop_toBottomOf="@+id/iv_preview_arg_1"
+            app:layout_constraintVertical_bias="0.6"
+            tools:text="Canny edge" />
+
+        <ImageView
+            android:id="@+id/iv_preview_arg_1"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:padding="1dp"
+            android:src="@drawable/placeholder"
+            app:layout_constraintEnd_toStartOf="@+id/textView"
+            app:layout_constraintStart_toEndOf="@+id/textView"
+            app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginEnd="44dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/argument_2_desc"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/iv_swap_arguments" />
+
+        <TextView
+            android:id="@+id/tv_argument2_desc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginStart="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/tv_argument1_desc"
+            app:layout_constraintEnd_toStartOf="@+id/iv_preview_arg_2"
+            app:layout_constraintStart_toEndOf="@+id/iv_preview_arg_2"
+            app:layout_constraintTop_toBottomOf="@+id/tv_argument1_desc"
+            tools:text="Choice" />
+
+        <ImageView
+            android:id="@+id/iv_preview_arg_2"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="4dp"
+            android:padding="1dp"
+            android:src="@drawable/placeholder"
+            app:layout_constraintEnd_toStartOf="@+id/textView2"
+            app:layout_constraintStart_toEndOf="@+id/textView2"
+            app:layout_constraintTop_toBottomOf="@+id/textView2" />
+
+
+        <ImageButton
+            android:id="@+id/iv_swap_arguments"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/button_state"
+            android:tint="@android:color/holo_blue_dark"
+            app:layout_constraintEnd_toStartOf="@+id/accept_params"
+            app:layout_constraintHorizontal_bias="0.503"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_swap_horiz_black_24dp" />
+
+        <ImageButton
+            android:id="@+id/accept_params"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/button_state"
+            android:tint="@color/colorAccent"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_swap_arguments"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/iv_swap_arguments"
+            app:srcCompat="@drawable/old_ic_done_black_24dp" />
+    </android.support.constraint.ConstraintLayout>
+</LinearLayout>

@@ -8,10 +8,9 @@ import android.arch.persistence.room.Query;
 import android.arch.persistence.room.Update;
 
 import java.util.List;
+import java.util.Set;
 
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 
@@ -24,7 +23,10 @@ public interface ResourceDao {
     List<Resource> all();
 
     @Query("SELECT * FROM Resource WHERE operationId = :operationId AND type = :resourceType")
-    Maybe<Resource> getByOperationAndType(long operationId, String resourceType);
+    Maybe<Resource> getByOperationAndType(long operationId, ResourceType resourceType);
+
+    @Query("SELECT * FROM Resource WHERE operationId = :operationId AND type IN(:types)")
+    List<Resource> getByOperationidAndTypes(long operationId, ResourceType[] types);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long save(Resource resource);
@@ -34,5 +36,5 @@ public interface ResourceDao {
 
     @Delete
     int delete(Resource resource);
-    
+
 }

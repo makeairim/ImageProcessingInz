@@ -1,16 +1,15 @@
 package pl.edu.agh.imageprocessing.features.detail.images.operation;
 
 
-import android.graphics.Bitmap;
 import android.util.Log;
 
-import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
@@ -21,7 +20,7 @@ public class FilterOperation extends BasicOperation {
     private static ImageOperationType type = ImageOperationType.FILTER;
     public static final String TAG = FilterOperation.class.getSimpleName();
 
-    public FilterOperation(ImageOperationParameter parameter, Mat mat) {
+    public FilterOperation(ImageOperationParameter parameter, List<Mat> mat) {
         super(parameter,mat);
     }
 
@@ -47,7 +46,7 @@ public class FilterOperation extends BasicOperation {
 //            }
 //        }
         kernel.put(0, 0, ((Parameters) parameter).getMatrix());
-        Imgproc.filter2D(getMat(), getMat(), getMat().depth(), kernel);
+        Imgproc.filter2D(getArguments().get(0), createResultMat(), getArguments().get(0).depth(), kernel);
         return this;
     }
 

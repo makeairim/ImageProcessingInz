@@ -10,6 +10,8 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -20,6 +22,7 @@ import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
+import pl.edu.agh.imageprocessing.features.detail.images.operation.ArithmeticOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.BinarizationOperation;
 import pl.edu.agh.imageprocessing.features.detail.images.operation.CannyEdgeOperation;
@@ -56,17 +59,21 @@ public class ImageOperationResolver {
         this.operationDao = operationDao;
     }
 
-    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationResolverParameters parameters, Uri imageUri, long processingOperationId) throws IOException {
+    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationResolverParameters parameters, List<Uri> imageUris, long processingOperationId) throws IOException {
         Log.i(TAG, "resolveOperation: " + type.name());
         ImageOperationParameter params = imageOperationParameterResolver(type, parameters);
         params.setOperationId(processingOperationId);
-        Bitmap bitmap = fileTools.getImageBitmap(context, imageUri);
-        Mat src = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC4);
-        Utils.bitmapToMat(bitmap, src);
-        return resolveOperation(type, params, src);
+        //todo for aritmetic operation imageUri is blank ?
+        List<Mat> arguments = new LinkedList<>();
+        for (int i = 0; i < imageUris.size(); i++) {
+            Bitmap bitmap = fileTools.getImageBitmap(context, imageUris.get(i));
+            arguments.add(new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC4));
+            Utils.bitmapToMat(bitmap, arguments.get(i));
+        }
+        return resolveOperation(type, params, arguments);
     }
 
-    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationParameter params, Mat mat) throws IOException {
+    public BasicOperation resolveOperation(ImageOperationType type, ImageOperationParameter params, List<Mat> mat) throws IOException {
         Log.i(TAG, "resolveOperation: " + type.name());
         switch (type) {
             case BINARIZATION:
@@ -85,6 +92,12 @@ public class ImageOperationResolver {
                 return new HarrisCornerEdgeOperation(params, mat);
             case SOBEL_OPERATOR:
                 return new SobelOperatorOperation(params, mat);
+            case ADD_IMAGES:
+            case DIFF_IMAGES:
+            case BITWISE_AND:
+            case BITWISE_OR:
+            case BITWISE_XOR:
+                return new ArithmeticOperation(params, mat);
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
@@ -117,9 +130,22 @@ public class ImageOperationResolver {
             case SOBEL_OPERATOR:
                 result = new SobelOperatorOperation.Parameters();
                 break;
+            case ADD_IMAGES:
+            case DIFF_IMAGES:
+            case BITWISE_AND:
+            case BITWISE_OR:
+            case BITWISE_XOR:
+                result = mapArithemticOperationParameter(parameters);
+                break;
             default:
                 throw new AssertionError("resolver not provided for operation: " + type.name());
         }
+        return result;
+    }
+
+    private ImageOperationParameter mapArithemticOperationParameter(ImageOperationResolverParameters parameters) {
+        ArithmeticOperation.Parameters result = new ArithmeticOperation.Parameters();
+        result.setType(parameters.getOperationType());
         return result;
     }
 
@@ -171,14 +197,18 @@ public class ImageOperationResolver {
     }
 
     public Resource processResult(BasicOperation execute) {
-        Bitmap resultBitmap = Bitmap.createBitmap(execute.getMat().width(), execute.getMat().height(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(execute.getMat(), resultBitmap);
+        Bitmap resultBitmap = Bitmap.createBitmap(execute.getResult().width(), execute.getResult().height(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(execute.getResult(), resultBitmap);
         Uri fileUri = fileTools.saveFile(resultBitmap);
         Resource result = operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE,
                 fileUri.toString(), execute
                         .getParameter()
                         .getOperationId()).blockingSingle();
         operationDao.updateStatus(execute.getParameter().getOperationId(), OperationStatus.FINISHED);
+        for (int i = 0; i < execute.getArguments().size(); i++) {
+            execute.getArguments().get(i).release();
+        }
+        execute.getResult().release();
         return result;
     }
 

@@ -107,6 +107,7 @@ public class ImageArgumentChooseCustomDialog extends BottomSheetDialogFragment {
         this.secondPhotoIV = view.findViewById(R.id.iv_preview_arg_2);
         this.argument1Desc = view.findViewById(R.id.tv_argument1_desc);
         this.argument2Desc = view.findViewById(R.id.tv_argument2_desc);
+
         loadPreviewsFromArguments(firstArgument, secondArgument, view);
         view.findViewById(R.id.iv_swap_arguments).setOnClickListener(l -> {
             swapArgument();

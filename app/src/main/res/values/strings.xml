@@ -18,4 +18,5 @@
     <string name="argument_1_desc">Argument 1</string>
     <string name="argument_2_desc">Argument 2</string>
     <string name="input_from_user_desc">Choosed</string>
+    <string name="argument_1_input_desc">Weight</string>
 </resources>

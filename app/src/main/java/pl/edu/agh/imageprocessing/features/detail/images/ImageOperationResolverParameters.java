@@ -8,6 +8,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.List;
 
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 
@@ -26,6 +27,25 @@ public class ImageOperationResolverParameters{
     private int supressedPointsThreshold;
     private int strongPointsThreshold;
     private int[] matrix;
+    private List<Double> argumentWeights;
+
+    private ImageOperationResolverParameters(Builder builder) {
+        operationType = builder.operationType;
+        morphologyWidth = builder.morphologyWidth;
+        morphologyHeight = builder.morphologyHeight;
+        morphologyElementType = builder.morphologyElementType;
+        threshold = builder.threshold;
+        matrixHeight = builder.matrixHeight;
+        matrixWidth = builder.matrixWidth;
+        supressedPointsThreshold = builder.supressedPointsThreshold;
+        strongPointsThreshold = builder.strongPointsThreshold;
+        matrix = builder.matrix;
+        argumentWeights = builder.argumentWeights;
+    }
+
+    public List<Double> getArgumentWeights() {
+        return argumentWeights;
+    }
 
     public ImageOperationType getOperationType() {
         return operationType;
@@ -67,20 +87,6 @@ public class ImageOperationResolverParameters{
         return matrix;
     }
 
-    private ImageOperationResolverParameters(Builder builder) {
-        operationType = builder.operationType;
-        morphologyWidth = builder.morphologyWidth;
-        morphologyHeight = builder.morphologyHeight;
-        morphologyElementType = builder.morphologyElementType;
-        threshold = builder.threshold;
-        matrixHeight = builder.matrixHeight;
-        matrixWidth = builder.matrixWidth;
-        supressedPointsThreshold = builder.supressedPointsThreshold;
-        strongPointsThreshold = builder.strongPointsThreshold;
-        matrix = builder.matrix;
-    }
-
-
     public static final class Builder {
         private ImageOperationType operationType;
         private int morphologyWidth;
@@ -92,6 +98,7 @@ public class ImageOperationResolverParameters{
         private int supressedPointsThreshold;
         private int strongPointsThreshold;
         private int[] matrix;
+        private List<Double> argumentWeights;
 
         public Builder() {
         }
@@ -143,6 +150,11 @@ public class ImageOperationResolverParameters{
 
         public Builder matrix(int[] val) {
             matrix = val;
+            return this;
+        }
+
+        public Builder argumentWeights(List<Double> val) {
+            argumentWeights = val;
             return this;
         }
 

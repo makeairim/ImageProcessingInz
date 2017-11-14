@@ -275,6 +275,7 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
                 .strongPointsThreshold(state.getStrongPointThreshold())
                 .supressedPointsThreshold(state.getSupressedPointThreshold())
                 .operationType(state.getOperationType())
+                .argumentWeights(state.getSetArgumentWeights())
                 .build();
     }
 
@@ -313,10 +314,11 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         } else {
             argument = new Resource.Builder().operationId(argument.getOperationId()).content(argument.getContent()).type(argument.getType()).build();
         }
-        ImageArgumentChooseCustomDialog dialog = ImageArgumentChooseCustomDialog.newInstance("Choose image arguments", operationType, argument);
+        ImageArgumentChooseCustomDialog dialog = ImageArgumentChooseCustomDialog.newInstance("Choose image arguments", operationType, argument, event.getType());
         dialog.show(fm, "operation_parameters");
-        dialog.setListener((arguments) -> {
+        dialog.setListener((arguments, weights) -> {
             state.setOperationType(event.getType());
+            state.setArgumentWeights = weights;
             saveOperationWithResources(new OperationWithChainAndResource.Builder().operation(createOperation(event.getType(), mapStateToParameter(state))).resource(arguments).build());
             EventBus.getDefault().post(new EventBasicViewMainPhoto(EventBasicView.ViewState.VISIBLE));
         });
@@ -506,6 +508,15 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
         private Long rootOperationId;
         private int supressedPointThreshold;
         private int strongPointThreshold;
+        public List<Double> setArgumentWeights;
+
+        public List<Double> getSetArgumentWeights() {
+            return setArgumentWeights;
+        }
+
+        public void setSetArgumentWeights(List<Double> setArgumentWeights) {
+            this.setArgumentWeights = setArgumentWeights;
+        }
 
         public List<OperationWithChainAndResource> getOperationChainAndResource() {
             return operationChainAndResource;

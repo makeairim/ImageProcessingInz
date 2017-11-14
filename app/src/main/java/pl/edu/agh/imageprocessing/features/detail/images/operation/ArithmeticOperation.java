@@ -44,7 +44,8 @@ public class ArithmeticOperation extends BasicOperation {
 
         switch (parameters.getType()) {
             case ADD_IMAGES:
-                Core.add(arg1, arg2, createResultMat());
+                Core.addWeighted(arg1,((ArithmeticOperation.Parameters)getParameter()).getArgumentWeights().get(0), arg2,((ArithmeticOperation.Parameters)getParameter()).getArgumentWeights().get(1),0.0d, createResultMat());
+//                Core.add(arg1, arg2, createResultMat());
                 break;
             case DIFF_IMAGES:
                 Core.absdiff(arg1, arg2, createResultMat());
@@ -76,6 +77,15 @@ public class ArithmeticOperation extends BasicOperation {
 
     public static class Parameters extends ImageOperationParameter {
         private ImageOperationType type;
+        private List<Double> argumentWeights;
+
+        public List<Double> getArgumentWeights() {
+            return argumentWeights;
+        }
+
+        public void setArgumentWeights(List<Double> argumentWeights) {
+            this.argumentWeights = argumentWeights;
+        }
 
         public ImageOperationType getType() {
             return type;

@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,6 +18,9 @@ import com.bumptech.glide.request.RequestOptions;
 import com.vansuita.pickimage.dialog.PickImageDialog;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -32,6 +36,7 @@ public class ImageArgumentChooseCustomDialog extends BottomSheetDialogFragment {
     public static final String TAG = ImageArgumentChooseCustomDialog.class.getSimpleName();
     private static final String OPERATION_KEY = "operationResource";
     private static final String OPERATION_TYPE_KEY = "operationTypeKey";
+    private static final String OPERATION_CURRENT_TYPE_KEY = "currentOperationTypeKey";
     private DialogListener listener;
     private Resource firstArgument;
     private Resource secondArgument;
@@ -42,11 +47,16 @@ public class ImageArgumentChooseCustomDialog extends BottomSheetDialogFragment {
     private Function<Consumer<Uri>, Boolean> pickPhoto;
     private TextView argument1Desc;
     private TextView argument2Desc;
-    private ImageOperationType imageOperationType;
+    private ImageOperationType previousImageOperationType;
     private ImageView firstPhotoIV;
+    private TextView tvArgument1Input;
+    private TextView tvArgument2Input;
+    private EditText edArgument1Input;
+    private EditText edArgument2Input;
+    private ImageOperationType currentImageOperationType;
 
     public interface DialogListener {
-        public void call(ArrayList<Resource> arguments);
+        public void call(ArrayList<Resource> arguments, List<Double> weights);
     }
 
     public ImageArgumentChooseCustomDialog() {
@@ -55,14 +65,15 @@ public class ImageArgumentChooseCustomDialog extends BottomSheetDialogFragment {
         // Use `newInstance` instead as shown below
     }
 
-    public static ImageArgumentChooseCustomDialog newInstance(String title, ImageOperationType imageOperationType, Resource operationResource) {
+    public static ImageArgumentChooseCustomDialog newInstance(String title, ImageOperationType previousImageOperationType, Resource operationResource, ImageOperationType currentType) {
         ImageArgumentChooseCustomDialog frag = new ImageArgumentChooseCustomDialog();
         Bundle args = new Bundle();
         args.putString("title", title);
         if (operationResource != null) {
             args.putParcelable(OPERATION_KEY, operationResource);
         }
-        args.putString(OPERATION_TYPE_KEY, imageOperationType.name());
+        args.putString(OPERATION_TYPE_KEY, previousImageOperationType.name());
+        args.putString(OPERATION_CURRENT_TYPE_KEY, currentType.name());
         frag.setArguments(args);
         return frag;
     }
@@ -101,13 +112,18 @@ public class ImageArgumentChooseCustomDialog extends BottomSheetDialogFragment {
         // Fetch arguments from bundle and set title
         String title = getArguments().getString("title", "Choose size");
         getDialog().setTitle(title);
-        imageOperationType = ImageOperationType.valueOf(getArguments().getString(OPERATION_TYPE_KEY));
+        previousImageOperationType = ImageOperationType.valueOf(getArguments().getString(OPERATION_TYPE_KEY));
+        currentImageOperationType = ImageOperationType.valueOf(getArguments().getString(OPERATION_CURRENT_TYPE_KEY));
         firstArgument = getArguments().getParcelable(OPERATION_KEY);
         this.firstPhotoIV = view.findViewById(R.id.iv_preview_arg_1);
         this.secondPhotoIV = view.findViewById(R.id.iv_preview_arg_2);
         this.argument1Desc = view.findViewById(R.id.tv_argument1_desc);
         this.argument2Desc = view.findViewById(R.id.tv_argument2_desc);
-
+        this.tvArgument1Input = view.findViewById(R.id.tv_arg1_input_desc);
+        this.tvArgument2Input = view.findViewById(R.id.tv_arg2_input_desc);
+        this.edArgument1Input = view.findViewById(R.id.ed_arg1_input);
+        this.edArgument2Input = view.findViewById(R.id.ed_arg2_input);
+        enableInput(currentImageOperationType);
         loadPreviewsFromArguments(firstArgument, secondArgument, view);
         view.findViewById(R.id.iv_swap_arguments).setOnClickListener(l -> {
             swapArgument();
@@ -118,6 +134,20 @@ public class ImageArgumentChooseCustomDialog extends BottomSheetDialogFragment {
 
         view.findViewById(R.id.accept_params).setOnClickListener(view1 -> {
             //listener.call();
+            Double arg1Weight = null, arg2Weight = null;
+            if (View.GONE != edArgument1Input.getVisibility()) {
+                try {
+                    arg1Weight = Double.parseDouble(edArgument1Input.getText().toString());
+                    arg2Weight = Double.parseDouble(edArgument2Input.getText().toString());
+                    if (!(arg1Weight >= 0 && arg1Weight <= 1.0 && arg2Weight >= 0 && arg2Weight <= 1)) {
+                        Toast.makeText(getActivity().getBaseContext(), "Decimal number arguments incorrect", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    Toast.makeText(getActivity().getBaseContext(), "Decimal number arguments incorrect", Toast.LENGTH_LONG).show();
+                    return;
+                }
+            }
             if (firstArgument != null && firstArgument.getContent() != null && secondArgument != null && secondArgument.getContent() != null) {
                 ArrayList<Resource> result = new ArrayList<>();
                 if (firstArgument.getOperationId() == null) {
@@ -131,13 +161,31 @@ public class ImageArgumentChooseCustomDialog extends BottomSheetDialogFragment {
                 }
                 result.add(firstArgument);
                 result.add(secondArgument);
-                listener.call(result);
+                List<Double> weights = Collections.emptyList();
+                if (arg1Weight != null) {
+                    weights = Arrays.asList(arg1Weight, arg2Weight);
+                }
+                listener.call(result, weights);
                 dismiss();
             } else {
                 Toast.makeText(getActivity().getBaseContext(), "Arguments not set", Toast.LENGTH_LONG).show();
             }
         });
 
+    }
+
+    private void enableInput(ImageOperationType imageOperationType) {
+        if (!ImageOperationType.ADD_IMAGES.equals(imageOperationType)) {
+            tvArgument1Input.setVisibility(View.GONE);
+            tvArgument2Input.setVisibility(View.GONE);
+            edArgument1Input.setVisibility(View.GONE);
+            edArgument2Input.setVisibility(View.GONE);
+        } else {
+            tvArgument1Input.setText(getString(R.string.argument_1_input_desc));
+            tvArgument2Input.setText(getString(R.string.argument_1_input_desc));
+            edArgument1Input.setText("1");
+            edArgument2Input.setText("1");
+        }
     }
 
     private void loadPreviewsFromArguments(Resource firstArgument, Resource secondArgument, View view) {
@@ -149,12 +197,12 @@ public class ImageArgumentChooseCustomDialog extends BottomSheetDialogFragment {
             firstPhotoIV.setOnClickListener(choosePhotoListener);
         }
         if (firstArgument != null && firstArgument.getOperationId() != null) {
-            argument1Desc.setText(imageOperationType.getTitle());
+            argument1Desc.setText(previousImageOperationType.getTitle());
             argument2Desc.setText(getString(R.string.input_from_user_desc));
 
         } else {
             argument1Desc.setText(getString(R.string.input_from_user_desc));
-            argument2Desc.setText(imageOperationType.getTitle());
+            argument2Desc.setText(previousImageOperationType.getTitle());
         }
         String uriPath = "";
         if (firstArgument != null && firstArgument.getContent() != null && !firstArgument.getContent().isEmpty()) {

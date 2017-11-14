@@ -146,6 +146,7 @@ public class ImageOperationResolver {
     private ImageOperationParameter mapArithemticOperationParameter(ImageOperationResolverParameters parameters) {
         ArithmeticOperation.Parameters result = new ArithmeticOperation.Parameters();
         result.setType(parameters.getOperationType());
+        result.setArgumentWeights(parameters.getArgumentWeights());
         return result;
     }
 

@@ -163,7 +163,7 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
 
     @OnClick(R.id.grid)
     public void showOperationChains() {
-        getViewModel().showOperationRoots();
+        getViewModel().showImageGallery();
     }
 
     @Subscribe

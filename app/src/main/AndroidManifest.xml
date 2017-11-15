@@ -16,34 +16,39 @@
         android:theme="@style/NoActionBar"
         tools:replace="android:theme">
         <service
-           
-        android:enabled="true"
-            android:name=".features.detail.images.ImageOperationService">
-    </service>
-    <provider
-        android:name="android.support.v4.content.FileProvider"
-        android:authorities="${applicationId}.com.vansuita.pickimage.provider"
-        android:exported="false"
-        android:grantUriPermissions="true"
-        tools:replace="android:authorities">
-        <meta-data
-            android:name="android.support.FILE_PROVIDER_PATHS"
-            android:resource="@xml/picker_provider_paths" />
-    </provider>
-    <activity
-        android:name="pl.edu.agh.imageprocessing.features.detail.home.HomeActivity"
-        android:theme="@style/NoActionBar">
 
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
+            android:name=".features.detail.images.ImageOperationService"
+            android:enabled="true"></service>
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="${applicationId}.com.vansuita.pickimage.provider"
+            android:exported="false"
+            android:grantUriPermissions="true"
+            tools:replace="android:authorities">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/picker_provider_paths" />
+        </provider>
 
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-    </activity>
-        <activity android:name=".features.detail.home.InformationalActivity"
+        <activity
+            android:name="pl.edu.agh.imageprocessing.features.detail.home.HomeActivity"
+            android:theme="@style/NoActionBar">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".features.detail.home.InformationalActivity"
             android:theme="@style/Theme.AppCompat.Light.Dialog">
 
         </activity>
-</application>
+        <activity
+            android:name="pl.edu.agh.imageprocessing.features.detail.home.GalleryActivity"
+            android:theme="@style/NoActionBar"></activity>
 
-    </manifest>
+    </application>
+
+</manifest>

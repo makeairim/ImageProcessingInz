@@ -1,6 +1,7 @@
 package pl.edu.agh.imageprocessing.features.detail.viemodel;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -50,6 +51,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisi
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSizeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSobelOperatorEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.GroupOperationModel;
+import pl.edu.agh.imageprocessing.features.detail.home.GalleryActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.ImageOperationFragment;
 import pl.edu.agh.imageprocessing.features.detail.home.ListOperationsFragment;
@@ -235,6 +237,11 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
         result.put(AppConstants.ARITHMETIC_OPERATIONS_HEADER, operationResourceAPIRepository.getArithmeticOperationTypes());
         EventBus.getDefault().post(new EventBasicViewListOperationsVisiblity(EventBasicView.ViewState.VISIBLE));
         return result;
+    }
+
+    public void showImageGallery() {
+        Intent intent = new Intent(provideActivity().getApplicationContext(), GalleryActivity.class);
+        provideActivity().startActivity(intent);
     }
 
 

@@ -25,10 +25,10 @@ import pl.edu.agh.imageprocessing.features.detail.images.operation.BasicOperatio
 public  class ImageModule {
     @Provides
     @Singleton
-    PickImageDialog providePhotoSelector() {
-        PickSetup setup = new PickSetup().setTitle("title").setMaxSize(500).setPickTypes(EPickType.GALLERY, EPickType.CAMERA).setSystemDialog(false);
-        return PickImageDialog.build(setup);
+    PickImageDialog providePhotoGallerySelector() {
+
     }
+
     @Provides
     @Singleton
     FileTools provideFileTools(Context context){

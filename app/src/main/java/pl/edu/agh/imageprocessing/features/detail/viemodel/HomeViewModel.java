@@ -241,7 +241,8 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
 
     public void showImageGallery() {
         Intent intent = new Intent(provideActivity().getApplicationContext(), GalleryActivity.class);
-        provideActivity().startActivity(intent);
+        provideActivity().startActivityForResult(intent, GalleryActivity.REQUEST_CODE);
+
     }
 
 

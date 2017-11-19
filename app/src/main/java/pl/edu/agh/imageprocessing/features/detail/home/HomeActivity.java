@@ -2,7 +2,9 @@ package pl.edu.agh.imageprocessing.features.detail.home;
 
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -40,6 +42,8 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewCo
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewMainPhoto;
 import pl.edu.agh.imageprocessing.features.detail.android.event.LiveVideoEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.PhotoEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.SelectedPhotoEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.GroupOperationModel;
 import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.ItemHeader;
@@ -207,5 +211,24 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
         dialog.show(getSupportFragmentManager(), DIALOG_INFO_TAG);
 //        Intent intent = InformationalActivity.newInstane(this, type);
 //        startActivity(intent);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case GalleryActivity.REQUEST_CODE:
+                if (resultCode != RESULT_OK) {
+                    return;
+                }
+                String uriString = data.getStringExtra(GalleryActivity.PHOTO_URI_KEY);
+                PhotoEvent photoEvent = PhotoEvent.valueOf(data.getStringExtra(GalleryActivity.PHOTO_EVENT_TYPE));
+                if (uriString != null && photoEvent != null) {
+                    EventBus.getDefault().post(new SelectedPhotoEvent(Uri.parse(uriString), photoEvent));
+                } else {
+                    Log.e(TAG, "onActivityResult: result from gallery empty");
+                }
+                break;
+        }
     }
 }

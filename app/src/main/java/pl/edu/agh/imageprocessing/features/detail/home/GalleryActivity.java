@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import pl.edu.agh.imageprocessing.R;
+import pl.edu.agh.imageprocessing.features.detail.android.event.PhotoEvent;
 import pl.edu.agh.imageprocessing.features.detail.images.GlideImageLoader;
 
 /**
@@ -29,16 +30,18 @@ public class GalleryActivity extends FragmentActivity {
             "http://img2.goodfon.ru/original/1920x1080/b/c9/su-47-berkut-c-37-firkin.jpg"
     ));
     private static final String movieUrl = "http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_1mb.mp4";
+    public static final int REQUEST_CODE = 101;
+    public static final String PHOTO_URI_KEY = "PHOTO_URI_KEY";
 
     private ScrollGalleryView scrollGalleryView;
-    public static final String EXPORT_PHOTO_URI_KEY = "EXPORT_PHOTO_URI";
-    public static final String ACCEPT_PHOTO_URI_KEY = "ACCEPT_PHOTO_URI";
+    public static final String PHOTO_EVENT_TYPE = "PHOTO_EVENT_KEY";
 
     private void onExportPhoto() {
         Log.i(TAG, "onExportPhoto: " + scrollGalleryView.getCurrentItem());
         String currentImage = images.get(scrollGalleryView.getCurrentItem());
         Intent data = new Intent();
-        data.putExtra(EXPORT_PHOTO_URI_KEY, currentImage);
+        data.putExtra(PHOTO_URI_KEY, currentImage);
+        data.putExtra(PHOTO_EVENT_TYPE, PhotoEvent.EXPORT.name());
         setResult(RESULT_OK, data);
     }
 
@@ -46,7 +49,8 @@ public class GalleryActivity extends FragmentActivity {
         Log.i(TAG, "onAcceptPhoto: " + scrollGalleryView.getCurrentItem());
         String currentImage = images.get(scrollGalleryView.getCurrentItem());
         Intent data = new Intent();
-        data.putExtra(ACCEPT_PHOTO_URI_KEY, currentImage);
+        data.putExtra(PHOTO_URI_KEY, currentImage);
+        data.putExtra(PHOTO_EVENT_TYPE, PhotoEvent.ACCEPT.name());
         setResult(RESULT_OK, data);
     }
 

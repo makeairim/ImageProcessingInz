@@ -1,6 +1,7 @@
 package pl.edu.agh.imageprocessing.data.local.converter;
 
 import android.arch.persistence.room.TypeConverter;
+import android.net.Uri;
 
 import java.util.Date;
 
@@ -27,14 +28,17 @@ public class Converters {
     public static OperationStatus operationStatusFromString(String value) {
         return value == null ? null : OperationStatus.valueOf(value);
     }
+
     @TypeConverter
     public static ResourceType resourceTypeFromString(String value) {
         return value == null ? null : ResourceType.valueOf(value);
     }
+
     @TypeConverter
     public static String resourceTypeToString(ResourceType status) {
         return status == null ? null : status.name();
     }
+
     @TypeConverter
     public static String operationStatusToString(OperationStatus status) {
         return status == null ? null : status.name();
@@ -44,8 +48,10 @@ public class Converters {
     public static ImageOperationType operationTypeFromString(String value) {
         return value == null ? null : ImageOperationType.valueOf(value);
     }
+
     @TypeConverter
     public static String operationTypeToString(ImageOperationType type) {
         return type == null ? null : type.name();
     }
+
 }

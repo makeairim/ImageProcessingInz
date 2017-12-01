@@ -116,4 +116,14 @@ public class OperationWithChainAndResource implements Parcelable {
         }
         return null;
     }
+    public Resource getResourceImageFile() {
+        if (resource != null && !resource.isEmpty()) {
+            for (int i = 0; i < resource.size(); i++) {
+                if (ResourceType.IMAGE_FILE.equals(resource.get(i).getType())) {
+                    return resource.get(i);
+                }
+            }
+        }
+        return null;
+    }
 }

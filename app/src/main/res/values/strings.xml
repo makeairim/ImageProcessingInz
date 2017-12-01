@@ -19,4 +19,11 @@
     <string name="argument_2_desc">Argument 2</string>
     <string name="input_from_user_desc">Choosed</string>
     <string name="argument_1_input_desc">Weight</string>
+    <string name="export_photo_dialog_title">Export photo</string>
+    <string name="export_photo_dialog_msg">Enter filename</string>
+    <string name="export_photo_dialog_sample_name">filename</string>
+    <string name="app_export_photo_desc">ImageProcessingPhoto</string>
+    <string name="photo_exported_msg">Photo exported</string>
+    <string name="photo_not_exported_msg">Cannot export photo</string>
+    <string name="no_photo_in_app_gallery">No photos in app gallery</string>
 </resources>

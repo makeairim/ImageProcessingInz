@@ -22,7 +22,7 @@ public interface OperationWithChainAndResourceDao {
 
     @Transaction
     @Query("SELECT * FROM Operation WHERE id =:operation_id")
-    public List<OperationWithChainAndResource> loadOperation(int operation_id);
+    public Maybe<OperationWithChainAndResource> getByOperationId(long operation_id);
 
     @Transaction
     @Query("SELECT * FROM Operation ORDER BY creationDate DESC")

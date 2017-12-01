@@ -27,7 +27,6 @@ import pl.edu.agh.imageprocessing.features.detail.viemodel.BaseViewModel;
 
 public class BaseActivity extends AppCompatActivity implements LifecycleRegistryOwner {
     protected LifecycleRegistry lifecycleRegistry = new LifecycleRegistry(this);
-
     protected BaseViewModel viewModel;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -55,6 +54,7 @@ public class BaseActivity extends AppCompatActivity implements LifecycleRegistry
 
         @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
         public void onResume() {
+
             viewModel.setBinding(activity);
             EventBus.getDefault().register(activity);
             EventBus.getDefault().register(viewModel);
@@ -64,6 +64,7 @@ public class BaseActivity extends AppCompatActivity implements LifecycleRegistry
         }
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         public void onPause(){
+
             EventBus.getDefault().unregister(activity);
             EventBus.getDefault().unregister(viewModel);
         }

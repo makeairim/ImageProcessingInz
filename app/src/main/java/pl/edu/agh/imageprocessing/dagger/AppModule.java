@@ -7,12 +7,8 @@ import android.content.Context;
 import android.util.Log;
 import android.view.View;
 
-import com.vansuita.pickimage.bundle.PickSetup;
-import com.vansuita.pickimage.enums.EPickType;
-
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.core.Core;
 
 import javax.inject.Singleton;
 
@@ -63,11 +59,6 @@ public class AppModule {
         return imageProcessingAPIDatabase.resourceDao();
     }
 
-    @Provides
-    @Singleton
-    PickSetup providePickPhotoSetup() {
-        return new PickSetup().setTitle("title").setMaxSize(500).setPickTypes(EPickType.GALLERY, EPickType.CAMERA).setSystemDialog(false);
-    }
 
     @Provides
     ViewModelProvider.Factory provideViewModelFactory(ImageProcessingViewModelFactory factory) {

@@ -1,5 +1,6 @@
 package pl.edu.agh.imageprocessing.app;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Application;
 import android.arch.persistence.room.RoomDatabase;
@@ -7,11 +8,17 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.annotation.NonNull;
 import android.view.View;
+import android.widget.Toast;
+
+import com.marchinram.rxgallery.RxGallery;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -26,6 +33,10 @@ import javax.inject.Inject;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasActivityInjector;
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import pl.edu.agh.imageprocessing.dagger.DaggerAppComponent;
 import pl.edu.agh.imageprocessing.data.local.ImageProcessingAPIDatabase;
 import pl.edu.agh.imageprocessing.features.detail.android.event.TriggerServiceWorkEvent;

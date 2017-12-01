@@ -12,7 +12,6 @@ import android.view.View;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.vansuita.pickimage.dialog.PickImageDialog;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -49,6 +48,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.dialog.CannyEdgeCustom
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.DilationErosionCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.ImageArgumentChooseCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.MatrixCustomDialog;
+import pl.edu.agh.imageprocessing.features.detail.android.dialog.PhotoPickerDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.dialog.SizeCustomDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.event.DataChangedEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
@@ -93,7 +93,6 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     OperationDao operationDao;
     @Inject
     ResourceDao resourceDao;
-
     @Inject
     FileTools fileTools;
     @Inject
@@ -102,19 +101,27 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     ImageOperationResolver imageOperationResolver;
     @Inject
     OpenCvTypes openCvTypes;
-    @Inject
-    PickImageDialog pickImageDialog;
 
     ImageOperationViewModelState state = new ImageOperationViewModelState();
 
     public void pickPhoto(Consumer<Uri> callback) {
-        pickImageDialog.setOnPickResult(result -> {
+        FragmentManager fm = provideActivity().getSupportFragmentManager();
+        PhotoPickerDialog dialog = PhotoPickerDialog.newInstance("Pick photo", fileTools.getPhotos());
+        dialog.show(fm, "photo_picker");
+        dialog.setListener((uri, photoEvent) -> {
             try {
-                callback.accept(result.getUri());
+                callback.accept(uri);
             } catch (Exception e) {
                 Log.e(TAG, "pickPhoto: " + e.getMessage(), e);
             }
-        }).show(provideActivity().getSupportFragmentManager());
+        });
+//        pickImageDialog.setOnPickResult(result -> {
+//            try {
+//                callback.accept(result.getUri());
+//            } catch (Exception e) {
+//                Log.e(TAG, "pickPhoto: " + e.getMessage(), e);
+//            }
+//        }).show(provideActivity().getSupportFragmentManager());
     }
 
     @Inject
@@ -135,7 +142,36 @@ public class ImageOperationViewModel extends BaseViewModel implements OperationF
     public void onImageOperationClicked(OperationWithChainAndResource operationWithChainAndResource, View sharedView) {
     }
 
-    //    }e->{e.onNext(operationWithChainAndResourceDao.getChainOperationsSortedAsc(rootId));e.onComplete();}
+    @Override
+    public void onImageOperationDelete(long operationId) {
+        operationDao.get(operationId).observeOn(Schedulers.newThread()).subscribeOn(Schedulers.newThread())
+                .subscribe(operation -> {
+                    if (operation.getNextOperationId() != null) {
+                        throw new AssertionError();
+                    }
+                    removeOperation(operation.getId());
+                });
+    }
+
+    private void removeOperation(long operationId) {
+        operationResourceAPIRepository.removeOperationWithResource(operationId).subscribeOn(Schedulers.newThread()).subscribe(operWithRes -> {
+            if (operWithRes.getOperation().getParentOperationId() != null) {
+                int indexToRemove = state.getOperationChainAndResource().size() - 1;
+                while (indexToRemove >= 0) {
+                    if (state.getOperationChainAndResource().get(indexToRemove).getOperation().getId() == operationId) {
+                        break;
+                    }
+                    --indexToRemove;
+                }
+                state.getOperationChainAndResource().remove(indexToRemove);
+                state.getOperationChainAndResource().get(state.getOperationChainAndResource().size() - 1).getOperation().setNextOperationId(null);
+                EventBus.getDefault().post(new DataChangedEvent());
+            } else {
+                provideFragment().getFragmentManager().popBackStack();
+            }
+        });
+    }
+
     @Subscribe
     public void refreshData(RefreshDataEvent event) {
         loadOperationChain(state.getRootOperationId());

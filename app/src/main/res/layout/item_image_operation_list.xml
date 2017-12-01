@@ -78,7 +78,7 @@
                     android:layout_height="match_parent"
                     android:padding="1dp"
                     android:id="@+id/iv_info"
-                    app:srcCompat="@drawable/ic_info_black_24dp"/>
+                    app:srcCompat="@drawable/ic_edit_black_24dp"/>
             </LinearLayout>
             <TextView
                 android:layout_marginLeft="40dp"

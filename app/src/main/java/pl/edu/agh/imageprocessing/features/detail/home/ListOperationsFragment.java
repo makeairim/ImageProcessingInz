@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import javax.inject.Inject;
@@ -20,7 +21,9 @@ import pl.edu.agh.imageprocessing.BaseFragment;
 import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.databinding.ListOperationsViewBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.ViewUtils;
+import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventSimpleDataMsg;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.viemodel.ListOperationsViewModel;
 
 /**
@@ -75,6 +78,10 @@ public class ListOperationsFragment extends BaseFragment {
 
     }
 
-
+    @Override
+    public void onResume() {
+        super.onResume();
+        EventBus.getDefault().post(new ShowMainViewVisibilityEventBasicView(EventBasicView.ViewState.VISIBLE));
+    }
 
 }

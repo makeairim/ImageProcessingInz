@@ -62,8 +62,10 @@ abstract public class BasicOperation {
 
     private Mat createEmptyMatAsSmallerArgument() {
         Mat smaller = getArguments().get(0);
-        if (getArguments().get(0).size().area() > getArguments().get(1).size().area()) {
-            smaller = getArguments().get(1);
+        if (getArguments().size() > 1) {
+            if (getArguments().get(0).size().area() > getArguments().get(1).size().area()) {
+                smaller = getArguments().get(1);
+            }
         }
         return new Mat(smaller.width(), smaller.height(), smaller.type());
     }

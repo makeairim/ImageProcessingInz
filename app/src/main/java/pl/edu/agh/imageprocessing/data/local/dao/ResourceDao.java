@@ -8,7 +8,6 @@ import android.arch.persistence.room.Query;
 import android.arch.persistence.room.Update;
 
 import java.util.List;
-import java.util.Set;
 
 import io.reactivex.Maybe;
 import pl.edu.agh.imageprocessing.data.local.ResourceType;
@@ -21,6 +20,9 @@ import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 public interface ResourceDao {
     @Query("SELECT * FROM Resource")
     List<Resource> all();
+
+    @Query("SELECT * FROM Resource WHERE id = :id")
+    Maybe<Resource> get(long id);
 
     @Query("SELECT * FROM Resource WHERE operationId = :operationId AND type = :resourceType")
     Maybe<Resource> getByOperationAndType(long operationId, ResourceType resourceType);

@@ -1,10 +1,9 @@
 package pl.edu.agh.imageprocessing.features.detail.home;
 
-import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +21,7 @@ import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.databinding.ItemImageOperationListBinding;
 import pl.edu.agh.imageprocessing.features.detail.android.BaseAdapter;
+import pl.edu.agh.imageprocessing.features.detail.android.dialog.EditPhotoDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ExpandedOperationId;
 
 
@@ -68,6 +68,7 @@ public class OperationFragmentListAdapter extends BaseAdapter<OperationFragmentL
     static class OperationViewHolder extends RecyclerView.ViewHolder {
 
         private final ItemImageOperationListBinding binding;
+        private final OperationFragmentListCallback callback;
 
         public static OperationViewHolder create(LayoutInflater inflater, ViewGroup parent, OperationFragmentListCallback callback) {
             ItemImageOperationListBinding itemOperationListBinding = ItemImageOperationListBinding.inflate(inflater, parent, false);
@@ -80,6 +81,7 @@ public class OperationFragmentListAdapter extends BaseAdapter<OperationFragmentL
             this.binding = binding;
             binding.getRoot().setOnClickListener(v ->
                     callback.onImageOperationClicked(binding.getResource(), null)); //todo binding.imageViewCover
+            this.callback = callback;
         }
 
         public void onBind(OperationWithChainAndResource operationWithChainAndResource) {
@@ -89,15 +91,13 @@ public class OperationFragmentListAdapter extends BaseAdapter<OperationFragmentL
                 if (binding.expandLayout.isCollapsed()) {
                     EventBus.getDefault().post(new ExpandedOperationId(operationWithChainAndResource.getOperation().getId()));
                     binding.expandLayout.expand();
-                    
-                }
-                else{
+                } else {
                     EventBus.getDefault().post(new ExpandedOperationId(null));
                     binding.expandLayout.collapse();
                 }
             });
-            binding.tvDescription.setText(DateUtils.formatDateTime(binding.getRoot().getContext(), operationWithChainAndResource.getOperation().getCreationDate().getTime(), DateUtils.FORMAT_SHOW_DATE| DateUtils.FORMAT_SHOW_TIME));
-            if(operationWithChainAndResource.getImageFile()!=null && !operationWithChainAndResource.getImageFile().isEmpty()) {
+            binding.tvDescription.setText(DateUtils.formatDateTime(binding.getRoot().getContext(), operationWithChainAndResource.getOperation().getCreationDate().getTime(), DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME));
+            if (operationWithChainAndResource.getImageFile() != null && !operationWithChainAndResource.getImageFile().isEmpty()) {
                 binding.ivPreview.setVisibility(View.VISIBLE);
                 binding.progressBar.setVisibility(View.GONE);
                 Glide.with(binding.ivPreview.getContext())
@@ -106,7 +106,18 @@ public class OperationFragmentListAdapter extends BaseAdapter<OperationFragmentL
                 Glide.with(binding.ivPhoto.getContext())
                         .load(Uri.parse(operationWithChainAndResource.getImageFile())).apply(RequestOptions.placeholderOf(R.drawable.placeholder))
                         .into(binding.ivPhoto);
-            }else{
+                binding.ivInfo.setOnClickListener(l -> {
+                    FragmentManager fm = ((HomeActivity) binding.ivInfo.getContext()).getSupportFragmentManager();
+                    Boolean canDeleteOperation = Boolean.FALSE;
+                    if (operationWithChainAndResource.getOperation().getNextOperationId() == null) {
+                        canDeleteOperation = Boolean.TRUE;
+                    }
+                    EditPhotoDialog dialog = EditPhotoDialog.newInstance("Photo edit", Uri.parse(operationWithChainAndResource.getImageFile()), operationWithChainAndResource.getResourceImageFile().getId(), canDeleteOperation);
+                    dialog.show(fm, "photo_picker");
+                    dialog.setListener(resourceId -> callback.onImageOperationDelete(operationWithChainAndResource.getOperation().getId()));
+//                    dialog.setListener((uri, photoEvent) -> {
+                });
+            } else {
                 binding.ivPreview.setVisibility(View.GONE);
                 binding.progressBar.setVisibility(View.VISIBLE);
             }

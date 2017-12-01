@@ -15,14 +15,11 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.vansuita.pickimage.dialog.PickImageDialog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import javax.inject.Inject;
 
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -41,8 +38,6 @@ public class ImageArgumentChooseCustomDialog extends BottomSheetDialogFragment {
     private Resource firstArgument;
     private Resource secondArgument;
 
-    @Inject
-    PickImageDialog pickImageDialog;
     private ImageView secondPhotoIV;
     private Function<Consumer<Uri>, Boolean> pickPhoto;
     private TextView argument1Desc;

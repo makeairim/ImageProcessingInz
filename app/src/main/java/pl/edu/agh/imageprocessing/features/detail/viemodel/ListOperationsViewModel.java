@@ -35,7 +35,7 @@ import pl.edu.agh.imageprocessing.features.detail.home.RegisterDisposableCallbac
  * Created by bwolcerz on 20.08.2017.
  */
 
-public class ListOperationsViewModel extends BaseViewModel implements ListOperationFragmentListCallback,RegisterDisposableCallback,ObtainImageFileForOperationCallback{
+public class ListOperationsViewModel extends BaseViewModel implements ListOperationFragmentListCallback, RegisterDisposableCallback, ObtainImageFileForOperationCallback {
     public static final String TAG = ListOperationsViewModel.class.getSimpleName();
     @Inject
     OperationDao operationDao;
@@ -52,7 +52,6 @@ public class ListOperationsViewModel extends BaseViewModel implements ListOperat
     }
 
 
-
     @Override
     protected ListOperationsFragment provideFragment() {
         return (ListOperationsFragment) super.provideFragment();
@@ -66,33 +65,39 @@ public class ListOperationsViewModel extends BaseViewModel implements ListOperat
     @Override
     public void setUp() {
         getRoots().observeOn(Schedulers.newThread()).subscribe(o -> {
-           state.setOperationRoots(o);
-           EventBus.getDefault().post(new DataChangedEvent());
+            state.setOperationRoots(o);
+            EventBus.getDefault().post(new DataChangedEvent());
         });
     }
 
     @Override
     public Bundle saveState() {
-        Bundle bundle=new Bundle();
-     //   bundle.putParcelable(this.STATE_KEY,state);
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(this.STATE_KEY, state);
         return bundle;
     }
 
     @Override
     public void restoreState(Bundle bundle) {
-//        if( bundle!=null){
-//            state=bundle.getParcelable(this.STATE_KEY);
-
+        if (bundle != null) {
+            state = bundle.getParcelable(this.STATE_KEY);
+            EventBus.getDefault().post(new DataChangedEvent());
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void notifyDataChanged(DataChangedEvent event){
+    public void notifyDataChanged(DataChangedEvent event) {
         provideFragment().adapter.setData(state.getOperationRoots());
         provideFragment().adapter.notifyDataSetChanged();
     }
-    private Observable<List<Operation>> getRoots(){
-        return Observable.create( (ObservableOnSubscribe<List<Operation>>)e ->{ e.onNext(operationDao.chainRoots()); e.onComplete();}).subscribeOn(Schedulers.newThread());
+
+    private Observable<List<Operation>> getRoots() {
+        return Observable.create((ObservableOnSubscribe<List<Operation>>) e -> {
+            e.onNext(operationDao.chainRoots());
+            e.onComplete();
+        }).subscribeOn(Schedulers.newThread());
     }
+
     @Override
     public void onImageOperationClicked(Operation operation, View sharedView) {
         EventBus.getDefault().post(new OperationsViewEvent(operation.getId()));
@@ -109,7 +114,7 @@ public class ListOperationsViewModel extends BaseViewModel implements ListOperat
     }
 
 
-static public class ListOperationsViewModelState implements Parcelable{
+    static public class ListOperationsViewModelState implements Parcelable {
         private List<Operation> operationRoots;
 
         public void setOperationRoots(List<Operation> operationRoots) {

@@ -1,5 +1,6 @@
 package pl.edu.agh.imageprocessing.data.remote;
 
+import android.arch.persistence.room.Transaction;
 import android.net.Uri;
 
 import java.sql.Date;
@@ -8,6 +9,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
@@ -19,6 +21,7 @@ import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResource;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationWithChainAndResourceDao;
 import pl.edu.agh.imageprocessing.data.local.dao.ResourceDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
+import pl.edu.agh.imageprocessing.data.local.entity.Resource;
 import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.GroupOperationModel;
 import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 
@@ -116,5 +119,39 @@ public class OperationResourceAPIRepository {
                         operationDao.delete(operationWithChainAndResource.getOperation());
                     }
                 });
+    }
+
+    public Maybe<pl.edu.agh.imageprocessing.data.local.entity.Resource> renameFileResource(long resourceId, String newFileName) {
+        Maybe<pl.edu.agh.imageprocessing.data.local.entity.Resource> resource = resourceDao.get(resourceId);
+        return resource.subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread())
+                .filter(res -> ResourceType.IMAGE_FILE.equals(res.getType()))
+                .doOnSuccess(c -> {
+                    Uri newUri = fileTools.renameFile(Uri.parse(c.getContent()), newFileName);
+                    if (newUri != null) {
+                        c.setContent(newUri.toString());
+                        resourceDao.update(c);
+                    }
+                }).observeOn(Schedulers.newThread()).subscribeOn(Schedulers.newThread());
+    }
+
+    @Transaction
+    public Maybe<OperationWithChainAndResource> removeOperationWithResource(long operationId) {
+        return operationWithChainAndResourceDao.getByOperationId(operationId).observeOn(Schedulers.newThread())
+                .map(operWithRes -> {
+                    for (Resource res : operWithRes.getResource()) {
+                        if (ResourceType.IMAGE_FILE.equals(res.getType())) {
+                            fileTools.deleteFile(Uri.parse(res.getContent()));
+                        }
+                        resourceDao.delete(res);
+                    }
+                    if (operWithRes.getOperation().getParentOperationId() != null) {
+                        Operation prevOperation = operationDao.getOperationByNextOperationId(operWithRes.getOperation().getId());
+                        prevOperation.setNextOperationId(operWithRes.getOperation().getNextOperationId());
+                        operationDao.update(prevOperation);
+                    }
+                    operationDao.delete(operWithRes.getOperation());
+                    return operWithRes;
+                });
+
     }
 }

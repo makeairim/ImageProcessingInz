@@ -85,18 +85,18 @@ public class BaseFragment extends Fragment implements LifecycleRegistryOwner {
         }
     }
 
-//    @Override
-//    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
-//        super.onViewStateRestored(savedInstanceState);
-//        if(savedInstanceState!=null) {
-//            viewModel.restoreState(savedInstanceState.getBundle(BaseViewModel.STATE_KEY));
-//        }
-//    }
-//
-//    @Override
-//    public void onSaveInstanceState(Bundle outState) {
-//        super.onSaveInstanceState(outState);
-//        outState.putBundle(BaseViewModel.STATE_KEY,viewModel.saveState());
-//    }
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if(savedInstanceState!=null) {
+            viewModel.restoreState(savedInstanceState.getBundle(BaseViewModel.STATE_KEY));
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBundle(BaseViewModel.STATE_KEY,viewModel.saveState());
+    }
 
 }

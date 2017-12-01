@@ -2,20 +2,28 @@ package pl.edu.agh.imageprocessing.features.detail.viemodel;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.github.dmstocking.optional.java.util.Optional;
-import com.vansuita.pickimage.dialog.PickImageDialog;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +36,7 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import pl.edu.agh.imageprocessing.BaseFragment;
+import pl.edu.agh.imageprocessing.R;
 import pl.edu.agh.imageprocessing.app.constants.AppConstants;
 import pl.edu.agh.imageprocessing.data.ImageOperationType;
 import pl.edu.agh.imageprocessing.data.local.OperationStatus;
@@ -35,11 +44,13 @@ import pl.edu.agh.imageprocessing.data.local.ResourceType;
 import pl.edu.agh.imageprocessing.data.local.dao.OperationDao;
 import pl.edu.agh.imageprocessing.data.local.entity.Operation;
 import pl.edu.agh.imageprocessing.data.remote.OperationResourceAPIRepository;
+import pl.edu.agh.imageprocessing.features.detail.android.dialog.PhotoPickerDialog;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewConfirmActionVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewHideBottomActionParameters;
 import pl.edu.agh.imageprocessing.features.detail.android.event.EventBasicViewListOperationsVisiblity;
 import pl.edu.agh.imageprocessing.features.detail.android.event.LiveVideoEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.OnTransitionToOperationRootViewEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.OperationsViewEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowArithmeticOperationEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowBinarizationEvent;
@@ -50,6 +61,7 @@ import pl.edu.agh.imageprocessing.features.detail.android.event.ShowHarrisEdgeEv
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowMainViewVisibilityEventBasicView;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSizeDialogEvent;
 import pl.edu.agh.imageprocessing.features.detail.android.event.ShowSobelOperatorEvent;
+import pl.edu.agh.imageprocessing.features.detail.android.event.ToggleOperationToolbar;
 import pl.edu.agh.imageprocessing.features.detail.android.operationtypeslist.GroupOperationModel;
 import pl.edu.agh.imageprocessing.features.detail.home.GalleryActivity;
 import pl.edu.agh.imageprocessing.features.detail.home.HomeActivity;
@@ -65,8 +77,6 @@ import pl.edu.agh.imageprocessing.features.detail.images.FileTools;
 public class HomeViewModel extends BaseViewModel implements OperationHomeListCallback {
     public static final String TAG = HomeViewModel.class.getSimpleName();
 
-    @Inject
-    PickImageDialog pickImageDialog;
     @Inject
     OperationResourceAPIRepository operationResourceAPIRepository;
     @Inject
@@ -108,31 +118,77 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     public HomeViewModel() {
     }
 
-    public void photoPicker() {
-        pickImageDialog.setOnPickResult(pickResult -> {
-            Observable.create(e -> e.onNext(fileTools.saveFile(pickResult.getBitmap(), context)))
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(Schedulers.newThread())
-                    .subscribe(o -> {
-                        Operation operation = operationResourceAPIRepository.createOperation();
-                        operation.setOperationType(ImageOperationType.BASIC_PHOTO);
-                        operation.setStatus(OperationStatus.FINISHED);
-                        operation.setId(operationDao.save(operation));
-                        operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(), operation.getId())
-                                .observeOn(AndroidSchedulers.mainThread()).subscribe(res -> {
-                            EventBus.getDefault().post(new OperationsViewEvent(res.getOperationId()));
-                        });
-                    });
-        }).show(provideActivity());
+    private Bitmap fromGallery(final Uri selectedImageUri) {
+        try {
+            Bitmap bm = null;
+            try {
+                bm = MediaStore.Images.Media.getBitmap(provideActivity().getContentResolver(), selectedImageUri);
+            } catch (IOException e) {
+                Log.e(TAG, "fromGallery: " + e.getMessage(), e);
+            }
+
+            ExifInterface exif = new ExifInterface(selectedImageUri.getPath());
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+
+            int angle = 0;
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    angle = 90;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    angle = 180;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    angle = 270;
+                    break;
+                default:
+                    angle = 0;
+                    break;
+            }
+            Matrix mat = new Matrix();
+            if (angle == 0 && bm.getWidth() > bm.getHeight())
+                mat.postRotate(-90);
+            else
+                mat.postRotate(angle);
+
+            return Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), mat, true);
+
+        } catch (IOException e) {
+            Log.e("", "-- Error in setting image");
+        } catch (OutOfMemoryError oom) {
+            Log.e("", "-- OOM Error in setting image");
+        }
+        return null;
     }
 
+    public void photoPicker() {
+        FragmentManager fm = provideActivity().getSupportFragmentManager();
+        PhotoPickerDialog dialog = PhotoPickerDialog.newInstance("Pick photo", fileTools.getPhotos());
+        dialog.show(fm, "photo_picker");
+        dialog.setListener((uri, photoEvent) -> Observable.create(e -> e.onNext(fileTools.saveFile(fromGallery(uri))))
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(Schedulers.newThread())
+                .subscribe(o -> {
+                    Operation operation = operationResourceAPIRepository.createOperation();
+                    operation.setOperationType(ImageOperationType.BASIC_PHOTO);
+                    operation.setStatus(OperationStatus.FINISHED);
+                    operation.setId(operationDao.save(operation));
+                    operationResourceAPIRepository.saveResource(ResourceType.IMAGE_FILE, o.toString(), operation.getId())
+                            .observeOn(AndroidSchedulers.mainThread()).subscribe(res -> EventBus.getDefault().post(new OperationsViewEvent(res.getOperationId())));
+                }));
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void toggleToolbarOperationView(ToggleOperationToolbar event) {
+        provideActivity().binding.videoButton.setVisibility(View.VISIBLE);
+        provideActivity().binding.operationButton.setVisibility(View.VISIBLE);
+        provideActivity().binding.exportButton.setVisibility(View.VISIBLE);
+    }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void showImageOperation(OperationsViewEvent event) {
         //todo
-        provideActivity().binding.videoButton.setVisibility(View.VISIBLE);
-        provideActivity().binding.operationButton.setVisibility(View.VISIBLE);
-        provideActivity().binding.exportButton.setVisibility(View.VISIBLE);
+        toggleToolbarOperationView(new ToggleOperationToolbar());
         FragmentTransaction ft = provideActivity().getSupportFragmentManager().beginTransaction();
         ft.replace(provideActivity().binding.container.getId(), ImageOperationFragment.newInstance(event.getId()), HomeActivity.RETAINED_FRAGMENT_TAG);
         ft.setTransition(FragmentTransaction.TRANSIT_ENTER_MASK);
@@ -140,15 +196,23 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
         ft.commit();
     }
 
-    public void showOperationRoots() {
-        //todo
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onTransitionToOperationRootView(OnTransitionToOperationRootViewEvent event) {
+        onTransitionToRootView();
+    }
+
+    private void onTransitionToRootView() {
         provideActivity().binding.videoButton.setVisibility(View.GONE);
         provideActivity().binding.operationButton.setVisibility(View.GONE);
         provideActivity().binding.exportButton.setVisibility(View.GONE);
+    }
+
+    private void showOperationRoots() {
+        onTransitionToRootView();
         FragmentTransaction ft = provideActivity().getSupportFragmentManager().beginTransaction();
         ft.replace(provideActivity().binding.container.getId(), ListOperationsFragment.newInstance(), HomeActivity.RETAINED_FRAGMENT_TAG);
         ft.setTransition(FragmentTransaction.TRANSIT_ENTER_MASK);
-        ft.addToBackStack(HomeActivity.RETAINED_FRAGMENT_TAG);
+//        ft.addToBackStack(HomeActivity.RETAINED_FRAGMENT_TAG);
         ft.commit();
     }
 
@@ -240,8 +304,16 @@ public class HomeViewModel extends BaseViewModel implements OperationHomeListCal
     }
 
     public void showImageGallery() {
-        Intent intent = new Intent(provideActivity().getApplicationContext(), GalleryActivity.class);
-        provideActivity().startActivityForResult(intent, GalleryActivity.REQUEST_CODE);
+        List<Uri> photoUris = fileTools.getPhotos();
+
+        if (photoUris != null && !photoUris.isEmpty()) {
+            Intent intent = new Intent(provideActivity().getApplicationContext(), GalleryActivity.class);
+            intent.putParcelableArrayListExtra(GalleryActivity.PHOTOS_KEY, new ArrayList<>(photoUris));
+            intent.putExtra(GalleryActivity.HIDE_ACCEPT_BTN,Boolean.TRUE);
+            provideActivity().startActivityForResult(intent, GalleryActivity.REQUEST_CODE);
+        } else {
+            Toast.makeText(provideActivity(), provideActivity().getString(R.string.no_photo_in_app_gallery), Toast.LENGTH_LONG).show();
+        }
 
     }
 

@@ -1,5 +1,6 @@
 package pl.edu.agh.imageprocessing.features.detail.home;
 
+import android.Manifest;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
@@ -12,6 +13,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
+
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -69,6 +72,7 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
     DispatchingAndroidInjector<Fragment> fragmentDispatchingAndroidInjector;
 
     public ActivityHomeBinding binding;
+    private RxPermissions rxPermissions;
 
     private HomeViewModel getViewModel() {
         return (HomeViewModel) viewModel;
@@ -130,6 +134,22 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
                 .RegisterItemType(new ItemHeaderViewBinder());
         binding.recyclerView.setAdapter(adapter);
         binding.recyclerView.setOnNoChildClickListener(getViewModel().onOutsideListClick);
+        rxPermissions = new RxPermissions(this);
+        rxPermissions
+                .requestEach(Manifest.permission_group.STORAGE,
+                        Manifest.permission.CAMERA)
+                .subscribe(permission -> { // will emit 2 Permission objects
+                    if (permission.granted) {
+                        // `permission.name` is granted !
+                    } else if (permission.shouldShowRequestPermissionRationale) {
+                        // Denied permission without ask never again
+                        finish();
+                    } else {
+                        finish();
+                        // Denied permission with ask never again
+                        // Need to go to the settings
+                    }
+                });
     }
 
 
@@ -230,5 +250,10 @@ public class HomeActivity extends BaseActivity implements HasSupportFragmentInje
                 }
                 break;
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
     }
 }
